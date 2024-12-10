@@ -1,3 +1,4 @@
+import WebUI from 'src/webui/main';
 import MainWindow from '../gui/main-window'
 import TmdbConfig from '../tmdb-config';
 import SettingsController from './settings';
@@ -6,17 +7,21 @@ import UploadController from './upload';
 
 export default class MainController {
   
-  ui: MainWindow;
+  //ui: MainWindow;
+  ui: WebUI;
   uploads: UploadController[];
-  settings: SettingsController;
-  tmdbConfig: TmdbConfig;
-  torrentClients: TorrentClients;
+  //settings: SettingsController;
+  //tmdbConfig: TmdbConfig;
+  //torrentClients: TorrentClients;
 
   constructor() {
     
       this.uploads = [];
 
-      this.ui = new MainWindow();
+      this.ui = new WebUI();
+
+      this.ui.onOpenFile(path => this.addUpload(path));
+      /*this.ui = new MainWindow();
 
       this.ui.onOpenFile(path => this.addUpload(path));
       this.ui.onOpenFolder(path => this.addUpload(path));
@@ -42,15 +47,15 @@ export default class MainController {
 
       this.settings.load().then(() => {
         this.ui.window.show();
-      });
+      });*/
 
   }
 
   async addUpload(path: string): Promise<void> {
 
-    const upload = new UploadController(this.ui, this.tmdbConfig, this.settings.settings.all(), this.torrentClients);
-    await upload.setPath(path);
-    this.uploads.push(upload);
+    //const upload = new UploadController(this.ui, this.tmdbConfig, this.settings.settings.all(), this.torrentClients);
+    //await upload.setPath(path);
+    //this.uploads.push(upload);
 
   }
 

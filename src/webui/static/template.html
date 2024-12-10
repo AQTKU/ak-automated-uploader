@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>AK Automated Uploader</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+    <style type="text/css">
+      :root { 
+        font-family: 'Karla';
+      }
+
+      header {
+        background: #386691;
+        border-radius: .25rem;
+        color: #fff;
+        padding: .5rem .75rem;
+      }
+
+      header h1 {
+        font-size: 1rem;
+        float: right;
+        margin: .25rem;
+      }
+
+      header a {
+        color: #fff;
+        text-decoration: none;
+        transition: background-color 100ms;
+      }
+
+      header a:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      nav ul {
+        margin: 0;
+        padding: 0;
+      }
+
+      nav li {
+        display: inline-block;
+        margin: 0;
+        padding: 0;
+      }
+
+      nav a {
+        display: inline-block;
+        padding: .25rem .5rem;
+      }
+
+      main {
+        margin-top: .5rem;
+      }
+
+      main nav a {
+        background: #294B6B;
+        border-radius: .25rem;
+        color: #fff;
+        text-decoration: none;
+      }
+
+      main nav a + a {
+        margin-left: .5rem;
+      }
+
+      #uploads {
+        grid-area: uploads;
+      }
+
+      main {
+        display: grid;
+        grid-template-areas: 
+          "uploads uploads"
+          "tmdb tracker"
+          "files tracker"
+          "screenshots tracker"
+          "progress tracker"
+          ". tracker";
+        grid-template-columns: 1fr 3fr;
+      }
+
+      h2 {
+        display: none;
+      }
+
+      #tmdb {
+        grid-area: tmdb;
+      }
+
+      #files {
+        grid-area: files;
+      }
+
+      #screenshots {
+        grid-area: screenshots;
+      }
+
+      #progress {
+        grid-area: progress;
+      }
+
+      #tracker {
+        grid-area: tracker;
+      }
+
+    </style>
+
+    <script type="text/javascript" defer>
+
+    </script>
+
+  </head>
+  <body>
+    <header>
+      <h1>AK Automated Uploader</h1>
+      <nav>
+        <ul>
+          <li><a href="/open-file">Open file</a></li>
+          <li><a href="/open-folder">Open folder</a></li>
+          <li><a href="/settings">Settings</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    %content%
+
+  </body>
+</html>

@@ -1,4 +1,4 @@
-import { QMainWindow, QWidget, QLabel, QPushButton, QIcon, QBoxLayout, Direction, QMessageBox, ButtonRole } from '@nodegui/nodegui';
+//import { QMainWindow, QWidget, QLabel, QPushButton, QIcon, QBoxLayout, Direction, QMessageBox, ButtonRole } from '@nodegui/nodegui';
 import * as path from "node:path";
 import sourceMapSupport from 'source-map-support';
 import MainController from './controllers/main'
@@ -28,7 +28,7 @@ function main(): void {
 }
 main();
 
-process.on('uncaughtException', (error) => {
+/*process.on('uncaughtException', (error) => {
   if (error.stack) console.error(error.stack);
   const messageBox = new QMessageBox();
   messageBox.setWindowTitle('Unhandled exception');
@@ -48,4 +48,4 @@ process.on('unhandledRejection', (error) => {
   close.setText('Close');
   messageBox.addButton(close, ButtonRole.AcceptRole);
   messageBox.exec();
-});
+});*/

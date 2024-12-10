@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <title>AK Automated Uploader</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+    <style type="text/css">
+      :root { 
+        font-family: 'Karla';
+      }
+
+      header {
+        background: #386691;
+        border-radius: .25rem;
+        color: #fff;
+        padding: .5rem .75rem;
+      }
+
+      header h1 {
+        font-size: 1rem;
+        float: right;
+        margin: .25rem;
+      }
+
+      header a {
+        color: #fff;
+        text-decoration: none;
+        transition: background-color 100ms;
+      }
+
+      header a:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      nav ul {
+        margin: 0;
+        padding: 0;
+      }
+
+      nav li {
+        display: inline-block;
+        margin: 0;
+        padding: 0;
+      }
+
+      nav a {
+        display: inline-block;
+        padding: .25rem .5rem;
+      }
+
+      main {
+        margin-top: .5rem;
+      }
+
+      main nav a {
+        background: #294B6B;
+        border-radius: .25rem;
+        color: #fff;
+        text-decoration: none;
+      }
+
+      main nav a + a {
+        margin-left: .5rem;
+      }
+
+      #uploads {
+        grid-area: uploads;
+      }
+
+      main {
+        display: grid;
+        grid-template-areas: 
+          "uploads uploads"
+          "tmdb tracker"
+          "files tracker"
+          "screenshots tracker"
+          "progress tracker"
+          ". tracker";
+        grid-template-columns: 1fr 3fr;
+      }
+
+      h2 {
+        display: none;
+      }
+
+      #tmdb {
+        grid-area: tmdb;
+      }
+
+      #files {
+        grid-area: files;
+      }
+
+      #screenshots {
+        grid-area: screenshots;
+      }
+
+      #progress {
+        grid-area: progress;
+      }
+
+      #tracker {
+        grid-area: tracker;
+      }
+
+    </style>
+
+    <script type="text/javascript" defer>
+
+    </script>
+
+  </head>
+  <body>
+    <header>
+      <h1>AK Automated Uploader</h1>
+      <nav>
+        <ul>
+          <li><a href="/open-file">Open file</a></li>
+          <li><a href="/open-folder">Open folder</a></li>
+          <li><a href="/settings">Settings</a></li>
+        </ul>
+      </nav>
+    </header>
+    <form action="/upload/big-buck-bunny-2008-web-mp4" method="post">
+      <main>
+
+        <nav id="uploads">
+          <ul>
+            <li><a href="/upload/big-buck-bunny-2008-web-mp4">Big Buck Bunny 2008 WEB.mp4</a></li>
+          </ul>
+        </nav>
+
+        <section id="tmdb">
+
+          <h2>Series</h2>
+
+          <img id="tmdb-poster">
+          <select name="tmdb-release" size="4">
+            <option value="Big Buck Bunny (2008)">Big Buck Bunny (2008)</option>
+          </select>
+        </section>
+
+        <section id="files">
+
+          <h2>Files</h2>
+
+          <table>
+
+            <thead>
+              <tr>
+                <th>File name</th>
+                <th abbr="Screenshots">SS</th>
+                <th abbr="MediaInfo">MI</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>Big Buck Bunny 2008 WEB.mp4</td>
+                <td><input name="file-screenshots-1" value="6" type="number"></td>
+                <td><input name="file-mediainfo" value="1" checked></td>
+              </tr>
+            </tbody>
+
+          </table>
+        </section>
+
+        <section id="screenshots">
+
+          <h2>Screenshots</h2>
+
+          <ul>
+            <li><img></li>
+            <li><img></li>
+            <li><img></li>
+            <li><img></li>
+            <li><img></li>
+            <li><img></li>
+          </ul>
+        </section>
+
+        <section id="progress">
+          <h2>Torrent progress:</h2>
+          <progress value="50"></progress>
+        </section>
+
+        <section id="tracker">
+
+          <nav>
+            <ul>
+              <li><a href="/upload/big-buck-bunny-2008-web-mp4/aither">Aither</a></li>
+            </ul>
+          </nav>
+
+          <aside id="duplicates">No duplicates found</aside>
+
+          <div id="fields">
+
+            <p>
+              <label for="aither-title">Title:</label>
+              <input name="aither-title" value="Big Buck Bunny 2008 1080p WEB-DL MP3 2.0 H.264">
+            </p>
+            
+            <p>
+              <label for="aither-category-id">Category:</label>
+              <select name="aither-category-id">
+                <option>Movie</option>
+              </select>
+            </p>
+
+            <p>
+              <label for="aither-type-id">Type:</label>
+              <select name="aither-type-id">
+                <option>WEB-DL</option>
+              </select>
+            </p>
+
+            <p>
+              <label for="aither-resolution-id">Resolution:</label>
+              <select name="aither-resolution-id">
+                <option>1080p</option>
+              </select>
+            </p>
+
+            <p>
+              <label for="aither-distributors-id">Distributors:</label>
+              <select name="aither-distributors-id">
+                <option></option>
+              </select>
+            </p>
+
+            <p>
+              <label for="aither-regions-id">Regions:</label>
+              <select name="aither-regions-id">
+                <option></option>
+              </select>
+            </p>
+
+            <p>
+              <label for="aither-season">Season:</label>
+              <input name="aither-season">
+            </p>
+
+            <p>
+              <label for="aither-episode">Episode:</label>
+              <input name="aither-episode">
+            </p>
+
+            <p>
+              <label for="aither-tmdb">TMDB ID:</label>
+              <input type="number" name="aither-tmdb">
+            </p>
+
+            <p>
+              <label for="aither-imdb">IMDB ID:</label>
+              <input name="aither-imdb">
+            </p>
+
+            <p>
+              <label for="aither-tvdb">TVDB ID:</label>
+              <input name="aither-tvdb">
+            </p>
+
+            <p>
+              <label for="aither-mal">MAL ID:</label>
+              <input name="aither-mal">
+            </p>
+
+            <p>
+              <label for="aither-keywords">Keywords:</label>
+              <input name="aither-keywords">
+            </p>
+
+            <p>
+              <label for="aither-description">Description:</label>
+              <textarea name="aither-description"></textarea>
+            </p>
+
+            <p>
+              <label for="aither-mediainfo">MediaInfo:</label>
+              <textarea name="aither-mediainfo"></textarea>
+            </p>
+
+            <p>
+              <label for="aither-bdinfo">BDInfo:</label>
+              <textarea name="aither-bdinfo"></textarea>
+            </p>
+
+            <p>
+              <label>
+                <input name="aither-anonymous" type="checkbox"> Anonymous
+              </label>
+            </p>
+
+            <p>
+              <label>
+                <input name="aither-stream-optimized" type="checkbox"> Stream optimized
+              </label>
+            </p>
+
+            <p>
+              <label>
+                <input name="aither-sd-content" type="checkbox"> SD content
+              </label>
+            </p>
+
+            <p>
+              <label>
+                <input name="aither-personal-release" type="checkbox"> Personal release
+              </label>
+            </p>
+
+            <p>
+              <label>
+                <input name="aither-internal" type="checkbox"> Internal
+              </label>
+            </p>
+
+          </div>
+
+          <input type="submit" name="preview" value="Preview Description">
+          <input type="submit" name="upload" value="Upload and Send to qBittorrent">
+
+        </section>
+
+      </main>
+    </form>
+  </body>
+</html>
