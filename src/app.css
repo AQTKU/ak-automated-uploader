@@ -1,0 +1,925 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+:root {
+    color-scheme: light dark;
+
+    --background-color: light-dark(#d1e2fa, #263b56);
+    
+    --header-background: linear-gradient(
+        to bottom,
+        oklch(from var(--background-color) calc(l * 1.0) calc(c * 1.2) h),
+        oklch(from var(--background-color) calc(l * 1.2) calc(c * 1.2) h)
+    );
+    --darker-background: linear-gradient(
+        to bottom,
+        oklch(from var(--background-color) calc(l - 0.12) c h),
+        oklch(from var(--background-color) calc(l - 0.07) c h)
+    );
+    --lighter-background: linear-gradient(
+        to bottom,
+        oklch(from var(--background-color) calc(l + 0.09) c h),
+        oklch(from var(--background-color) calc(l + 0.07) c h)
+    );
+
+    --accent-color: oklch(from var(--background-color) calc(l + 0.07) c h);
+
+    --text-color: light-dark(#222222, #d4d4d4);
+    --lighter-text-color: light-dark(#000000, #ffffff);
+
+    --error-background-color: #e2a995;
+    --error-text-color: oklch(from var(--error-background-color) 0.2 c h);
+
+    --success-background-color: #95e2a3;
+    --success-text-color: oklch(from var(--success-background-color) 0.2 c h);
+
+    background: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: clamp(75%, 4vw, 100%);
+}
+
+* {
+    scrollbar-color: oklch(from var(--background-color) calc(l + 0.07) c h) oklch(from var(--background-color) calc(l - 0.12) c h);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+a, button {
+    color: inherit;
+    transition: color 150ms;
+}
+
+a:hover, button:hover {
+    color: var(--lighter-text-color);
+}
+
+abbr {
+    text-decoration: none;
+}
+
+time {
+    text-wrap: nowrap;
+}
+
+table {
+    border-spacing: 0 .125rem;
+    width: 100%;
+}
+
+th {
+    font-size: smaller;
+    text-transform: uppercase;
+    text-align: left;
+    padding: .25rem .5rem;
+    background: var(--darker-background);
+}
+
+td {
+    background: var(--lighter-background);
+    padding: .25rem .5rem;
+}
+
+table a, table button {
+    display: inline-block;
+    margin: -.25rem -.5rem;
+    padding: .25rem .5rem;
+    text-align: left;
+    text-decoration: none;
+}
+
+main {
+    padding: 1rem;
+}
+
+h2 {
+    margin-top: 0;
+}
+
+/*** Forms ********************************************************************/
+
+fieldset {
+    border: 0;
+    margin: 0;
+    padding: 1rem;
+    min-width: 0;
+    transition: opacity 500ms;
+}
+
+fieldset:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+legend {
+    display: none;
+}
+
+fieldset > :last-child {
+    margin-bottom: 0;
+}
+
+.no-fields {
+    margin-top: 0;
+}
+
+.field {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.field:first-of-type {
+    margin-top: 0;
+}
+
+.field:last-of-type {
+    margin-bottom: 0;
+}
+
+.control {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.control label {
+    display: block;
+    margin-bottom: .25rem;
+}
+
+@media (min-width: 500px) {
+
+    .control {
+        flex-direction: row;
+        align-items: first baseline;
+    }
+
+    .control label {
+        min-width: 9rem;
+        margin: 0;
+    }
+
+    input, textarea {
+        flex-grow: 1;
+    }
+
+}
+
+.field .description {
+    font-size: smaller;
+    margin-top: .25rem;
+    margin-bottom: 0;
+}
+
+input, textarea, .control.image-hosts > span {
+    background: var(--darker-background);
+    border: .1rem solid var(--accent-color);
+    padding: .25rem .5rem;
+    border-radius: .25rem;
+    color: inherit;
+    font: inherit;
+    accent-color: var(--accent-color);
+    max-width: calc(100vw - 5.75rem);
+}
+
+@media (min-width: 500px) {
+    input, textarea {
+        max-width: calc(100vw - 14.75rem);
+    }
+}
+
+textarea {
+    min-height: 5rem;
+    resize: vertical;
+    field-sizing: content;
+    max-height: 16rem;
+}
+
+button, .buttons > a {
+    background: var(--lighter-background);
+    display: inline-block;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    border: 0;
+    padding: .25rem .5rem;
+    transition: color 150ms;
+    text-decoration: none;
+}
+
+button:hover, .buttons > a:hover {
+    color: var(--lighter-text-color);
+}
+
+select {
+    border: 0;
+    font: inherit;
+    padding: .25rem .5rem;
+}
+
+.supports-base-select select {
+    appearance: base-select;
+    background: var(--lighter-background);
+    border: .1rem solid var(--accent-color);
+    border-radius: .25rem;
+    color: inherit;
+}
+
+.supports-base-select ::picker(select) {
+    appearance: base-select;
+    background: var(--darker-background);
+    border: .1rem solid var(--accent-color);
+    border-radius: .25rem;
+    color: inherit;
+    padding: .25rem;
+}
+
+progress {
+    accent-color: var(--accent-color);
+}
+
+.control.image-hosts > span {
+    display: flex;
+    flex-wrap: wrap;
+    padding: .5rem;
+    gap: .5rem;
+}
+
+.control.image-hosts > span > span {
+    background: var(--background-color);
+    border: .1rem solid var(--accent-color);
+    padding: .25rem .5rem;
+}
+
+.control.image-hosts > span > span > span {
+    opacity: .5;
+    margin-top: -.25rem;
+}
+
+/*** Tabbed sections **********************************************************/
+
+.tab-group nav {
+    background: var(--darker-background);
+    padding: .5rem;
+}
+
+.tab-group .selector {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.tab-group .add-tab {
+    background: var(--darker-background);
+    margin: 0;
+    padding: .5rem;
+    display: flex;
+    gap: .5rem;
+    grid-area: add-tab;
+}
+
+.tab-group .add-tab select {
+    flex-grow: 1;
+}
+
+.tabs {
+    grid-area: tabs;
+}
+
+.tab-group fieldset {
+    grid-area: form;
+}
+
+/*** Reusable classes**********************************************************/
+
+.error {
+    background-color: var(--error-background-color);
+    color: var(--error-text-color);
+    padding: .25rem .5rem;
+}
+
+.success {
+    background-color: var(--success-background-color);
+    color: var(--success-text-color);
+    padding: .25rem .5rem;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.selector {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.selector a, .selector button {
+    background: none;
+    text-align: left;
+}
+
+.selected a, .selected button {
+    background: var(--lighter-background);
+}
+
+.breadcrumbs ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: .5rem;
+    align-items: first baseline;
+    flex-wrap: wrap;
+}
+
+.breadcrumbs li + li::before {
+    content: '⮞';
+    margin-right: .5rem;
+}
+
+/*** Main header **************************************************************/
+
+#main-header {
+    background: var(--header-background);
+    box-shadow: 0 0 5rem #00000055;
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    margin: 0;
+    padding: .25rem 0.5rem;
+}
+
+#main-header nav {
+    flex-grow: 1;
+}
+
+#main-header h1 {
+    margin: 0;
+}
+
+#main-header h1 img {
+    width: 1.5rem;
+    margin: .5rem 0 0;
+}
+
+#main-header ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: .25rem;
+}
+
+#main-header li:last-child {
+    margin-left: auto;
+}
+
+#main-header nav a, #main-header nav button {
+    padding: .25rem .5rem;
+    display: inline-block;
+    text-decoration: none;
+    transition: color 150ms, text-shadow 150ms;
+    background: none;
+}
+
+#main-header nav a:hover, #main-header nav button:hover {
+    text-shadow: 0 0 1rem light-dark(#fff, #000), 0 0 1rem light-dark(#fff, #000), 0 0 1rem light-dark(#fff, #000);
+}
+
+/*** Sections *****************************************************************/
+
+h3 {
+    background: var(--darker-background);
+    padding: .25rem .5rem;
+    font-size: smaller;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+/*** Login ********************************************************************/
+
+#login, #login-header {
+    text-align: center;
+    margin: 0 auto;
+    width: min(50rem, calc(100vw - 2rem));
+}
+
+#login .auth-token {
+    background: var(--lighter-background);
+    padding: 1rem;
+}
+
+#login .auth-token p {
+    margin: .5rem;
+}
+
+#login label {
+    display: block;
+}
+
+#login input {
+    min-width: min(30rem, 75vw);
+    text-align: center;
+}
+
+/*** Open and uploads *********************************************************/
+
+#open .size, #open .modified, #uploads .status, #uploads .close {
+    text-align: right;
+    width: 1em;
+    white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+
+    #open table, #uploads table {
+        display: block;
+    }
+
+    #open tr > *, #uploads tr > * {
+        display: block;
+    }
+
+    #open tr, #uploads tr {
+        text-align: right;
+    }
+
+    #open td, #uploads td {
+        text-align: left;
+    }
+
+    #open tr > :not(:first-child), #uploads tr > :not(:first-child) {
+        display: inline-block;
+        background: none;
+        width: auto;
+        font-size: smaller;
+    }
+
+    #uploads td.close {
+        margin-top: .25rem;
+        margin-bottom: .125rem;
+    }
+
+}
+
+/*** Settings *****************************************************************/
+
+#settings button + button {
+    margin-left: auto;
+}
+
+@media (min-width: 800px) {
+
+    #settings .tab-group + .tab-group {
+        margin-top: 1rem;
+    }
+
+    #settings .tabs .selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #settings .tabs .selector li {
+        display: flex;
+    }
+
+    #settings .tabs .selector li > * {
+        flex-grow: 1;
+        text-align: left;
+    }
+
+    #settings .add-tab {
+        flex-direction: column;
+    }
+
+    #settings .tab-group > div {
+        display: grid;
+        grid-template-columns: 10rem auto;
+        grid-template-areas:
+            "tabs form";
+    }
+
+    #settings .tab-group.addable > div {
+        grid-template-areas:
+            "tabs form"
+            "add-tab form";
+    }
+
+}
+
+/*** Upload *******************************************************************/
+
+#upload header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#upload > div {
+    display: grid;
+    gap: .5rem;
+    grid-template-rows: auto 12.5rem auto auto auto;
+    grid-template-areas:
+        "torrent-progress"
+        "tmdb"
+        "files"
+        "screenshots"
+        "trackers";
+}
+
+@media (min-width: 800px) {
+
+    #upload > div {
+        grid-template-columns: 25rem 1fr;
+        grid-template-rows: auto 12.5rem auto auto;
+        grid-template-areas:
+            "torrent-progress torrent-progress"
+            "tmdb files"
+            "screenshots screenshots"
+            "trackers trackers";        
+    }
+}
+
+@media (min-width: 1150px) {
+
+    #upload > div {
+        grid-template-columns: 25rem 1fr 1fr;
+        grid-template-rows: auto 12.5rem auto;
+        grid-template-areas: 
+            "torrent-progress torrent-progress torrent-progress"
+            "tmdb files screenshots"
+            "trackers trackers trackers";
+    }
+
+}
+
+@media (min-width: 2000px) {
+    
+    #upload > div {
+        grid-template-columns: 1fr 85rem;
+        grid-template-rows: auto 12.5rem auto 1fr;
+        grid-template-areas:
+            "torrent-progress torrent-progress"
+            "tmdb trackers"
+            "screenshots trackers"
+            "files trackers";
+    }
+
+}
+
+@media (min-width: 2200px) {
+
+    #upload > div {
+        grid-template-columns: 2fr 1fr 85rem;
+        grid-template-rows: auto 12.5rem 1fr;
+        grid-template-areas: 
+            "torrent-progress torrent-progress torrent-progress"
+            "tmdb screenshots trackers"
+            "files screenshots trackers";
+    }
+
+}
+
+@media (min-width: 2600px) {
+
+    #upload > div {
+        grid-template-columns: 25rem 1fr 1fr 85rem;
+        grid-template-rows: auto 1fr;
+        grid-template-areas:
+            "torrent-progress torrent-progress torrent-progress torrent-progress"
+            "tmdb files screenshots trackers";
+    }
+
+    #upload > div {
+        position: fixed;
+        bottom: 1rem;
+        top: calc(5.3rem + var(--title-height));
+        left: 1rem;
+        right: 1rem;
+    }
+
+    #trackers {
+        overflow-y: auto;
+    }
+
+    #trackers h3 {
+        position: sticky;
+        top: 0;
+    }
+
+    #trackers .selector {
+        position: sticky;
+        top: 2.125rem;
+    }
+
+}
+
+/*** Torrent progress *********************************************************/
+
+#torrent-progress {
+    display: flex;
+    grid-area: torrent-progress;
+}
+
+#torrent-progress h3 {
+    display: none;
+}
+
+#torrent-progress progress {
+    flex-grow: 1;
+}
+
+/*** TMDB *********************************************************************/
+
+#tmdb {
+    grid-area: tmdb;
+    overflow-y: auto;
+}
+
+#tmdb h3 {
+    position: sticky;
+    top: 0;
+}
+
+#tmdb > div {
+    display: grid;
+    margin-top: .5rem;
+    gap: .5rem;
+    grid-template-columns: 6.666rem auto;
+    grid-template-areas: "poster selector";
+}
+
+#tmdb img {
+    grid-area: poster;
+    height: 10rem;
+    width: 6.666rem;
+    object-fit: contain;
+    position: sticky;
+    top: 2.125rem;
+}
+
+#tmdb .selector {
+    grid-area: selector;
+}
+
+/*** Files ********************************************************************/
+
+#files {
+    grid-area: files;
+    overflow-y: auto;
+}
+
+#files h3 {
+    display: none;
+}
+
+#files table {
+    margin-top: -.125rem;
+    margin-bottom: .25rem;
+}
+
+#files th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#files td {
+    position: relative;
+    top: .375rem;
+    z-index: 1;
+}
+
+#files th.screenshots {
+    text-align: center;
+}
+
+#files .screenshots input {
+    width: 2.5rem;
+}
+
+#files .mediainfo {
+    text-align: right;
+}
+
+/*** Screenshots **************************************************************/
+
+#screenshots {
+    grid-area: screenshots;
+    overflow-y: auto;
+}
+
+#screenshots h3 {
+    position: sticky;
+    top: 0;
+}
+
+#screenshots ul {
+    display: grid;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: .5rem;
+    padding-top: .5rem;
+}
+
+#screenshots img {
+    width: 100%;
+    height: auto;
+    object-fit: fill;
+}
+
+/*** Trackers *****************************************************************/
+
+#trackers {
+    grid-area: trackers;
+}
+
+@media (min-width: 1400px) {
+
+    #trackers .tabs .selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #trackers .tabs .selector li {
+        display: flex;
+    }
+
+    #trackers .tabs .selector li > * {
+        flex-grow: 1;
+        text-align: left;
+    }
+
+    #trackers .add-tab {
+        flex-direction: column;
+    }
+
+    #trackers.tab-group > div {
+        display: grid;
+        grid-template-columns: 10rem auto;
+        grid-template-areas:
+            "tabs form";
+    }
+
+}
+
+/*** Tracker ******************************************************************/
+
+.tracker aside p {
+    margin-top: 0;
+    margin-bottom: .5rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: smaller;
+}
+
+.tracker aside ul {
+    list-style: none;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.tracker aside a {
+    display: inline-block;
+    padding: .25rem .5rem;
+    text-decoration: none;
+}
+
+.tracker aside a:hover {
+    background: var(--lighter-background);
+}
+
+.tracker .status {
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: smaller;
+}
+
+
+@media (min-width: 1100px) {
+
+    .tracker form > div {
+        display: grid;
+        gap: .5rem;
+    }
+
+    .tracker .field {
+        margin: 0;
+    }
+
+}
+
+/*** Aither *******************************************************************/
+
+@media (min-width: 1100px) {
+
+    #tracker-fields-aither {
+        grid-template-areas:
+            "a a a a"
+            "b c d ."
+            "e e f ."
+            "g h . ."
+            "i j k l"
+            "m m m m"
+            "n n n n"
+            "o o o o"
+            "p p p p"
+            "q u x ."
+            "r v y ."
+            "s w z ."
+            "t . A .";
+    }
+
+    #tracker-aither label {
+        min-width: 7rem;
+    }
+
+}
+
+#aither-category_id, #aither-type_id, #aither-resolution_id, #aither-region_id {
+    width: 8rem;
+    flex-grow: 0;
+}
+
+#aither-tmdb, #aither-imdb, #aither-tvdb, #aither-mal {
+    width: 5rem;
+    flex-grow: 0;
+}
+
+#aither-season_number, #aither-episode_number {
+    width: 2rem;
+    flex-grow: 0;
+}
+
+#aither-distributor_id {
+    width: 20rem;
+    flex-grow: 0;
+}
+
+#aither-free {
+    width: 10rem;
+    flex-grow: 0;
+}
+
+
+/*** LST **********************************************************************/
+
+@media (min-width: 1100px) {
+
+    #tracker-fields-lst {
+        grid-template-areas:
+            "a a a a"
+            "b c d e"
+            "f f g h"
+            "i j . ."
+            "k k . ."
+            "l . . ."
+            "m n o p"
+            "q q q q"
+            "r r r r"
+            "s s s s"
+            "t t t t"
+            "u y . ."
+            "v z . ."
+            "w A . ."
+            "x A . ."
+    }
+
+    #tracker-lst label {
+        min-width: 7rem;
+    }
+
+}
+
+#lst-category_id, #lst-type_id, #lst-resolution_id, #lst-region_id,
+#lst-provider, #lst-edition_id {
+    width: 8rem;
+    flex-grow: 0;
+}
+
+#lst-edition_id, #lst-hdr_dv {
+    width: 12rem;
+    flex-grow: 0;
+}
+
+#lst-season_number, #lst-episode_number {
+    width: 2rem;
+    flex-grow: 0;
+}
+
+#lst-distributor_id {
+    width: 20rem;
+    flex-grow: 0;
+}
+
+#lst-tmdb, #lst-imdb, #lst-tvdb, #lst-mal {
+    width: 5rem;
+    flex-grow: 0;
+}

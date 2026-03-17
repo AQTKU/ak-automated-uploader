@@ -1,0 +1,39 @@
+{
+	"name": "ak-automated-uploader",
+	"private": true,
+	"version": "0.9.0",
+	"type": "module",
+	"scripts": {
+		"dev": "bunx --bun vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^7.0.0",
+		"@sveltejs/kit": "^2.49.1",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/bun": "^1.3.5",
+		"@types/node": "^25.0.3",
+		"svelte": "^5.45.6",
+		"svelte-check": "^4.3.4",
+		"typescript": "^5.9.3",
+		"vite": "^7.2.6"
+	},
+	"dependencies": {
+		"@isaacs/ttlcache": "^2.1.4",
+		"@js-temporal/polyfill": "^0.5.1",
+		"cheerio": "^1.2.0",
+		"expiry-map": "^2.0.0",
+		"iso-639-2": "^3.0.2",
+		"liquidjs": "^10.24.0",
+		"mediainfo.js": "^0.3.6",
+		"p-memoize": "^8.0.0",
+		"p-queue": "^9.1.0",
+		"sharp": "^0.34.5",
+		"svelte-dnd-action": "^0.9.69",
+		"zod": "^4.2.1"
+	}
+}
