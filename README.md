@@ -26,7 +26,7 @@ Supported trackers:
 Supported torrent clients:
 - qBittorrent
 
-## Prerequesites
+## Prerequisites
 
 Any new-ish version of the following should do. Put them in your PATH.
 
