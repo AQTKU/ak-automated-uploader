@@ -831,10 +831,11 @@ h3 {
             "n n n n"
             "o o o o"
             "p p p p"
-            "q u x ."
-            "r v y ."
-            "s w z ."
-            "t . A .";
+            "q v y ."
+            "r w z ."
+            "s x A ."
+            "t . B ."
+            "u . B .";
     }
 
     #tracker-aither label {

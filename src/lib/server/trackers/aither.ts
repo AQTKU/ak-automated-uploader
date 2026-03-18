@@ -115,6 +115,7 @@ const aitherFields = [
     { key: 'bdinfo', label: 'BDInfo', type: 'multiline', default: '' },
     { key: 'dv', label: 'Dolby Vision', type: 'checkbox', default: false },
     { key: 'hdr', label: 'HDR', type: 'checkbox', default: false },
+    { key: 'hdr10p', label: 'HDR10+', type: 'checkbox', default: false },
     { key: 'sd', label: 'Standard definition', type: 'checkbox', default: false },
     { key: 'stream', label: 'Stream optimized', type: 'checkbox', default: false },
     { key: 'anonymous', label: 'Anonymous', type: 'checkbox', default: false },
@@ -189,7 +190,8 @@ export default class Aither extends Tracker {
         const type = this.getOption('type_id');
 
         if (release.dv) this.data.dv = true;
-        if (release.hdr) this.data.hdr = true;
+        if (release.hdr?.plus === 'HDR') this.data.hdr = true;
+        if (release.hdr?.plus === 'HDR10+') this.data.hdr = true;
         const resolution = parseInt(release.resolution ?? '0');
         if (resolution <= 576 && resolution > 0) this.data.sd = true;
 
