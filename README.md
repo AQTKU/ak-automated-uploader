@@ -28,9 +28,9 @@ Supported torrent clients:
 
 Any new-ish version of the following should do. Put them in your PATH.
 
-- Bun
-- ffmpeg/ffprobe
-- mkbrr
+- [Bun](https://bun.com/)
+- [ffmpeg/ffprobe](https://www.ffmpeg.org/)
+- [mkbrr](https://mkbrr.com/)
 
 You'll also need a TMDB API key.
 
@@ -54,6 +54,15 @@ $env:ORIGIN = "http://localhost:3000"
 bun build/index.js
 ```
 
----
+Change the port with a `PORT` environment variable:
 
-More details to come.
+```
+PORT=12345 ORIGIN=http://localhost:3000 bun build.index.js
+```
+
+Configure your image hosts, torrent client, and trackers on the settings page.
+
+## Known issues
+
+- The file browser is a little janky.
+- Questionable filenames may or may not work.
