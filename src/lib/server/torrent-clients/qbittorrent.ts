@@ -48,7 +48,7 @@ class QBittorrent extends TorrentClient {
     private async checkLogin(): Promise<boolean> {
         
         try {
-            await this.get('/api/v2/app/version');
+            await this.get('api/v2/app/version');
         } catch {
             return false;
         }
@@ -59,12 +59,16 @@ class QBittorrent extends TorrentClient {
 
     async configure(settings: QBittorrentSettings) {
 
+        if (!settings.url.endsWith('/')) settings.url += '/';
+
         this.url = settings.url;
         this.username = settings.username;
         this.password = settings.password;
 
-        await this.logout();
-        await this.login();
+        this.cookies = '';
+
+        const isLoggedIn = await this.checkLogin();
+        if (!isLoggedIn) await this.login();
 
         log('qBittorrent configured', 'aquamarine');
 
@@ -73,15 +77,13 @@ class QBittorrent extends TorrentClient {
     private async get(endpoint: string, data?: URLSearchParams): Promise<Response> {
 
         const url = new URL(endpoint, this.url);
+        log(url.href);
         if(data) url.search = data.toString();
 
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Cookie': this.cookies,
-                'Referer': `${url.protocol}//${url.host}`,
-            },
-        });
+        const headers: Record<string, string> = { 'Referer': `${url.protocol}//${url.host}` };
+        if (this.cookies) headers.Cookie = this.cookies;
+
+        const response = await fetch(url, { method: 'GET', headers });
 
         if (!response.ok) {
             throw Error(await response.text());
@@ -93,7 +95,7 @@ class QBittorrent extends TorrentClient {
 
     private async getCategories(defaultSavePath: string = '') {
 
-        const response = await this.get('/api/v2/torrents/categories');
+        const response = await this.get('api/v2/torrents/categories');
         const body = await response.json();
 
         const validated = z.record(z.string(), z.object({
@@ -128,7 +130,7 @@ class QBittorrent extends TorrentClient {
 
     private async getPreferences() {
 
-        const response = await this.get('/api/v2/app/preferences');
+        const response = await this.get('api/v2/app/preferences');
         const body = await response.json();
 
         const validated = z.object({
@@ -147,10 +149,8 @@ class QBittorrent extends TorrentClient {
         try {
 
             if (!this.url) throw Error('Missing URL');
-            if (!this.username) throw Error('Missing username');
-            if (!this.password) throw Error('Missing password');
 
-            const response = await this.post('/api/v2/auth/login', new URLSearchParams({
+            const response = await this.post('api/v2/auth/login', new URLSearchParams({
                 username: this.username,
                 password: this.password,
             }));
@@ -165,14 +165,7 @@ class QBittorrent extends TorrentClient {
 
     }
 
-    private async logout() {
-        try {
-            await this.post('/api/v2/auth/logout');
-            this.cookies = '';
-        } catch { }
-    }
-
-    private async post(endpoint: string, data?: FormData | URLSearchParams, signal?: AbortSignal): Promise<Response> {
+    private async post(endpoint: string, body?: FormData | URLSearchParams, signal?: AbortSignal): Promise<Response> {
 
         const url = new URL(endpoint, this.url);
 
@@ -184,14 +177,10 @@ class QBittorrent extends TorrentClient {
            FormData in the request by calling Request.blob(), then use that blob
            to set a Content-Length, which disables chunked transfer encoding */
 
-        const request = new Request(url, {
-            method: 'POST',
-            headers: {
-                'Cookie': this.cookies,
-                'Referer': `${url.protocol}//${url.host}`,
-            },
-            body: data,
-        });
+        const headers: Record<string, string> = { 'Referer': `${url.protocol}//${url.host}` };
+        if (this.cookies) headers.Cookie = this.cookies;
+
+        const request = new Request(url, { method: 'POST', headers, body });
 
         const blob = await request.blob();
 
@@ -242,7 +231,7 @@ class QBittorrent extends TorrentClient {
             }
             formData.set('torrents', file(torrentPath), basename(torrentPath));
 
-            await this.post('/api/v2/torrents/add', formData, signal);
+            await this.post('api/v2/torrents/add', formData, signal);
 
         } catch (error) {
             throw Error(errorString('Failed to upload torrent file', error));
