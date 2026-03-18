@@ -368,7 +368,7 @@ export default class Aither extends Tracker {
             name, description, mediainfo, bdinfo, keywords, season_number,
             episode_number, tmdb, imdb, tvdb, mal, category_id, type_id,
             resolution_id, region_id, distributor_id, free, anonymous, stream,
-            sd, dv, hdr, personal_release, internal, exclusive,
+            sd, dv, hdr, hdr10p, personal_release, internal, exclusive,
             mod_queue_opt_in, refundable
         } = this.data;
 
@@ -402,6 +402,7 @@ export default class Aither extends Tracker {
         formData.set('sd', sd ? '1' : '0');
         formData.set('dv', dv ? '1' : '0');
         formData.set('hdr', hdr ? '1' : '0');
+        formData.set('hdr10p', hdr10p ? '1' : '0');
         formData.set('personal_release', personal_release ? '1' : '0');
 
         if (mod_queue_opt_in) formData.set('mod_queue_opt_in', '1');
