@@ -9,6 +9,8 @@ import getMediaInfo from '$lib/server/mediainfo';
 import type { TmdbHydratedSearchResult, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResults, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState } from '$lib/types';
 import { Trackers } from './trackers';
 import { normalize } from './util/normalize';
+import { getMalId } from './jikan';
+import { log } from './util/log';
 
 export interface UploadState {
     errors: string[];
@@ -247,10 +249,20 @@ export default class Upload {
             this.emitUpdate('tmdbSelected');
             this.trackers?.setRelease(this.release);
 
+
+            let malId: number | null = null;
+            if (hydrated.keywords.includes('anime')) {
+                try {
+                    malId = await getMalId(hydrated.title, hydrated.originalTitle, this.release.category, hydrated.year);
+                } catch (error) {
+                    log(errorString('Getting MAL ID from Jikan failed', error), 'tomato');
+                }
+            }
+
             if (this.mediaInfo) await this.mediaInfo;
             this.signal.throwIfAborted();
             if (this.trackers) {
-                this.trackers.setMetadata(hydrated);
+                this.trackers.setMetadata({ malId, ...hydrated });
                 this.trackers.search();
             }
 

@@ -6,7 +6,7 @@ import errorString from './util/error-string';
 import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
-import type { FieldsToType, TrackerField, TrackerSearchResults, TmdbHydratedSearchResult, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState } from '$lib/types';
+import type { FieldsToType, TrackerField, TrackerSearchResults, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState, Metadata } from '$lib/types';
 import { Context, Liquid, TagToken, type Emitter, type TopLevelToken } from 'liquidjs';
 import { uploadScreenshots } from './upload-screenshots';
 import settings from './settings';
@@ -26,7 +26,7 @@ export default abstract class Tracker {
     errors: string[] = [];
     abstract readonly fields: TrackerField[];
     imageHosts: string[] = [];
-    metadata?: TmdbHydratedSearchResult;
+    metadata?: Metadata;
     mediaInfo?: ReturnType<typeof getMediaInfo>;
     release?: Release;
     screenshots?: Promise<string[]>;
@@ -42,7 +42,7 @@ export default abstract class Tracker {
         this.configure(settings);
     }
 
-    protected abstract applyMetadata(metadata: TmdbHydratedSearchResult): void;
+    protected abstract applyMetadata(metadata: Metadata): void;
 
     protected abstract applyRelease(release: Release): void;
 
@@ -244,7 +244,7 @@ export default abstract class Tracker {
         });
     }
 
-    setMetadata(metadata: TmdbHydratedSearchResult) {
+    setMetadata(metadata: Metadata) {
         this.metadata = metadata;
         this.applyMetadata(metadata);
         this.mediaInfo?.then(

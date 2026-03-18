@@ -1,4 +1,4 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TmdbHydratedSearchResult, TrackerSettings, TrackerAfterUploadAction } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata } from '$lib/types';
 import z from 'zod';
 import type Release from '../release';
 import Tracker from '../tracker';
@@ -159,11 +159,11 @@ export default class Aither extends Tracker {
         });
     }
 
-    applyMetadata(metadata: TmdbHydratedSearchResult) {
+    applyMetadata(metadata: Metadata) {
         this.data.tmdb = String(metadata.tmdbId);
         this.data.imdb = metadata.imdbId ? metadata.imdbId.replace(/^tt/i, '') : '0';
         this.data.tvdb = metadata.tvdbId ? String(metadata.tvdbId) : '0';
-        this.data.mal = '0';
+        this.data.mal = metadata.malId ? String(metadata.malId) : '0';
         this.data.keywords = metadata.keywords.join(', ');
     }
 

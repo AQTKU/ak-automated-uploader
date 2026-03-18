@@ -74,7 +74,9 @@ export interface TmdbHydratedSearchResult {
     imdbId: string | null,
     tvdbId: number | null,
     keywords: string[],
-};
+}
+
+export type Metadata = TmdbHydratedSearchResult & { malId: number | null };
 
 export const TrackerSettingsSchema = z.object({
     name: z.string(),

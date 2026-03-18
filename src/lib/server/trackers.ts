@@ -1,7 +1,7 @@
 import type getMediaInfo from '$lib/server/mediainfo';
 import type Release from './release';
 import settings from './settings';
-import type { TmdbHydratedSearchResult, TrackerAfterUploadActionState, TrackerErrorState, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResultState, TrackerState, TrackerStatusState } from '$lib/types';
+import type { Metadata, TrackerErrorState, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResultState, TrackerState, TrackerStatusState } from '$lib/types';
 import type Torrent from './torrent';
 import { trackers } from './trackers/index';
 import type Tracker from './tracker';
@@ -231,7 +231,7 @@ export class Trackers {
         this.emitDataChanged();
     }
 
-    setMetadata(metadata: TmdbHydratedSearchResult) {
+    setMetadata(metadata: Metadata) {
         this.trackers.forEach(tracker => tracker.setMetadata(metadata));
         this.emitDataChanged();
     }
