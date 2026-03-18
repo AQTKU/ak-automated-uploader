@@ -6,9 +6,11 @@ Well, two private trackers. More coming. Probably.
 
 Features:
 - Creates torrents with mkbrr
+- Matches media with TMDB
 - Takes and uploads screenshots
 - Parses MediaInfo
 - Corrects filenames
+- Responsive design
 
 Supported image hosts:
 - Catbox
@@ -57,7 +59,7 @@ bun build/index.js
 Change the port with a `PORT` environment variable:
 
 ```
-PORT=12345 ORIGIN=http://localhost:3000 bun build.index.js
+PORT=12345 ORIGIN=http://localhost:12345 bun build.index.js
 ```
 
 Configure your image hosts, torrent client, and trackers on the settings page.
