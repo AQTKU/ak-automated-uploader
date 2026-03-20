@@ -29,18 +29,22 @@ export type TrackerField =
         label: string;
         type: 'text' | 'multiline';
         default: string;
+        size?: number;
     } | {
         key: string;
         label: string;
         type: 'select';
         default: string;
         options: [ key: string, value: string ][];  // Required for select
+        size?: number;
     } | {
         key: string;
         label: string;
         type: 'checkbox';
         default: boolean;
     };
+
+export type TrackerLayout = (string | null)[][];
 
 export type TrackerSearchResults = { name: string, url: string }[];
 
@@ -120,11 +124,13 @@ export type TrackerFieldState =
         id: string;
         label: string;
         type: 'text' | 'multiline';
+        size?: number;
     } | {
         id: string;
         label: string;
         type: 'select';
         options: { id: string, label: string }[];  // Required for select
+        size?: number;
     } | {
         id: string;
         label: string;
@@ -143,6 +149,7 @@ export interface TrackerState {
 export interface TrackerFieldsState {
     name: string;
     fields: TrackerFieldState[];
+    layout: TrackerLayout;
 }
 
 export type TrackerStatus = '' |

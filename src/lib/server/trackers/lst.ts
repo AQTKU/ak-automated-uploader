@@ -1,4 +1,4 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, TrackerLayout } from '$lib/types';
 import z from 'zod';
 import type Release from '../release';
 import Tracker from '../tracker';
@@ -137,23 +137,23 @@ export const lstSettings: SettingsField[] = [
     }
 ];
 
-const lstFields = [
+const fields = [
     { key: 'name', label: 'Title', type: 'text', default: '' },
-    { key: 'category_id', label: 'Category', type: 'select', default: 'Movies', options: categories },
-    { key: 'type_id', label: 'Type', type: 'select', default: 'Other', options: types },
-    { key: 'resolution_id', label: 'Resolution', type: 'select', default: 'Other', options: resolutions },
-    { key: 'provider', label: 'Provider', type: 'text', default: '' },
-    { key: 'distributor_id', label: 'Distributor', type: 'select', default: '', options: distributors },
-    { key: 'region_id', label: 'Region', type: 'select', default: '', options: regions },
-    { key: 'edition_id', label: 'Edition', type: 'select', default: '', options: editions },
-    { key: 'season_number', label: 'Season', type: 'text', default: '' },
-    { key: 'episode_number', label: 'Episode', type: 'text', default: '' },
-    { key: 'hdr_dv', label: 'HDR/DV', type: 'select', default: 'None', options: hdrDvs },
+    { key: 'category_id', label: 'Category', type: 'select', default: 'Movies', options: categories, size: 13 },
+    { key: 'type_id', label: 'Type', type: 'select', default: 'Other', options: types, size: 13 },
+    { key: 'resolution_id', label: 'Resolution', type: 'select', default: 'Other', options: resolutions, size: 13 },
+    { key: 'provider', label: 'Provider', type: 'text', default: '', size: 13 },
+    { key: 'distributor_id', label: 'Distributor', type: 'select', default: '', options: distributors, size: 35 },
+    { key: 'region_id', label: 'Region', type: 'select', default: '', options: regions, size: 13 },
+    { key: 'edition_id', label: 'Edition', type: 'select', default: '', options: editions, size: 13 },
+    { key: 'season_number', label: 'Season', type: 'text', default: '', size: 3 },
+    { key: 'episode_number', label: 'Episode', type: 'text', default: '', size: 3 },
+    { key: 'hdr_dv', label: 'HDR/DV', type: 'select', default: 'None', options: hdrDvs, size: 20 },
     { key: 'dual_audio', label: 'Dual audio', type: 'checkbox', default: false },
-    { key: 'tmdb', label: 'TMDB ID', type: 'text', default: '' },
-    { key: 'imdb', label: 'IMDB ID', type: 'text', default: '' },
-    { key: 'tvdb', label: 'TVDB ID', type: 'text', default: '' },
-    { key: 'mal', label: 'MAL ID', type: 'text', default: '' },
+    { key: 'tmdb', label: 'TMDB ID', type: 'text', default: '', size: 10 },
+    { key: 'imdb', label: 'IMDB ID', type: 'text', default: '', size: 10 },
+    { key: 'tvdb', label: 'TVDB ID', type: 'text', default: '', size: 10 },
+    { key: 'mal', label: 'MAL ID', type: 'text', default: '', size: 10 },
     { key: 'keywords', label: 'Keywords', type: 'text', default: '' },
     { key: 'description', label: 'Description', type: 'multiline', default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}' },
     { key: 'mediainfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
@@ -164,8 +164,26 @@ const lstFields = [
     { key: 'draft_queue_opt_in', label: 'Save as draft', type: 'checkbox', default: false },
     { key: 'internal', label: 'Internal', type: 'checkbox', default: false },
     { key: 'refundable', label: 'Refundable', type: 'checkbox', default: false },
-    { key: 'free', label: 'Freeleech', type: 'select', default: 'No Freeleech', options: frees },
+    { key: 'free', label: 'Freeleech', type: 'select', default: 'No Freeleech', options: frees, size: 16 },
 ] as const satisfies TrackerField[];
+
+const layout = [
+    ['name',               'name',           'name',          'name'],
+    ['category_id',        'type_id',        'resolution_id', 'provider'],
+    ['distributor_id',     'distributor_id', 'region_id',     'edition_id'],
+    ['season_number',      'episode_number'],
+    ['hdr_dv',             'hdr_dv'],
+    ['dual_audio'],
+    ['tmdb',               'imdb',           'tvdb',          'mal'],
+    ['keywords',           'keywords',       'keywords',      'keywords'],
+    ['description',        'description',    'description',   'description'],
+    ['mediainfo',          'mediainfo',      'mediainfo',     'mediainfo'],
+    ['bdinfo',             'bdinfo',         'bdinfo',        'bdinfo'],
+    ['anonymous',          'internal'],
+    ['personal_release',   'refundable'],
+    ['mod_queue_opt_in',   'free'],
+    ['draft_queue_opt_in', 'free'],
+] as const satisfies TrackerLayout;
 
 const bannedGroupsCache = new TTLCache<unknown, string[]>({ ttl: 1000 * 60 * 60 });
 
@@ -173,8 +191,9 @@ export default class LST extends Tracker {
 
     apiKey: string = '';
     override name: string = 'LST';
-    override data: FieldsToType<typeof lstFields>;
-    override readonly fields = lstFields;
+    override data: FieldsToType<typeof fields>;
+    override readonly fields = fields;
+    override readonly layout = layout;
     source: string = 'LST';
     private getBannedGroups: typeof this._getBannedGroups;
 

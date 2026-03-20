@@ -45,6 +45,7 @@
             <Tracker
                 name={tracker.name}
                 fields={tracker.fields}
+                layout={tracker.layout}
                 data={trackerData.find(trackerData => trackerData.name === tracker.name)?.data}
                 {uploadId}
                 status={trackerStatus.find(trackerStatus => trackerStatus.tracker === tracker.name)?.status || ''}

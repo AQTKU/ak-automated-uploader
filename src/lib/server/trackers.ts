@@ -133,6 +133,7 @@ export class Trackers {
         return this.trackers.map(tracker => ({
             name: tracker.name,
             fields: tracker.getFieldState(),
+            layout: tracker.layout,
         }));
     }
 

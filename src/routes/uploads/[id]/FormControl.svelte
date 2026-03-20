@@ -2,17 +2,14 @@
     import type { TrackerFieldState } from '$lib/types';
     import trackerNameToId from '$lib/util/tracker-name-to-id';
 
-    let { trackerName, field, value, area }: { trackerName: string, field: TrackerFieldState, value: string | boolean | undefined, area?: string } = $props();
+    let { trackerName, field, value }: { trackerName: string, field: TrackerFieldState, value: string | boolean | undefined } = $props();
 
     // svelte-ignore state_referenced_locally
         let id = $state(`${trackerNameToId(trackerName)}-${field.id}`);
 
-    // svelte-ignore state_referenced_locally
-        if (area) area = `grid-area: ${area}`;
-
 </script>
 
-<div class="field" id="field-{id}" style={area}>
+<div class="field" id="field-{id}" style:grid-area={field.id}>
     <p class="control {field.type}">
 
         {#if field.type === 'checkbox'}
@@ -32,7 +29,11 @@
 
             {:else if field.type === 'select'}
 
-                <select {id} name={field.id}>
+                <select
+                    {id}
+                    name={field.id}
+                    style:min-width={field.size ? `${field.size}ch` : undefined}
+                >
                     {#each field.options as option}
                         <option value={option.id} selected={value === option.id}>{option.label}</option>
                     {/each}
@@ -40,7 +41,7 @@
 
             {:else if field.type === 'text'}
 
-                <input type="text" {id} name={field.id} value={value || ''}>
+                <input type="text" {id} name={field.id} value={value || ''} size={field.size}>
 
             {/if}
 

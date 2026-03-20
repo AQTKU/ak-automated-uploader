@@ -1,4 +1,4 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, TrackerLayout } from '$lib/types';
 import z from 'zod';
 import type Release from '../release';
 import Tracker from '../tracker';
@@ -96,19 +96,19 @@ export const aitherSettings: SettingsField[] = [
     }
 ];
 
-const aitherFields = [
+const fields = [
     { key: 'name', label: 'Title', type: 'text', default: '' },
-    { key: 'category_id', label: 'Category', type: 'select', default: 'Movie', options: categories },
-    { key: 'type_id', label: 'Type', type: 'select', default: 'Other', options: types },
-    { key: 'resolution_id', label: 'Resolution', type: 'select', default: 'Other/Mixed', options: resolutions },
-    { key: 'distributor_id', label: 'Distributors', type: 'select', default: '', options: distributors },
-    { key: 'region_id', label: 'Regions', type: 'select', default: '', options: regions },
-    { key: 'season_number', label: 'Season', type: 'text', default: '' },
-    { key: 'episode_number', label: 'Episode', type: 'text', default: '' },
-    { key: 'tmdb', label: 'TMDB ID', type: 'text', default: '' },
-    { key: 'imdb', label: 'IMDB ID', type: 'text', default: '' },
-    { key: 'tvdb', label: 'TVDB ID', type: 'text', default: '' },
-    { key: 'mal', label: 'MAL ID', type: 'text', default: '' },
+    { key: 'category_id', label: 'Category', type: 'select', default: 'Movie', options: categories, size: 13 },
+    { key: 'type_id', label: 'Type', type: 'select', default: 'Other', options: types, size: 13 },
+    { key: 'resolution_id', label: 'Resolution', type: 'select', default: 'Other/Mixed', options: resolutions, size: 13 },
+    { key: 'distributor_id', label: 'Distributors', type: 'select', default: '', options: distributors, size: 35 },
+    { key: 'region_id', label: 'Regions', type: 'select', default: '', options: regions, size: 13 },
+    { key: 'season_number', label: 'Season', type: 'text', default: '', size: 3 },
+    { key: 'episode_number', label: 'Episode', type: 'text', default: '', size: 3 },
+    { key: 'tmdb', label: 'TMDB ID', type: 'text', default: '', size: 10 },
+    { key: 'imdb', label: 'IMDB ID', type: 'text', default: '', size: 10 },
+    { key: 'tvdb', label: 'TVDB ID', type: 'text', default: '', size: 10 },
+    { key: 'mal', label: 'MAL ID', type: 'text', default: '', size: 10 },
     { key: 'keywords', label: 'Keywords', type: 'text', default: '' },
     { key: 'description', label: 'Description', type: 'multiline', default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}' },
     { key: 'mediainfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
@@ -124,8 +124,25 @@ const aitherFields = [
     { key: 'internal', label: 'Internal', type: 'checkbox', default: false },
     { key: 'exclusive', label: 'Exclusive', type: 'checkbox', default: false },
     { key: 'refundable', label: 'Refundable', type: 'checkbox', default: false },
-    { key: 'free', label: 'Freeleech', type: 'select', default: 'No Freeleech', options: frees },
+    { key: 'free', label: 'Freeleech', type: 'select', default: 'No Freeleech', options: frees, size: 16 },
 ] as const satisfies TrackerField[];
+
+const layout = [
+    ['name',           'name',             'name',        'name'],
+    ['category_id',    'type_id',          'resolution_id'],
+    ['distributor_id', 'distributor_id',   'region_id'],
+    ['season_number',  'episode_number'],
+    ['tmdb',           'imdb',             'tvdb',        'mal'],
+    ['keywords',       'keywords',         'keywords',    'keywords'],
+    ['description',    'description',      'description', 'description'],
+    ['mediainfo',      'mediainfo',        'mediainfo',   'mediainfo'],
+    ['bdinfo',         'bdinfo',           'bdinfo',      'bdinfo'],
+    ['dv',             'anonymous',        'internal'],
+    ['hdr',            'personal_release', 'exclusive'],
+    ['hdr10p',         'mod_queue_opt_in', 'refundable'],
+    ['sd',             null,               'free'],
+    ['stream',         null,               'free'],
+] as const satisfies TrackerLayout;
 
 const bannedGroupsCache = new TTLCache<unknown, {name: string, types: string[] }[]>({ ttl: 1000 * 60 * 60 });
 
@@ -133,8 +150,9 @@ export default class Aither extends Tracker {
 
     apiKey: string = '';
     override name: string = 'Aither';
-    override data: FieldsToType<typeof aitherFields>;
-    override readonly fields = aitherFields;
+    override data: FieldsToType<typeof fields>;
+    override readonly fields = fields;
+    override readonly layout = layout;
     source: string = 'Aither';
     private getBannedGroups: typeof this._getBannedGroups;
 

@@ -6,11 +6,9 @@ import errorString from './util/error-string';
 import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
-import type { FieldsToType, TrackerField, TrackerSearchResults, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState, Metadata } from '$lib/types';
+import type { FieldsToType, TrackerField, TrackerSearchResults, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState, Metadata, TrackerLayout } from '$lib/types';
 import { Context, Liquid, TagToken, type Emitter, type TopLevelToken } from 'liquidjs';
 import { uploadScreenshots } from './upload-screenshots';
-import settings from './settings';
-import { torrentClients } from './torrent-clients';
 import { log } from './util/log';
 import sendTorrent from './send-torrent';
 
@@ -25,6 +23,7 @@ export default abstract class Tracker {
     private errorCallbacks: Array<(reason: string) => void> = [];
     errors: string[] = [];
     abstract readonly fields: TrackerField[];
+    abstract readonly layout: TrackerLayout;
     imageHosts: string[] = [];
     metadata?: Metadata;
     mediaInfo?: ReturnType<typeof getMediaInfo>;
@@ -128,6 +127,7 @@ export default abstract class Tracker {
                     label: field.label,
                     type: 'select',
                     options: field.options.map(item => ({ id: item[0], label: item[1] })),
+                    size: field.size,
                 });
 
             } else if (field.type === 'checkbox') {
@@ -144,6 +144,7 @@ export default abstract class Tracker {
                     id: field.key,
                     label: field.label,
                     type: field.type,
+                    size: field.size,
                 });
 
             }

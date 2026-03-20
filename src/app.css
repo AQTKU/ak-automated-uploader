@@ -802,6 +802,9 @@ h3 {
     font-size: smaller;
 }
 
+.tracker [size] {
+    flex-grow: 0;
+}
 
 @media (min-width: 1100px) {
 
@@ -814,113 +817,8 @@ h3 {
         margin: 0;
     }
 
-}
-
-/*** Aither *******************************************************************/
-
-@media (min-width: 1100px) {
-
-    #tracker-fields-aither {
-        grid-template-areas:
-            "a a a a"
-            "b c d ."
-            "e e f ."
-            "g h . ."
-            "i j k l"
-            "m m m m"
-            "n n n n"
-            "o o o o"
-            "p p p p"
-            "q v y ."
-            "r w z ."
-            "s x A ."
-            "t . B ."
-            "u . B .";
-    }
-
-    #tracker-aither label {
+    .tracker label {
         min-width: 7rem;
     }
 
-}
-
-#aither-category_id, #aither-type_id, #aither-resolution_id, #aither-region_id {
-    width: 8rem;
-    flex-grow: 0;
-}
-
-#aither-tmdb, #aither-imdb, #aither-tvdb, #aither-mal {
-    width: 5rem;
-    flex-grow: 0;
-}
-
-#aither-season_number, #aither-episode_number {
-    width: 2rem;
-    flex-grow: 0;
-}
-
-#aither-distributor_id {
-    width: 20rem;
-    flex-grow: 0;
-}
-
-#aither-free {
-    width: 10rem;
-    flex-grow: 0;
-}
-
-
-/*** LST **********************************************************************/
-
-@media (min-width: 1100px) {
-
-    #tracker-fields-lst {
-        grid-template-areas:
-            "a a a a"
-            "b c d e"
-            "f f g h"
-            "i j . ."
-            "k k . ."
-            "l . . ."
-            "m n o p"
-            "q q q q"
-            "r r r r"
-            "s s s s"
-            "t t t t"
-            "u y . ."
-            "v z . ."
-            "w A . ."
-            "x A . ."
-    }
-
-    #tracker-lst label {
-        min-width: 7rem;
-    }
-
-}
-
-#lst-category_id, #lst-type_id, #lst-resolution_id, #lst-region_id,
-#lst-provider, #lst-edition_id {
-    width: 8rem;
-    flex-grow: 0;
-}
-
-#lst-edition_id, #lst-hdr_dv {
-    width: 12rem;
-    flex-grow: 0;
-}
-
-#lst-season_number, #lst-episode_number {
-    width: 2rem;
-    flex-grow: 0;
-}
-
-#lst-distributor_id {
-    width: 20rem;
-    flex-grow: 0;
-}
-
-#lst-tmdb, #lst-imdb, #lst-tvdb, #lst-mal {
-    width: 5rem;
-    flex-grow: 0;
 }
