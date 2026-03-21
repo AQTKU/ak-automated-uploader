@@ -4,13 +4,7 @@ AK Automated Uploader is a web-based torrent uploader tool for private trackers.
 
 Well, two private trackers. More coming. Probably.
 
-Features:
-- Creates torrents with mkbrr
-- Matches media with TMDB
-- Takes and uploads screenshots
-- Parses MediaInfo
-- Corrects filenames
-- Responsive design
+![Screenshot of the AK Automated Uploader user interface](https://files.catbox.moe/i32l9r.png)
 
 Supported image hosts:
 - Catbox
