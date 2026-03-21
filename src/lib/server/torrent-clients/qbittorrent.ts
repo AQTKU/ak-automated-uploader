@@ -77,7 +77,6 @@ class QBittorrent extends TorrentClient {
     private async get(endpoint: string, data?: URLSearchParams): Promise<Response> {
 
         const url = new URL(endpoint, this.url);
-        log(url.href);
         if(data) url.search = data.toString();
 
         const headers: Record<string, string> = { 'Referer': `${url.protocol}//${url.host}` };
