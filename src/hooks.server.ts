@@ -27,7 +27,7 @@ try {
     await settings.load();
 
 } catch (error) {
-    log(errorString('Error during app start', error), 'crimson');
+    log(errorString('Error during app start', error), 'tomato');
 }
 
 function compare(a: string, b: string) {

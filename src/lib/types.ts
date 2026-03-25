@@ -1,5 +1,4 @@
 import z from 'zod';
-import type { UploadState } from './server/upload';
 
 export interface SettingsField {
     id: string;
