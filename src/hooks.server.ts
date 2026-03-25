@@ -1,12 +1,12 @@
-import { redirect, type Handle } from '@sveltejs/kit';
+import { error, redirect, type Handle } from '@sveltejs/kit';
 import settings from '$lib/server/settings';
 import { torrentClients } from '$lib/server/torrent-clients/index';
 import { imageHosts } from '$lib/server/image-hosts/index';
 import { trackers } from '$lib/server/trackers/index';
-import { tmdb } from '$lib/server/tmdb';
 import errorString from '$lib/server/util/error-string';
 import { checkSession } from '$lib/server/sessions';
 import { log } from '$lib/server/util/log';
+import { timingSafeEqual } from 'node:crypto';
 
 log('Starting up');
 
@@ -30,6 +30,14 @@ try {
     log(errorString('Error during app start', error), 'crimson');
 }
 
+function compare(a: string, b: string) {
+    const encoder = new TextEncoder();
+    const aBytes = encoder.encode(a);
+    const bBytes = encoder.encode(b);
+    if (aBytes.length !== bBytes.length) return false;
+    return timingSafeEqual(aBytes, bBytes);
+}
+
 log('Ready', 'aquamarine');
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -44,6 +52,22 @@ export const handle: Handle = async ({ event, resolve }) => {
     const { pathname } = event.url;
     if (pathname === '/login') {
         return resolve(event);
+    }
+
+    if (pathname.startsWith('/api') && pathname !== '/api') {
+
+        const apiKey = settings.apiKey;
+        if (!apiKey) error(501);
+
+        const header = event.request.headers.get('Authorization');
+        if (header && compare(`Bearer ${apiKey}`, header)) return resolve(event);
+    
+        const param = event.url.searchParams.get('apiKey');
+        if (param && compare(param, apiKey)) return resolve(event);
+
+        event.setHeaders({ 'WWW-Authenticate': 'Bearer' });
+        error(401);
+
     }
 
     const sessionId = event.cookies.get('session');

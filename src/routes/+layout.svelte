@@ -32,6 +32,7 @@
 				<li><a href="/uploads">Uploads</a></li>
 				<li><a href="/open">Open</a></li>
 				<li><a href="/settings">Settings</a></li>
+				<li><a href="/api">API</a></li>
 				<li><form action="/logout" method="post"><button type="submit">Log out</button></form></li>
 			</ul>
 		</nav>

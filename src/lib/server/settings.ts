@@ -1,4 +1,3 @@
-import z from 'zod';
 import appDataPath from './util/app-data-path';
 import errorString from './util/error-string';
 import { TrackerSettingsSchema, SettingsSchema, ImageHostSettingsSchema, TorrentClientSettingsSchema } from '$lib/types';
@@ -169,6 +168,14 @@ class Settings {
         return token;
     }
 
+    async generateApiKey() {
+        const apiKey = randomBytes(32).toString('base64url');
+        this.settings.apiKey = apiKey;
+        log('API key generated');
+        await this.save();
+        return apiKey;
+    }
+
     getAvailableImageHostOptions() {
         const selected = this.settings.imageHosts.map(option => option.name);
         return this.imageHostOptions.filter(option => !selected.includes(option.name));
@@ -199,6 +206,7 @@ class Settings {
         return this.trackerOptions.filter(option => selected.includes(option.name));
     }
 
+    get apiKey() { return this.settings.apiKey }
     get contentFolder() { return this.settings.contentFolder }
     get torrentClient() { return this.settings.torrentClient; }
 
@@ -235,6 +243,12 @@ class Settings {
 
     onChange(callback: (settings: SettingsList) => Promise<void>) {
         this.changeCallbacks.push(callback);
+    }
+
+    async rescindApiKey() {
+        this.settings.apiKey = null;
+        log('API key rescinded');
+        await this.save();
     }
 
     async save() {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ActionData, PageData, PageProps } from './$types';
+    import type { PageProps } from './$types';
 
     const { data, form }: PageProps = $props();
     // svelte-ignore state_referenced_locally

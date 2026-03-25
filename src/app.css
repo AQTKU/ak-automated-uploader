@@ -98,6 +98,21 @@ h2 {
     margin-top: 0;
 }
 
+code {
+    background: var(--lighter-background);
+    display: inline-block;
+    padding: .125rem .25rem
+}
+
+pre {
+    background: var(--lighter-background);
+    padding: .25rem .5rem;
+}
+
+dl > * + * {
+    margin-top: .5rem;
+}
+
 /*** Forms ********************************************************************/
 
 fieldset {
@@ -509,6 +524,19 @@ h3 {
             "add-tab form";
     }
 
+}
+
+/*** API documentation ********************************************************/
+
+#api .method {
+    font: inherit;
+    font-size: smaller;
+    font-weight: bold;
+}
+
+#api .endpoint {
+    background: none;
+    font-size: larger;
 }
 
 /*** Upload *******************************************************************/

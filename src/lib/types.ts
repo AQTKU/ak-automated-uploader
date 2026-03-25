@@ -110,6 +110,7 @@ export type TorrentClientSettings = z.infer<typeof TorrentClientSettingsSchema>;
 
 export const SettingsSchema = z.object({
     authToken: z.string().optional(),
+    apiKey: z.string().nullable().default(null),
     tmdbApiKey: z.string().default(''),
     contentFolder: z.string().transform(value => value === '' ? undefined : value).optional(),
     imageHosts: z.array(ImageHostSettingsSchema).default([]),
