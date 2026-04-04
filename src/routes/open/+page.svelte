@@ -1,8 +1,10 @@
 <script lang="ts">
 
     import insertWbr from '$lib/util/insert-wbr';
-import type { PageData } from "./$types";
+    import { onMount } from 'svelte';
+    import type { PageData } from "./$types";
     import { Temporal } from '@js-temporal/polyfill';
+    import { browser } from '$app/environment';
 
     const { data } = $props();
 
@@ -125,6 +127,20 @@ import type { PageData } from "./$types";
         );
 
     }
+
+    onMount(() => {
+        
+        if (browser) {
+
+            cookieStore.set({
+                name: 'lastBrowsePath',
+                value: data.path,
+                expires: 60 * 60 * 24 * 365
+            });
+
+        }
+
+    });
 
 </script>
 

@@ -12,6 +12,48 @@ export interface FileInfo {
     modified?: string;
 }
 
+async function getItem(name: string, path: string): Promise<FileInfo | null> {
+
+    let fileInfo;
+    try {
+        fileInfo = await file(path).stat();
+    } catch {
+        return null;
+    }
+
+    const isDir = fileInfo.isDirectory();
+
+    if (isDir) {
+
+        const dir: FileInfo = {
+            name,
+            path,
+            isDir,
+        };
+
+        if (fileInfo.size) {
+            dir.size = fileInfo.size;
+        }
+
+        if (fileInfo.mtimeMs) {
+            dir.modified = Temporal.Instant.fromEpochMilliseconds(fileInfo.mtimeMs).toString();
+        }
+
+        return dir;
+
+    } else {
+
+        return {
+            name,
+            path,
+            isDir,
+            size: fileInfo.size,
+            modified: Temporal.Instant.fromEpochMilliseconds(fileInfo.mtimeMs).toString(),
+        };
+
+    }
+}
+
 export async function list(requestedPath: string): Promise<FileInfo[]> {
 
     const output: FileInfo[] = [];
@@ -20,52 +62,19 @@ export async function list(requestedPath: string): Promise<FileInfo[]> {
 
         pauseHashing();
         const paths = await readdir(requestedPath);
+        const promises = [];
 
         for (const name of paths) {
 
             const path = join(requestedPath, name);
-            let fileInfo;
-            try {
-                fileInfo = await file(path).stat();
-            } catch {
-                continue;
-            }
 
-            const isDir = fileInfo.isDirectory();
-
-            if (isDir) {
-
-                const dir: FileInfo = {
-                    name,
-                    path,
-                    isDir,
-                };
-
-                if (fileInfo.size) {
-                    dir.size = fileInfo.size;
-                }
-
-                if (fileInfo.mtimeMs) {
-                    dir.modified = Temporal.Instant.fromEpochMilliseconds(fileInfo.mtimeMs).toString();
-                }
-
-                output.push(dir);
-
-            } else {
-
-                output.push({
-                    name,
-                    path,
-                    isDir,
-                    size: fileInfo.size,
-                    modified: Temporal.Instant.fromEpochMilliseconds(fileInfo.mtimeMs).toString(),
-                });
-
-            }
+            promises.push(getItem(name, path));
 
         }
 
-        return output;
+        const output = await Promise.all(promises);
+
+        return output.filter(file => file !== null);
 
     } finally {
         resumeHashing();

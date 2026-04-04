@@ -119,11 +119,6 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 
         const breadcrumbs = makeBreadcrumbs(path);
 
-        cookies.set('lastBrowsePath', path, {
-            path: '/',
-            maxAge: 60 * 60 * 24 * 365,
-        });
-
         sort = sortFiles(files, sort);
         sortTable[path] = sort;
 
