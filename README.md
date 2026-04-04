@@ -1,9 +1,10 @@
 # ak-automated-uploader
 
 AK Automated Uploader is a web-based torrent uploader tool for private trackers.
-Upload files by picking them via the web UI, or go fully automated with the API.
 
 Well, two private trackers. More coming. Probably.
+
+Upload files by picking them via the web UI, or go fully automated with the API.
 
 ![Screenshot of the AK Automated Uploader user interface](https://files.catbox.moe/i32l9r.png)
 
