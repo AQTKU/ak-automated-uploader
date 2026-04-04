@@ -1,10 +1,18 @@
 # ak-automated-uploader
 
 AK Automated Uploader is a web-based torrent uploader tool for private trackers.
+Upload files by picking them via the web UI, or go fully automated with the API.
 
 Well, two private trackers. More coming. Probably.
 
 ![Screenshot of the AK Automated Uploader user interface](https://files.catbox.moe/i32l9r.png)
+
+Supported trackers:
+
+| Tracker | Features |
+| ------- | -------- |
+| Aither  | Duplicate search, banned groups, season pack trumping, repack trumping |
+| LST     | Duplicate search, banned groups, season pack trumping, repack trumping |
 
 Supported image hosts:
 - Catbox
@@ -12,10 +20,6 @@ Supported image hosts:
 - ImgBB
 - imgbox
 - PiXhost
-
-Supported trackers:
-- Aither
-- LST
 
 Supported torrent clients:
 - qBittorrent
@@ -60,5 +64,4 @@ Configure your image hosts, torrent client, and trackers on the settings page.
 
 ## Known issues
 
-- The file browser is a little janky.
 - Questionable filenames may or may not work.
