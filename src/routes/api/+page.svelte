@@ -3,7 +3,7 @@
 
     const { data }: PageProps = $props();
     // svelte-ignore state_referenced_locally
-    let { apiKey } = data;
+    let { apiKey, trackers } = data;
 
     let copyTimeout: ReturnType<typeof setTimeout> | undefined;
     let copyState: string | null = $state(null);
@@ -30,6 +30,14 @@
         target.select();
     }
 
+    function fieldTypeToDataType(type: string) {
+        switch (type) {
+            case 'checkbox': return 'boolean';
+            case 'select': return 'string enum';
+            default: return 'string';
+        }
+    }
+
 </script>
 
 <main id="api">
@@ -44,15 +52,17 @@
 
         <p class="token">
             <input type="text" readonly value={apiKey} onfocus={select} size="55">
-            <button type="button" onclick={copy}>
-                {#if copyState === 'success'}
-                    ✅ Copied
-                {:else if copyState === 'error'}
-                    ❌ Failed
-                {:else}
-                    📋 Copy
-                {/if}
-            </button>
+            {#if apiKey}
+                <button type="button" onclick={copy}>
+                    {#if copyState === 'success'}
+                        ✅ Copied
+                    {:else if copyState === 'error'}
+                        ❌ Failed
+                    {:else}
+                        📋 Copy
+                    {/if}
+                </button>
+            {/if}
         </p>
 
         <form method="post">
@@ -64,7 +74,7 @@
 
     </section>
 
-<!--    <section>
+    <section>
 
         <h3>Authentication</h3>
 
@@ -85,7 +95,8 @@
         <p>
             Send data with your requests as either JSON or urlencoded params.
             For boolean fields with urlencoded params use the string
-            <code>true</code> for true and anything else for false.
+            <code>true</code> or <code>1</code> for true and anything else for
+            false.
         </p>
 
         <p>
@@ -111,7 +122,7 @@
 
             <dt>
                 <code>contentPath</code>
-                <small>(string)</small>
+                <small>string</small>
             </dt>
             <dd>
                 The location of the content, as this uploader can see it.
@@ -119,7 +130,7 @@
 
             <dt>
                 <code>ignoreDuplicates</code>
-                <small>(boolean)</small>
+                <small>boolean</small>
             </dt>
             <dd>
                 Normally, uploading will fail if a duplicate is found on the
@@ -129,13 +140,26 @@
 
             <dt>
                 <code>trackers</code>
-                <small>(string[])</small>
+                <small>string[]</small>
             </dt>
             <dd>
                 Tracker(s) to upload to, named exactly how they appear in the
                 UI. In JSON, send as an array of strings, otherwise send
                 multiple, like
                 <code>?trackers=Tracker 1&trackers=Tracker 2</code>
+            </dd>
+
+            <dt>
+                <code>set</code>
+                <small>{'{ field: string | boolean }[]'}</small>
+            </dt>
+            <dd>
+                Form fields to set immediately before submitting to the tracker.
+                Use an object in JSON, like
+                <code>{'set: { anonymous: true }'}</code>, or use multiple
+                query params, like
+                <code>?set=anonymous=true&set=tmdb=1234</code>. See below for a
+                field reference.
             </dd>
         </dl>
 
@@ -149,13 +173,59 @@
         <dl>
             <dt>
                 <code>why</code>
-                <small>(string)</small>
+                <small>string</small>
             </dt>
             <dd>
                 Explanation of what went wrong.
             </dd>
         </dl>
 
-    </section>-->
+    </section>
+
+    <section>
+
+        <h3>Tracker field reference</h3>
+
+        {#each trackers as tracker (tracker.name)}
+
+            <h4>{tracker.name}</h4>
+
+            <dl>
+
+                {#each tracker.fields as field (field.key)}
+                    <dt>
+                        <code>{field.key}</code>
+                        <small>{fieldTypeToDataType(field.type)}</small>
+                    </dt>
+                    <dd>
+                        {#if field.type === 'select' && field.options.length > 20}
+                            <details>
+                                <summary>
+                                    {field.label}, one of {field.options.length} options
+                                </summary>
+                                {@html
+                                    field.options
+                                        .map(option => `<code>"${option[0]}"</code>${(option[1] && option[1] !== option[0]) ? ` (${option[1]})` : ''}`)
+                                        .join(', ')
+                                }
+                            </details>
+                        {:else if field.type === 'select'}
+                            {field.label}, one of
+                            {@html
+                                field.options
+                                    .map(option => `<code>"${option[0]}"</code>${(option[1] && option[1] !== option[0]) ? ` (${option[1]})` : ''}`)
+                                    .join(', ')
+                            }
+                        {:else}
+                            {field.label}
+                        {/if}
+                    </dd>
+                {/each}
+
+            </dl>
+
+        {/each}
+
+    </section>
 
 </main>

@@ -1,5 +1,5 @@
 import type { Image, ImageHostSettings, SettingsField } from '$lib/types';
-import z from 'zod';
+import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';
 import { file } from 'bun';
@@ -15,10 +15,6 @@ export const freeimageHostFields: SettingsField[] = [{
     default: '6d207e02198a847aa98d0a2a901485a5',
 }];
 
-const schema = z.object({
-    apiKey: z.string(),
-});
-
 const queue = new PQueue({ concurrency: 1 });
 
 class FreeimageHost extends ImageHost {
@@ -27,8 +23,7 @@ class FreeimageHost extends ImageHost {
     maxSize = 64 * 1024 * 1024;
 
     override async configure(settings: ImageHostSettings) {
-        const data = schema.parse(settings);
-        this.apiKey = data.apiKey;
+        this.apiKey = settings.apiKey ?? '';
     }
 
     async post(image: string, thumb: boolean, signal?: AbortSignal): Promise<Image> {
@@ -54,21 +49,21 @@ class FreeimageHost extends ImageHost {
 
         const data = await response.json();
 
-        const schema = z.object({
-            status_code: z.literal(200),
-            image: z.object({
-                url_viewer: z.httpUrl(),
-                url: z.httpUrl(),
-                medium: z.object({
-                    url: z.httpUrl()
+        const Schema = v.object({
+            status_code: v.literal(200),
+            image: v.object({
+                url_viewer: v.pipe(v.string(), v.url()),
+                url: v.pipe(v.string(), v.url()),
+                medium: v.object({
+                    url: v.pipe(v.string(), v.url()),
                 }),
-                thumb: z.object({
-                    url: z.httpUrl()
+                thumb: v.object({
+                    url: v.pipe(v.string(), v.url()),
                 }),
-            })
+            }),
         });
 
-        const validated = schema.parse(data);
+        const validated = v.parse(Schema, data);
 
         return {
             page: validated.image.url_viewer,

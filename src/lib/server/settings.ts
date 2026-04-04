@@ -9,6 +9,7 @@ import { file } from 'bun';
 import { imageHosts } from './image-hosts';
 import { torrentClients } from './torrent-clients';
 import { tmdb } from './tmdb';
+import * as v from 'valibot';
 
 class Settings {
 
@@ -21,7 +22,7 @@ class Settings {
 
     constructor() {
 
-        this.settings = SettingsSchema.parse({});
+        this.settings = v.parse(SettingsSchema, {});
 
     }
 
@@ -37,8 +38,8 @@ class Settings {
         }
 
         const schema = buildSchemaFromFields(option.fields, option.name);
-        const defaultsAdded = schema.parse(settings);
-        const validated = ImageHostSettingsSchema.parse(defaultsAdded);
+        const defaultsAdded = v.parse(schema, settings);
+        const validated = v.parse(ImageHostSettingsSchema, defaultsAdded);
 
         this.settings.imageHosts.push(validated);
 
@@ -59,8 +60,8 @@ class Settings {
         }
 
         const schema = buildSchemaFromFields(option.fields, option.name);
-        const defaultsAdded = schema.parse(settings);
-        const validated = TorrentClientSettingsSchema.parse(defaultsAdded);
+        const defaultsAdded = v.parse(schema, settings);
+        const validated = v.parse(TorrentClientSettingsSchema, defaultsAdded);
 
         this.settings.torrentClient = validated;
     }
@@ -80,8 +81,8 @@ class Settings {
         }
 
         const schema = buildSchemaFromFields(option.fields, option.name);
-        const defaultsAdded = schema.parse(settings);
-        const validated = TrackerSettingsSchema.parse(defaultsAdded);
+        const defaultsAdded = v.parse(schema, settings);
+        const validated = v.parse(TrackerSettingsSchema, defaultsAdded);
 
         this.settings.trackers.push(validated);
     }
@@ -236,7 +237,7 @@ class Settings {
         } catch (error) {
             log(errorString('Error reading settings from file', error), 'tomato');
             log('Using default settings', 'tomato');
-            this.settings = SettingsSchema.parse({ authToken });
+            this.settings = v.parse(SettingsSchema, { authToken });
         }
 
     }
@@ -270,7 +271,7 @@ class Settings {
 
         const currentAuthToken = this.settings.authToken;
 
-        const settings = SettingsSchema.parse(data);
+        const settings = v.parse(SettingsSchema, data);
         settings.authToken = (saveAuthToken && settings.authToken) ? settings.authToken : currentAuthToken;
 
         try {

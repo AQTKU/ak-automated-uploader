@@ -1,7 +1,7 @@
 import PQueue from 'p-queue';
 import ImageHost from '../image-host';
 import type { Image } from '$lib/types';
-import z from 'zod';
+import * as v from 'valibot';
 import { file } from 'bun';
 import { load } from 'cheerio';
 
@@ -22,7 +22,7 @@ class PiXhost extends ImageHost {
 
         const page = load(source);
         const url = page('#image').attr('src');
-        return z.httpUrl().parse(url);
+        return v.parse(v.pipe(v.string(), v.url()), url);
 
     }
 
@@ -44,10 +44,13 @@ class PiXhost extends ImageHost {
 
         const body = await response.json();
 
-        const validated = z.object({
-            show_url: z.httpUrl(),
-            th_url: z.httpUrl(),
-        }).parse(body);
+        const validated = v.parse(
+            v.object({
+                show_url: v.pipe(v.string(), v.url()),
+                th_url: v.pipe(v.string(), v.url()),
+            }),
+            body
+        );
 
         return {
             page: validated.show_url,

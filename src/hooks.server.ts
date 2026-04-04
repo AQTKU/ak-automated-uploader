@@ -19,7 +19,7 @@ for (const name in imageHosts) {
 }
 
 for (const name in trackers) {
-    if (trackers[name]) settings.addTrackerOption(name, trackers[name].fields);
+    if (trackers[name]) settings.addTrackerOption(name, trackers[name].settings);
 }
 
 try {

@@ -1,6 +1,6 @@
 import { file, spawn } from 'bun';
 import { basename, join } from 'node:path';
-import z from 'zod';
+import * as v from 'valibot';
 import errorString from './util/error-string';
 import PQueue from 'p-queue';
 import { tmpdir } from 'node:os';
@@ -57,10 +57,11 @@ export default class Screenshots {
 
     async getDuration(video: string) {
 
-        const schema = z.object({
-            format: z.object({
-                duration: z.string().transform(
-                    duration => Math.round(parseFloat(duration) * 1000)
+        const Schema = v.object({
+            format: v.object({
+                duration: v.pipe(
+                    v.string(),
+                    v.transform(duration => Math.round(parseFloat(duration) * 1000))
                 ),
             }),
         });
@@ -74,7 +75,7 @@ export default class Screenshots {
                 '-show_entries', 'format=duration',
                 video
             );
-            validated = schema.parse(data);
+            validated = v.parse(Schema, data);
 
         } catch {
 
@@ -84,7 +85,7 @@ export default class Screenshots {
                     '-show_entries', 'format=duration',
                     video
                 );
-                validated = schema.parse(data);
+                validated = v.parse(Schema, data);
 
             } catch (error) {
                 throw Error(errorString(`Couldn't get duration of ${basename(video)}`, error));
@@ -229,13 +230,16 @@ export default class Screenshots {
             path
         );
 
-        const schema = z.object({
-            streams: z.array(z.object({
-                index: z.number(`Couldn't find video stream in ${basename(path)}`),
-            })).min(1, `Couldn't find video stream in ${basename(path)}`),
-        });
+        const Schema = v.object({
+            streams: v.pipe(
+                v.array(v.object({
+                    index: v.number(`Couldn't find video stream in ${basename(path)}`),
+                })),
+                v.minLength(1, `Couldn't find video stream in ${basename(path)}`),
+            ),
+        })
 
-        schema.parse(data);
+        v.parse(Schema, data);
 
     }
 

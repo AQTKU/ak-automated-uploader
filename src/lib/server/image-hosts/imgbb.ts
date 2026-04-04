@@ -1,5 +1,5 @@
 import type { Image, ImageHostSettings, SettingsField } from '$lib/types';
-import z from 'zod';
+import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';
 import { file } from 'bun';
@@ -14,10 +14,6 @@ export const imgBBSettings: SettingsField[] = [{
     default: '',
 }];
 
-const schema = z.object({
-    apiKey: z.string(),
-});
-
 const queue = new PQueue({ concurrency: 1 });
 
 class ImgBB extends ImageHost {
@@ -26,8 +22,7 @@ class ImgBB extends ImageHost {
     maxSize = 32 * 1000 * 1000;
 
     override async configure(settings: ImageHostSettings) {
-        const data = schema.parse(settings);
-        this.apiKey = data.apiKey;
+        this.apiKey = settings.apiKey ?? '';
     }
 
     async post(image: string, thumbnail: boolean, signal: AbortSignal): Promise<Image> {
@@ -48,22 +43,22 @@ class ImgBB extends ImageHost {
         const body = await response.json();
 
         if (!response.ok || !body.success) {
-            const ErrorSchema = z.object({ error: z.object({ message: z.string() })});
-            const error = ErrorSchema.safeParse(body).data;
-            if (error) throw Error(error.error.message);
+            const ErrorSchema = v.object({ error: v.object({ message: v.string() })});
+            const error = v.safeParse(ErrorSchema, body);
+            if (error.success) throw Error(error.output.error.message);
             throw Error(body.status_txt ?? response.statusText);
         }
 
-        const Schema = z.object({
-            data: z.object({
-                url_viewer: z.httpUrl(),
-                image: z.object({ url: z.httpUrl() }),
-                thumb: z.object({ url: z.httpUrl() }),
-                medium: z.object({ url: z.httpUrl() }),
-            }),
-        });
+        const Schema = v.object({
+            data: v.object({
+                url_viewer: v.pipe(v.string(), v.url()),
+                image: v.object({ url: v.pipe(v.string(), v.url()) }),
+                thumb: v.object({ url: v.pipe(v.string(), v.url()) }),
+                medium: v.object({ url: v.pipe(v.string(), v.url()) }),
+            })
+        })
 
-        const validated = Schema.parse(body);
+        const validated = v.parse(Schema, body);
 
         return {
             page: validated.data.url_viewer,

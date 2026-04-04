@@ -1,5 +1,5 @@
 import type { Image } from '$lib/types';
-import z from 'zod';
+import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';
 import { file } from 'bun';
@@ -44,14 +44,14 @@ class Imgbox extends ImageHost {
 
         const body = await response.json();
 
-        const TokenSchema = z.object({
-            token_id: z.number(),
-            token_secret: z.string(),
-            gallery_id: z.number().optional(),
-            gallery_secret: z.string().optional(),
+        const TokenSchema = v.object({
+            token_id: v.number(),
+            token_secret: v.string(),
+            gallery_id: v.optional(v.number()),
+            gallery_secret: v.optional(v.string()),
         });
 
-        const validated = TokenSchema.parse(body);
+        const validated = v.parse(TokenSchema, body);
 
         return validated;
 
@@ -89,15 +89,18 @@ class Imgbox extends ImageHost {
 
         const body = await response.json();
 
-        const FilesSchema = z.object({
-            files: z.array(z.object({
-                url: z.httpUrl(),
-                original_url: z.httpUrl(),
-                thumbnail_url: z.httpUrl(),
-            })).length(1),
+        const FilesSchema = v.object({
+            files: v.pipe(
+                v.array(v.object({
+                    url: v.pipe(v.string(), v.url()),
+                    original_url: v.pipe(v.string(), v.url()),
+                    thumbnail_url: v.pipe(v.string(), v.url()),
+                })),
+                v.length(1),
+            ),
         });
 
-        const validated = FilesSchema.parse(body);
+        const validated = v.parse(FilesSchema, body);
 
         return {
             page: validated.files[0]!.url,

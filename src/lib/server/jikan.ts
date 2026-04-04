@@ -1,21 +1,21 @@
 import PQueue from 'p-queue';
-import z from 'zod';
 import { normalize } from './util/normalize';
+import * as v from 'valibot';
 
 const queue = new PQueue({ concurrency: 1, strict: true, intervalCap: 1, interval: 1000 });
 
-const ResultsSchema = z.object({
-    pagination: z.object({
-        has_next_page: z.boolean(),
+const ResultsSchema = v.object({
+    pagination: v.object({
+        has_next_page: v.boolean(),
     }),
-    data: z.array(z.object({
-        mal_id: z.number(),
-        type: z.string(),
-        titles: z.array(z.object({
-            type: z.string(),
-            title: z.string(),
+    data: v.array(v.object({
+        mal_id: v.number(),
+        type: v.string(),
+        titles: v.array(v.object({
+            type: v.string(),
+            title: v.string(),
         })),
-        year: z.number().nullable(),
+        year: v.nullable(v.number()),
     })),
 });
 
@@ -31,7 +31,7 @@ export async function getMalId(inputTitle: string, inputOriginalTitle: string, i
 
             const response = await queue.add(async () => await fetch(url));
             const body = await response.json();
-            const validated = ResultsSchema.parse(body);
+            const validated = v.parse(ResultsSchema, body);
 
             const filtered = validated.data.filter(({ type, year }) => {
                 if (inputType === 'tv' && type === 'Movie') return false;

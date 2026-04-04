@@ -1,5 +1,5 @@
 import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, TrackerLayout } from '$lib/types';
-import z from 'zod';
+import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
 import { unit3dDistributors, unit3dRegions } from './unit3d-distributors';
@@ -13,22 +13,22 @@ const SEARCH_URL = 'https://lst.gg/api/torrents/filter';
 const BANNED_GROUPS_URL = 'https://lst.gg/api/bannedReleaseGroups';
 const CREATE_TRUMPING_REPORT_URL = (id: number) => `https://lst.gg/api/reports/torrents/${id}/trump`;
 
-const BannedGroupsSchema = z.array(z.object({
-    name: z.string(),
-    type: z.string(),
-    reason: z.string(),
+const BannedGroupsSchema = v.array(v.object({
+    name: v.string(),
+    type: v.string(),
+    reason: v.string(),
 }));
 
-const SearchResultsSchema = z.object({
-    data: z.array(z.object({
-        id: z.string(),
-        attributes: z.object({
-            name: z.string(),
-            details_link: z.httpUrl(), // TODO: verify filter endpoint includes details_link in attributes
+const SearchResultsSchema = v.object({
+    data: v.array(v.object({
+        id: v.string(),
+        attributes: v.object({
+            name: v.string(),
+            details_link: v.pipe(v.string(), v.url()),
         }),
     })),
-    links: z.object({
-        next: z.httpUrl().nullable(),
+    links: v.object({
+        next: v.nullable(v.pipe(v.string(), v.url())),
     }),
 });
 
@@ -115,10 +115,10 @@ const editions: KeyValueData = [
     ['11', 'X Cut'],
 ];
 
-export const regions: KeyValueData = unit3dRegions;
-export const distributors: KeyValueData = unit3dDistributors;
+const regions: KeyValueData = unit3dRegions;
+const distributors: KeyValueData = unit3dDistributors;
 
-export const lstSettings: SettingsField[] = [
+export const settings: SettingsField[] = [
     {
         id: 'announce',
         label: 'Announce URL',
@@ -137,7 +137,7 @@ export const lstSettings: SettingsField[] = [
     }
 ];
 
-const fields = [
+export const fields = [
     { key: 'name', label: 'Title', type: 'text', default: '' },
     { key: 'category_id', label: 'Category', type: 'select', default: 'Movies', options: categories, size: 13 },
     { key: 'type_id', label: 'Type', type: 'select', default: 'Other', options: types, size: 13 },
@@ -355,7 +355,7 @@ export default class LST extends Tracker {
                 throw Error(body.message ?? response.statusText);
             }
 
-            const validated = BannedGroupsSchema.parse(body);
+            const validated = v.parse(BannedGroupsSchema, body);
             return validated.map(item => item.name);
 
         } catch (error) {
@@ -395,7 +395,7 @@ export default class LST extends Tracker {
         const response = await fetch(url, { headers: this.headers });
         const data = await response.json();
 
-        const validated = SearchResultsSchema.parse(data).data;
+        const validated = v.parse(SearchResultsSchema, data).data;
 
         const output: TrackerSearchResults = [];
 
@@ -480,16 +480,19 @@ export default class LST extends Tracker {
         console.log(body);
 
         if (!response.ok || !body.success) {
-            const ErrorSchema = z.record(z.string(), z.array(z.string()));
-            const errors = ErrorSchema.safeParse(body.data).data;
-            if (errors) {
-                const flattenedErrors = Object.values(errors).flat().join(' ');
+            const ErrorSchema = v.record(v.string(), v.array(v.string()));
+            const errors = v.safeParse(ErrorSchema, body);
+            if (errors.success) {
+                const flattenedErrors = Object.values(errors.output).flat().join(' ');
                 throw Error(flattenedErrors);
             }
             throw Error(body.message ?? response.statusText);
         }
 
-        const validated = z.object({ data: z.httpUrl() }).parse(body);
+        const validated = v.parse(
+            v.object({ data: v.pipe(v.string(), v.url()) }),
+            body
+        );
 
         return validated.data;
 
@@ -505,7 +508,7 @@ export default class LST extends Tracker {
 
         if (!response.ok) throw Error(`Couldn't find torrent: ${body.message ?? response.statusText}`);
 
-        const validated = SearchResultsSchema.parse(body).data;
+        const validated = v.parse(SearchResultsSchema, body).data;
 
         const found = validated.find(torrent => torrent.attributes.name === this.data.name);
         if (!found) throw Error("Couldn't find torrent");
@@ -530,7 +533,7 @@ export default class LST extends Tracker {
 
         if (!response.ok) throw Error(`Couldn't find repack trumping candidates: ${body.message ?? response.statusText}`);
 
-        const results = SearchResultsSchema.parse(body).data;
+        const results = v.parse(SearchResultsSchema, body).data;
 
         const filtered = results.filter(
             result => result.attributes.name.toLowerCase().endsWith(`-${this.release!.group!}`.toLowerCase())
@@ -554,12 +557,12 @@ export default class LST extends Tracker {
 
         do {
 
-            const response = await fetch(next ?? url, { headers: this.headers, signal });
+            const response: Response = await fetch(next ?? url, { headers: this.headers, signal });
             const body = await response.json();
 
             if (!response.ok) throw Error(`Couldn't find season pack trumping candidates: ${body.message ?? response.statusText}`);
 
-            const validated = SearchResultsSchema.parse(body);
+            const validated = v.parse(SearchResultsSchema, body);
             next = validated.links.next;
             const data = validated.data;
 

@@ -1,16 +1,18 @@
 import type { SettingsField } from '$lib/types';
-import z from 'zod';
+import * as v from 'valibot';
 
 export default function buildSchemaFromFields(fields: SettingsField[], name?: string) {
-    const shape: Record<string, z.ZodDefault | z.ZodLiteral> = {};
+
+    const shape: Record<string, v.LiteralSchema<string, undefined> | v.SchemaWithFallback<v.StringSchema<any>, string>> = {}
 
     for (const field of fields) {
-        shape[field.id] = z.string().default(field.default || '');
+        shape[field.id] = v.fallback(v.string(), field.default || '');
     }
 
     if (name) {
-        shape.name = z.literal(name);
+        shape.name = v.literal(name);
     }
 
-    return z.object(shape);
+    return v.object(shape);
+
 }

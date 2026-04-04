@@ -1,9 +1,9 @@
-import type { SettingsField, TrackerSettings } from '$lib/types';
-import Aither, { aitherSettings } from './aither';
+import type { SettingsField, TrackerField, TrackerSettings } from '$lib/types';
+import Aither, { settings as aitherSettings, fields as aitherFields } from './aither';
 import type Tracker from '../tracker';
-import LST, { lstSettings } from './lst';
+import LST, { settings as lstSettings, fields as lstFields } from './lst';
 
-export const trackers: Record<string, { class: new (settings: TrackerSettings) => Tracker, fields: SettingsField[] }> = {
-    'Aither': { class: Aither, fields: aitherSettings },
-    'LST': { class: LST, fields: lstSettings },
+export const trackers: Record<string, { class: new (settings: TrackerSettings) => Tracker, settings: SettingsField[], fields: TrackerField[] }> = {
+    'Aither': { class: Aither, settings: aitherSettings, fields: aitherFields },
+    'LST': { class: LST, settings: lstSettings, fields: lstFields },
 };

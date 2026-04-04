@@ -1,4 +1,5 @@
-import z from 'zod';
+import * as v from 'valibot';
+import { torrentClients } from './server/torrent-clients';
 
 export interface SettingsField {
     id: string;
@@ -81,43 +82,41 @@ export interface TmdbHydratedSearchResult {
 
 export type Metadata = TmdbHydratedSearchResult & { malId: number | null };
 
-export const TrackerSettingsSchema = z.object({
-    name: z.string(),
-    announce: z.string(),
-    imageHosts: z.array(z.string()),
-    apiKey: z.string().optional(),
-    defaultDescription: z.string().optional(),
+export const TrackerSettingsSchema = v.object({
+    name: v.string(),
+    announce: v.string(),
+    imageHosts: v.array(v.string()),
+    apiKey: v.optional(v.string()),
+    defaultDescription: v.optional(v.string()),
 });
 
-export type TrackerSettings = z.infer<typeof TrackerSettingsSchema>;
+export type TrackerSettings = v.InferOutput<typeof TrackerSettingsSchema>;
 
-export const ImageHostSettingsSchema = z.object({
-    name: z.string(),
-    apiKey: z.string().optional(),
+export const ImageHostSettingsSchema = v.object({
+    name: v.string(),
+    apiKey: v.optional(v.string()),
 });
 
-export type ImageHostSettings = z.infer<typeof ImageHostSettingsSchema>;
+export type ImageHostSettings = v.InferOutput<typeof ImageHostSettingsSchema>;
 
-export const TorrentClientSettingsSchema = z.object({
-    name: z.string(),
-    url: z.url().optional(),
-    username: z.string().optional(),
-    password: z.string().optional(),
+export const TorrentClientSettingsSchema = v.object({
+    name: v.string(),
+    url: v.optional(v.pipe(v.string(), v.url()))
+})
+
+export type TorrentClientSettings = v.InferOutput<typeof TorrentClientSettingsSchema>;
+
+export const SettingsSchema = v.object({
+    authToken: v.optional(v.string()),
+    apiKey: v.fallback(v.nullable(v.string()), null),
+    tmdbApiKey: v.fallback(v.string(), ''),
+    contentFolder: v.optional(v.pipe(v.string(), v.transform(value => value === '' ? undefined : value))),
+    imageHosts: v.fallback(v.array(ImageHostSettingsSchema), []),
+    torrentClient: v.optional(TorrentClientSettingsSchema),
+    trackers: v.fallback(v.array(TrackerSettingsSchema), []),
 });
 
-export type TorrentClientSettings = z.infer<typeof TorrentClientSettingsSchema>;
-
-export const SettingsSchema = z.object({
-    authToken: z.string().optional(),
-    apiKey: z.string().nullable().default(null),
-    tmdbApiKey: z.string().default(''),
-    contentFolder: z.string().transform(value => value === '' ? undefined : value).optional(),
-    imageHosts: z.array(ImageHostSettingsSchema).default([]),
-    torrentClient: TorrentClientSettingsSchema.optional(),
-    trackers: z.array(TrackerSettingsSchema).default([]),
-});
-
-export type SettingsList = z.infer<typeof SettingsSchema>;
+export type SettingsList = v.InferOutput<typeof SettingsSchema>;
 
 export type TrackerFieldState = 
     | {

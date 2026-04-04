@@ -35,6 +35,6 @@
 		"p-queue": "^9.1.0",
 		"sharp": "^0.34.5",
 		"svelte-dnd-action": "^0.9.69",
-		"zod": "^4.2.1"
+		"valibot": "^1.3.1"
 	}
 }

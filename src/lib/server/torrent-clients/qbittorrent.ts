@@ -4,7 +4,7 @@ import errorString from '../util/error-string';
 import path, { basename } from 'node:path';
 import TorrentClient from '../torrent-client';
 import { log } from '../util/log';
-import z from 'zod';
+import * as v from 'valibot';
 import posixPath from 'node:path/posix';
 import win32Path from 'node:path/win32';
 import { file } from 'bun';
@@ -97,10 +97,13 @@ class QBittorrent extends TorrentClient {
         const response = await this.get('api/v2/torrents/categories');
         const body = await response.json();
 
-        const validated = z.record(z.string(), z.object({
-            name: z.string(),
-            savePath: z.string(),
-        })).parse(body);
+        const validated = v.parse(
+            v.record(v.string(), v.object({
+                name: v.string(),
+                savePath: v.string(),
+            })),
+            body
+        );
 
         const categories = Object.values(validated);
         
@@ -132,10 +135,13 @@ class QBittorrent extends TorrentClient {
         const response = await this.get('api/v2/app/preferences');
         const body = await response.json();
 
-        const validated = z.object({
-            auto_tmm_enabled: z.boolean(),
-            save_path: z.string(),
-        }).parse(body);
+        const validated = v.parse(
+            v.object({
+                auto_tmm_enabled: v.boolean(),
+                save_path: v.string(),
+            }),
+            body
+        )
 
         this.setPlatform(validated.save_path);
 

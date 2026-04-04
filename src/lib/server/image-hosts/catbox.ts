@@ -3,7 +3,7 @@ import ImageHost from '../image-host';
 import type { Image } from '$lib/types';
 import sharp from 'sharp';
 import { basename } from 'node:path';
-import z from 'zod';
+import * as v from 'valibot';
 import { file } from 'bun';
 
 const queue = new PQueue({ concurrency: 1 })
@@ -50,7 +50,7 @@ class Catbox extends ImageHost {
         const urlOrError = await response.text();
         if (!response.ok) throw Error(urlOrError || response.statusText);
 
-        const url = z.httpUrl(urlOrError).parse(urlOrError);
+        const url = v.parse(v.pipe(v.string(), v.url(urlOrError)), urlOrError);
 
         /* Catbox has this annoying problem where you'll upload an image and
             it'll give you a 200 and a URL, but the image isn't actually

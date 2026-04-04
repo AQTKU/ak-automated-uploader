@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as v from 'valibot';
 import errorString from './util/error-string';
 import PQueue from 'p-queue';
 import { normalize } from './util/normalize';
@@ -8,34 +8,36 @@ import { log } from './util/log';
 
 export type TmdbSettings = { apiKey: string };
 
-const TmdbMovieSearchResultSchema = z.object({
-    genre_ids: z.array(z.number()),
-    id: z.number(),
-    original_language: z.string(),
-    original_title: z.string(),
-    overview: z.string(),
-    poster_path: z.string().nullable(),
-    release_date: z.string(),
-    title: z.string(),
+const TmdbMovieSearchResultSchema = v.object({
+    genre_ids: v.array(v.number()),
+    id: v.number(),
+    original_language: v.string(),
+    original_title: v.string(),
+    overview: v.string(),
+    poster_path: v.nullable(v.string()),
+    release_date: v.string(),
+    title: v.string(),
 });
-export type TmdbMovieSearchResult = z.infer<typeof TmdbMovieSearchResultSchema>;
+
+export type TmdbMovieSearchResult = v.InferOutput<typeof TmdbMovieSearchResultSchema>;
 export type TmdbMovieSearchResults = {
     results: TmdbMovieSearchResult[],
     match: { name: string, result: TmdbMovieSearchResult } | null,
 };
 
-const TmdbTvSearchResultSchema = z.object({
-    genre_ids: z.array(z.number()),
-    id: z.number(),
-    origin_country: z.array(z.string()),
-    original_language: z.string(),
-    original_name: z.string(),
-    overview: z.string(),
-    poster_path: z.string().nullable(),
-    first_air_date: z.string(),
-    name: z.string(),
-});
-export type TmdbTvSearchResult = z.infer<typeof TmdbTvSearchResultSchema>;
+const TmdbTvSearchResultSchema = v.object({
+    genre_ids: v.array(v.number()),
+    id: v.number(),
+    origin_country: v.array(v.string()),
+    original_language: v.string(),
+    original_name: v.string(),
+    overview: v.string(),
+    poster_path: v.nullable(v.string()),
+    first_air_date: v.string(),
+    name: v.string(),
+})
+
+export type TmdbTvSearchResult = v.InferOutput<typeof TmdbTvSearchResultSchema>;
 export type TmdbTvSearchResults = {
     results: TmdbTvSearchResult[],
     match: { name: string, result: TmdbTvSearchResult } | null,
@@ -149,7 +151,7 @@ class Tmdb {
         this.apiKey = settings.apiKey;
         this.authenticated = false;
         try {
-            await this.query('3/authentication', z.object({ success: z.literal(true) }));
+            await this.query('3/authentication', v.object({ success: v.literal(true) }));
             this.authenticated = true;
         } catch(error) {
             throw Error(errorString(`Failed to authenticate with TMDB`, error));
@@ -168,24 +170,24 @@ class Tmdb {
     async getExternalIds(category: 'movie', id: number): Promise<{ imdb_id: string | null }>;
     async getExternalIds(category: 'tv' | 'movie', id: number) {
 
-        let schema;
+        let Schema;
 
         if (category === 'tv') {
 
-            schema = z.object({
-                imdb_id: z.string().nullable(),
-                tvdb_id: z.number().nullable(),
+            Schema = v.object({
+                imdb_id: v.nullable(v.string()),
+                tvdb_id: v.nullable(v.number()),
             });
 
         } else {
 
-            schema = z.object({
-                imdb_id: z.string().nullable(),
+            Schema = v.object({
+                imdb_id: v.nullable(v.string()),
             });
 
         }
 
-        return await this.query(`3/${category}/${id}/external_ids`, schema);
+        return await this.query(`3/${category}/${id}/external_ids`, Schema);
 
     }
 
@@ -194,14 +196,14 @@ class Tmdb {
         if (category === 'tv' && this.tvGenres) return this.tvGenres;
         if (category === 'movie' && this.movieGenres) return this.movieGenres;
 
-        const schema = z.object({
-            genres: z.array(z.object({
-                id: z.number(),
-                name: z.string(),
+        const Schema = v.object({
+            genres: v.array(v.object({
+                id: v.number(),
+                name: v.string(),
             })),
         });
 
-        const data = await this.query(`3/genre/${category}/list`, schema);
+        const data = await this.query(`3/genre/${category}/list`, Schema);
 
         const map = new Map<number, string>();
         for (const { id, name } of data.genres) {
@@ -231,24 +233,24 @@ class Tmdb {
 
         if (category === 'tv') {
 
-            const schema = z.object({
-                results: z.array(z.object({
-                    name: z.string(),
+            const Schema = v.object({
+                results: v.array(v.object({
+                    name: v.string(),
                 })),
             });
 
-            const data = await this.query(`3/${category}/${id}/keywords`, schema);
+            const data = await this.query(`3/${category}/${id}/keywords`, Schema);
             return data.results.map(keyword => keyword.name);
 
         } else {
 
-            const schema = z.object({
-                keywords: z.array(z.object({
-                    name: z.string(),
+            const Schema = v.object({
+                keywords: v.array(v.object({
+                    name: v.string(),
                 })),
             });
 
-            const data = await this.query(`3/${category}/${id}/keywords`, schema);
+            const data = await this.query(`3/${category}/${id}/keywords`, Schema);
             return data.keywords.map(keyword => keyword.name);
 
         }
@@ -259,14 +261,14 @@ class Tmdb {
 
         if (this.imageConstants) return this.imageConstants;
 
-        const schema = z.object({
-            images: z.object({
-                'base_url': z.httpUrl(),
-                'poster_sizes': z.array(z.string()),
-            }),
-        });
+        const Schema = v.object({
+            images: v.object({
+                base_url: v.pipe(v.string(), v.url()),
+                poster_sizes: v.array(v.string()),
+            })
+        })
 
-        const data = await this.query('3/configuration', schema);
+        const data = await this.query('3/configuration', Schema);
 
         this.imageConstants = data.images;
 
@@ -446,11 +448,11 @@ class Tmdb {
 
     }
 
-    private async query<T extends z.ZodType>(
+    private async query<T extends v.GenericSchema>(
         endpoint: string,
         schema: T,
         params: Record<string, string> = {}
-    ): Promise<z.infer<T>> {
+    ): Promise<v.InferOutput<T>> {
 
         return this.queryQueue.add(async () => {
 
@@ -471,7 +473,7 @@ class Tmdb {
                     throw Error('status_message' in data ? data.status_message : response.statusText);
                 }
 
-                return schema.parse(data);
+                return v.parse(schema, data);
 
             } catch (error) {
                 throw Error(errorString(`Couldn't fetch ${endpoint} from the TMDB API`, error));
@@ -487,10 +489,10 @@ class Tmdb {
 
         if (title === '') return { results: [], match: null };
 
-        const schema = z.object({
-            page: z.number(),
-            total_pages: z.number(),
-            results: z.array(TmdbMovieSearchResultSchema),
+        const Schema = v.object({
+            page: v.number(),
+            total_pages: v.number(),
+            results: v.array(TmdbMovieSearchResultSchema),
         });
 
         const results: TmdbMovieSearchResult[] = [];
@@ -509,10 +511,10 @@ class Tmdb {
             if (query.year) params.year = query.year;
             if (year) params.year = String(year);
 
-            let data: z.infer<typeof schema>;
+            let data: v.InferOutput<typeof Schema>;
             do {
                 params.page = String(page);
-                data = await this.query('3/search/movie', schema, params);
+                data = await this.query('3/search/movie', Schema, params);
                 results.push(...data.results);
                 page++;
             } while (data.total_pages >= page);
@@ -537,10 +539,10 @@ class Tmdb {
 
         if (title === '') return { results: [], match: null };
 
-        const schema = z.object({
-            page: z.number(),
-            total_pages: z.number(),
-            results: z.array(TmdbTvSearchResultSchema),
+        const Schema = v.object({
+            page: v.number(),
+            total_pages: v.number(),
+            results: v.array(TmdbTvSearchResultSchema),
         });
         
         const results: TmdbTvSearchResult[] = [];
@@ -558,10 +560,10 @@ class Tmdb {
             const params: SearchParams = { query: query.title };
             if (query.year) params.year = query.year;
 
-            let data: z.infer<typeof schema>;
+            let data: v.InferOutput<typeof Schema>;
             do {
                 params.page = String(page);
-                data = await this.query('3/search/tv', schema, params);
+                data = await this.query('3/search/tv', Schema, params);
                 results.push(...data.results);
                 page++;
             } while (data.total_pages >= page);
