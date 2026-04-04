@@ -191,3 +191,12 @@ export type UploadsState = Array<{
     name: string,
     statusCounts: Record<TrackerStatus, number>,
 }>;
+    
+export const ApiUploadSchema = v.object({
+    contentPath: v.string(),
+    tracker: v.string(),
+    set: v.fallback(v.record(
+        v.string(),
+        v.union([v.boolean(), v.string()])
+    ), {})
+});

@@ -109,8 +109,16 @@ pre {
     padding: .25rem .5rem;
 }
 
-dl > * + * {
-    margin-top: .5rem;
+dd {
+    margin-left: 0;
+}
+
+dd + dt {
+    margin-top: 1rem;
+}
+
+* + dd {
+    margin-top: .25rem;
 }
 
 /*** Forms ********************************************************************/

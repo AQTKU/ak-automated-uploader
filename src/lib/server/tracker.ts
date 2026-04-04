@@ -206,14 +206,38 @@ export default abstract class Tracker {
 
     abstract search(): Promise<TrackerSearchResults>;
 
-    setData(data: Record<string, string>) {
+    set(key: string, value: string | boolean, emit = true) {
+
+        const field = this.fields.find(field => field.key === key);
+        if (!field) throw Error(`Couldn't find field ${key}`);
+
+        if (field.type === 'checkbox') {
+            if (typeof value !== 'boolean') throw Error(`Couldn't set ${key}, expected boolean, got string`);
+            this.data[key] = value;
+            return;
+        }
+
+        if (typeof value !== 'string') throw Error(`Couldn't set ${key}, expected string, got boolean`);
+
+        if (field.type === 'select') {
+            const keys = field.options.map(option => option[0]);
+            if (!keys.includes(value)) throw Error(`Couldn't set ${key}, must be one of: ${keys.join(', ')}`);
+        }
+
+        this.data[key] = value;
+
+        if (emit) this.emitDataChanged();
+
+    }
+
+    setData(data: Record<string, string | boolean>) {
 
         for (const field of this.fields) {
 
             if (field.type === 'checkbox') {
-                this.data[field.key] = data[field.key] === '1';
+                this.set(field.key, data[field.key] === '1', false);
             } else {
-                this.data[field.key] = data[field.key] ?? field.default;
+                this.set(field.key, data[field.key] ?? field.default, false);
             }
 
         }
@@ -349,7 +373,9 @@ export default abstract class Tracker {
             this.emitStatus('✅ Done');
 
         } catch (error) {
-            this.emitError(errorString(`${this.status} failed`, error));
+            const status = this.status;
+            this.emitError(errorString(`${status} failed`, error));
+            throw Error(errorString(`${status} failed`, error));
         }
 
     }
@@ -446,6 +472,7 @@ export default abstract class Tracker {
         } catch (error) {
             this.emitStatus('❌ Error');
             this.emitError(errorString("Couldn't transform tags", error));
+            throw Error(errorString("Couldn't transform tags", error));
         }
 
     }

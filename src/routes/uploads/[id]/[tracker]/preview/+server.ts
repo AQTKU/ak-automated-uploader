@@ -24,7 +24,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
     catch (error) { return why(422, "Couldn't set tracker data", error); }
 
     // Fire and forget - this can be a very long process so we'll handle errors elsewhere
-    tracker.transformTags();
+    tracker.transformTags().then(() => { }, () => { });
 
     return ACCEPTED;
 

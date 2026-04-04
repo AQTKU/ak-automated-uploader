@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { string } from 'valibot';
     import type { PageProps } from './$types';
 
     const { data }: PageProps = $props();
@@ -36,6 +37,15 @@
             case 'select': return 'string enum';
             default: return 'string';
         }
+    }
+
+    function formatOption([key, value]: [string, string]) {
+
+        let output = key ? `<code>${key}</code>` : 'an empty string';
+        if (value && value !== key) output += ` (${value})`;
+        
+        return output;
+
     }
 
 </script>
@@ -93,35 +103,37 @@
         <h3>Supported content types</h3>
 
         <p>
-            Send data with your requests as either JSON or urlencoded params.
-            For boolean fields with urlencoded params use the string
-            <code>true</code> or <code>1</code> for true and anything else for
-            false.
+            Send data with your requests as either JSON, urlencoded params, or
+            multipart form data. For boolean fields with form data or urlencoded
+            params, use the string <code>true</code> or <code>1</code> for true
+            and <code>false</code> or <code>0</code> for false.
         </p>
 
         <p>
-            The server will respond with JSON, or an empty response if there's
-            nothing to say. Set the request header
-            <code>Accept: application/json</code>.
+            The server will respond with JSON if you set
+            <code>Accept: application/json</code>, plain text otherwise, or an
+            empty response if there's nothing to say.
         </p>
 
     </section>
 
     <section>
         
-        <h3>Uploading</h3>
+        <h3>Upload</h3>
 
         <p>
             <code class="method post">POST</code>
             <code class="endpoint">/api/upload</code>
         </p>
 
+        <p>Uploads a file to a tracker.</p>
+
         <h4>Request</h4>
 
         <dl>
 
             <dt>
-                <code>contentPath</code>
+                <var>contentPath</var>
                 <small>string</small>
             </dt>
             <dd>
@@ -129,35 +141,22 @@
             </dd>
 
             <dt>
-                <code>ignoreDuplicates</code>
-                <small>boolean</small>
+                <var>tracker</var>
+                <small>string</small>
             </dt>
             <dd>
-                Normally, uploading will fail if a duplicate is found on the
-                tracker, even by a different release group. Set to true to skip
-                that check.
+                Tracker to upload to, named exactly how they appear in the UI.
             </dd>
 
             <dt>
-                <code>trackers</code>
-                <small>string[]</small>
-            </dt>
-            <dd>
-                Tracker(s) to upload to, named exactly how they appear in the
-                UI. In JSON, send as an array of strings, otherwise send
-                multiple, like
-                <code>?trackers=Tracker 1&trackers=Tracker 2</code>
-            </dd>
-
-            <dt>
-                <code>set</code>
+                <var>set</var>
                 <small>{'{ field: string | boolean }[]'}</small>
             </dt>
             <dd>
-                Form fields to set immediately before submitting to the tracker.
-                Use an object in JSON, like
-                <code>{'set: { anonymous: true }'}</code>, or use multiple
-                query params, like
+                Form fields to override before sending the upload to the
+                tracker. Use an object in JSON, like
+                <code>{'"set": { "anonymous": true, "tmdb": 1234 }'}</code>,
+                or use multiple query params, like
                 <code>?set=anonymous=true&set=tmdb=1234</code>. See below for a
                 field reference.
             </dd>
@@ -172,7 +171,74 @@
 
         <dl>
             <dt>
-                <code>why</code>
+                <var>why</var>
+                <small>string</small>
+            </dt>
+            <dd>
+                Explanation of what went wrong.
+            </dd>
+        </dl>
+
+    </section>
+
+    <section>
+        
+        <h3>Preview</h3>
+
+        <p>
+            <code class="method post">POST</code>
+            <code class="endpoint">/api/preview</code>
+        </p>
+
+        <p>
+            Prepares a file for upload to a tracker, but doesn't upload it.
+            Complete the upload in the UI.
+        </p>
+
+        <h4>Request</h4>
+
+        <dl>
+
+            <dt>
+                <var>contentPath</var>
+                <small>string</small>
+            </dt>
+            <dd>
+                The location of the content, as this uploader can see it.
+            </dd>
+
+            <dt>
+                <var>tracker</var>
+                <small>string</small>
+            </dt>
+            <dd>
+                Tracker to upload to, named exactly how they appear in the UI.
+            </dd>
+
+            <dt>
+                <var>set</var>
+                <small>{'{ field: string | boolean }[]'}</small>
+            </dt>
+            <dd>
+                Form fields to override before sending the upload to the
+                tracker. Use an object in JSON, like
+                <code>{'"set": { "anonymous": true, "tmdb": 1234 }'}</code>,
+                or use multiple query params, like
+                <code>?set=anonymous=true&set=tmdb=1234</code>. See below for a
+                field reference.
+            </dd>
+        </dl>
+
+        <h4>Response</h4>
+
+        <p>
+            On success, returns a 204 with no response body. Otherwise, returns
+            a 4xx HTTP code with the following JSON params:
+        </p>
+
+        <dl>
+            <dt>
+                <var>why</var>
                 <small>string</small>
             </dt>
             <dd>
@@ -194,7 +260,7 @@
 
                 {#each tracker.fields as field (field.key)}
                     <dt>
-                        <code>{field.key}</code>
+                        <var>{field.key}</var>
                         <small>{fieldTypeToDataType(field.type)}</small>
                     </dt>
                     <dd>
@@ -205,15 +271,15 @@
                                 </summary>
                                 {@html
                                     field.options
-                                        .map(option => `<code>"${option[0]}"</code>${(option[1] && option[1] !== option[0]) ? ` (${option[1]})` : ''}`)
+                                        .map(option => formatOption(option))
                                         .join(', ')
                                 }
                             </details>
                         {:else if field.type === 'select'}
-                            {field.label}, one of
+                            {field.label}, one of:
                             {@html
                                 field.options
-                                    .map(option => `<code>"${option[0]}"</code>${(option[1] && option[1] !== option[0]) ? ` (${option[1]})` : ''}`)
+                                    .map(option => formatOption(option))
                                     .join(', ')
                             }
                         {:else}

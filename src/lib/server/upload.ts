@@ -36,6 +36,7 @@ export default class Upload {
     private tmdbSelected?: TmdbHydratedSearchResult;
     private updateCallbacks: ((callback: Partial<UploadState>) => void)[] = [];
     private statusUpdateCallbacks: (() => void)[] = [];
+    private errorCallbacks: ((error: string) => void)[] = [];
     private path: string;
     private files?: Files;
     private torrent?: Torrent;
@@ -45,6 +46,7 @@ export default class Upload {
     private mediaInfoFile?: string;
     private trackers?: Trackers;
     private matchedTitles: Map<number, string> = new Map();
+    private initializationPromise: Promise<void> | null = null;
 
     private errors: string[] = [];
     private abortController = new AbortController();
@@ -67,6 +69,12 @@ export default class Upload {
         this.trackers?.cleanup();
     }
 
+    emitError(error: string) {
+        for (const callback of this.errorCallbacks) {
+            callback(error);
+        }
+    }
+
     emitUpdate(key?: string) {
         for (const callback of this.updateCallbacks) {
             callback(this.toJSON(key));
@@ -85,6 +93,16 @@ export default class Upload {
         return this.release.fileName;
     }
 
+    get readyToEdit(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.onStatusUpdate(() => {
+                const statusCounts = this.statusCounts.get('✏️ Ready to edit');
+                if ((statusCounts || 0) >= (this.trackers?.count || Infinity)) resolve();
+            });
+            this.onError((message) => reject(message));
+        });
+    }
+
     get signal() {
         return this.abortController.signal;
     }
@@ -99,14 +117,21 @@ export default class Upload {
         return output;
     }
 
+    getTrackerByName(tracker: string) {
+        if (!this.trackers) throw Error('Trackers not initialized');
+        return this.trackers.getTrackerByName(tracker);
+    }
+
     getTrackerById(tracker: string) {
         if (!this.trackers) throw Error('Trackers not initialized');
         return this.trackers.getTrackerById(tracker);
     }
 
     private handleError(description: string, error: any) {
-        this.errors.push(errorString(description, error));
+        const message = errorString(description, error);
+        this.errors.push(message);
         this.emitUpdate('errors');
+        this.emitError(message);
     }
 
     private async initialize() {
@@ -204,6 +229,10 @@ export default class Upload {
 
     offUpdate(callback: (callback: Partial<UploadState>) => void) {
         this.updateCallbacks = this.updateCallbacks.filter(existingCallback => existingCallback !== callback);
+    }
+
+    onError(callback: (error: string) => void) {
+        this.errorCallbacks.push(callback);
     }
 
     onStatusUpdate(callback: () => void) {

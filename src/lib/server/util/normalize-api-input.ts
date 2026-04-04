@@ -61,13 +61,13 @@ function parsePrimitive(
 
 }
 
-function parseParams(params: URLSearchParams, schema: v.ObjectSchema<v.ObjectEntries, any>): Record<string, unknown> {
+function parseParams(params: URLSearchParams | FormData, schema: v.ObjectSchema<v.ObjectEntries, any>): Record<string, unknown> {
 
     const result: Record<string, unknown> = {};
 
     for (const [key, shape] of Object.entries(schema.entries)) {
 
-        const values = params.getAll(key);
+        const values = params.getAll(key).filter(value => typeof value === 'string');
         if (!values.length) continue;
 
         let unwrappedShape = unwrap(shape);
@@ -127,6 +127,11 @@ export default async function normalizeApiInput<T extends v.ObjectSchema<v.Objec
         case 'application/x-www-form-urlencoded':
             const bodyParams = new URLSearchParams(await request.text());
             body = parseParams(bodyParams, schema);
+            break;
+        
+        case 'multipart/form-data':
+            const formData = await request.formData();
+            body = parseParams(formData, schema);
             break;
 
         case 'application/json':

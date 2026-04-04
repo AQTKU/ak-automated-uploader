@@ -114,6 +114,10 @@ export class Trackers {
         }
     }
 
+    get count() {
+        return this.trackers.length;
+    }
+
     getActions(): TrackersAfterUploadActionsState[] {
         return this.trackers.map((tracker, index) => ({
             tracker: tracker.name,
@@ -169,6 +173,12 @@ export class Trackers {
 
         return output;
 
+    }
+
+    getTrackerByName(name: string) {
+        const tracker = this.trackers.find(tracker => tracker.name === name);
+        if (!tracker) throw Error(`Couldn't find tracker ${name}`);
+        return tracker;
     }
 
     getTrackerById(id: string) {
