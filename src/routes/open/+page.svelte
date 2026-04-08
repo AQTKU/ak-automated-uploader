@@ -130,15 +130,7 @@
 
     onMount(() => {
         
-        if (browser) {
-
-            cookieStore.set({
-                name: 'lastBrowsePath',
-                value: data.path,
-                expires: 60 * 60 * 24 * 365
-            });
-
-        }
+        document.cookie = `lastBrowsePath=${encodeURIComponent(data.path)}; max-age=${60 * 60 * 24 * 365}; path=/; SameSite=Strict`;
 
     });
 
