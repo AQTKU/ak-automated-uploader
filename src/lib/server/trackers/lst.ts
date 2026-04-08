@@ -290,13 +290,13 @@ export default class LST extends Tracker {
             this.data.season_number = release.season ? String(release.season) : '0';
             this.data.episode_number = release.episode ? String(release.episode) : '0';
 
-            titleFormat = '{title aka} {season_episode} {edition} {language if_not_dual_audio} {attributes} {repack} {resolution} {source} ';
+            titleFormat = '{title aka} {season_episode} {edition} {attributes} {repack} {resolution} {source} ';
 
         } else if (release.category === 'movie') {
 
             this.setOption('category_id', 'Movies');
 
-            titleFormat = '{title aka} {year} {edition} {language if_not_dual_audio} {attributes} {repack} {resolution} {source} ';
+            titleFormat = '{title aka} {year} {edition} {attributes} {repack} {resolution} {source} ';
 
         }
 
