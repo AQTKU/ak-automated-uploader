@@ -1,12 +1,11 @@
 <script lang="ts">
 
     import insertWbr from '$lib/util/insert-wbr';
-    import { onMount } from 'svelte';
     import type { PageData } from "./$types";
     import { Temporal } from '@js-temporal/polyfill';
     import { browser } from '$app/environment';
 
-    const { data } = $props();
+    const { data }: { data: PageData } = $props();
 
     const defaultFileIcon = '📃';
     const fileIcons: Record<string, string> = {
@@ -128,10 +127,10 @@
 
     }
 
-    onMount(() => {
-        
-        document.cookie = `lastBrowsePath=${encodeURIComponent(data.path)}; max-age=${60 * 60 * 24 * 365}; path=/; SameSite=Strict`;
-
+    $effect(() => {
+        if (browser) {
+            document.cookie = `lastBrowsePath=${encodeURIComponent(data.path)}; max-age=${60 * 60 * 24 * 365}; path=/; SameSite=Strict`;
+        }
     });
 
 </script>
