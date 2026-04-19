@@ -20,6 +20,8 @@ jobs:
       packages: write
  
     steps:
+      - uses: actions/checkout@v4
+
       - name: Get next version
         id: version
         run: |
@@ -28,8 +30,6 @@ jobs:
           echo "tag=v$((NUM + 1))" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v4
  
       # ---- Build the app ----
       - uses: oven-sh/setup-bun@v2
