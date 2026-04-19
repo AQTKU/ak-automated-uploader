@@ -98,7 +98,7 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
         redirect(302, url);
     }
 
-    const rawPath = url.searchParams.get('browse') || cookies.get('lastBrowsePath') || env.HOME || homedir();
+    const rawPath = url.searchParams.get('browse') || cookies.get('akauLastBrowsePath') || env.HOME || homedir();
     
     const path = normalize(rawPath);
 

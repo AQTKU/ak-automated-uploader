@@ -7,8 +7,8 @@
 
 	if (browser) {
 		const { timeZone, locale } = Intl.DateTimeFormat().resolvedOptions();
-		document.cookie = `timeZone=${timeZone}; path=/; max-age=31536000`;
-		document.cookie = `locale=${locale}; path=/; max-age=31536000`;
+		document.cookie = `akauTimeZone=${timeZone}; path=/; max-age=31536000`;
+		document.cookie = `akauLocale=${locale}; path=/; max-age=31536000`;
 	}
 </script>
 

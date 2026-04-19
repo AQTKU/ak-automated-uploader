@@ -123,9 +123,9 @@ export const actions = {
         }
 
         locals.settings.unsetAuthToken();
-        const isLoggedIn = checkSession(cookies.get('session') ?? '');
-        if (isLoggedIn) removeSession(cookies.get('session') as string);
-        cookies.delete('session', { path: '/' });
+        const isLoggedIn = checkSession(cookies.get('akauSession') ?? '');
+        if (isLoggedIn) removeSession(cookies.get('akauSession') as string);
+        cookies.delete('akauSession', { path: '/' });
         redirect(303, '/login');
 
     },

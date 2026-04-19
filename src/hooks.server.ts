@@ -44,8 +44,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     event.locals.settings = settings;
     
-    const timeZone = event.cookies.get('timeZone') || 'UTC';
-    const locale = event.cookies.get('locale');
+    const timeZone = event.cookies.get('akauTimeZone') || 'UTC';
+    const locale = event.cookies.get('akauLocale');
     event.locals.timeZone = timeZone;
     event.locals.locale = locale;
 
@@ -70,13 +70,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     }
 
-    const sessionId = event.cookies.get('session');
+    const sessionId = event.cookies.get('akauSession');
     if (!sessionId || !checkSession(sessionId)) {
-        event.cookies.delete('session', { path: '/' });
+        event.cookies.delete('akauSession', { path: '/' });
         redirect(303, '/login');
     }
 
-    event.cookies.set('session', sessionId, { path: '/', maxAge: 60 * 60 * 24 * 7 });
+    event.cookies.set('akauSession', sessionId, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+        secure: process.env.ORIGIN?.startsWith('https') ?? false
+    });
 
     return resolve(event);
 

@@ -129,7 +129,7 @@
 
     $effect(() => {
         if (browser) {
-            document.cookie = `lastBrowsePath=${encodeURIComponent(data.path)}; max-age=${60 * 60 * 24 * 365}; path=/; SameSite=Strict`;
+            document.cookie = `akauLastBrowsePath=${encodeURIComponent(data.path)}; max-age=${60 * 60 * 24 * 365}; path=/`;
         }
     });
 

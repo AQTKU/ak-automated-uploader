@@ -6,7 +6,7 @@ import { timingSafeEqual } from 'node:crypto';
 
 export const load = (async ({ cookies }) => {
     
-    const session = cookies.get('session');
+    const session = cookies.get('akauSession');
     if (checkSession(session || '')) redirect(303, '/');
 
     const isFirstBoot = settings.isFirstBoot;
@@ -30,7 +30,11 @@ export const actions = {
         }
 
         const sessionId = addSession();
-        cookies.set('session', sessionId, { path: '/', maxAge: 60 * 60 * 24 * 7 });
+        cookies.set('akauSession', sessionId, {
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7,
+            secure: process.env.ORIGIN?.startsWith('https') ?? false,
+        });
 
         settings.completeFirstBoot();
 
