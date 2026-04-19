@@ -37,31 +37,47 @@ You'll also need a TMDB API key.
 
 ## Getting started
 
-To run from source, download and run the following:
+Download the latest release and run the following:
 
 ```
 bun install
-bun --bun run build
-```
-
-```
-ORIGIN=http://localhost:3000 bun build/index.js
+ORIGIN=http://localhost:51901 PORT=51901 bun build/index.js
 ```
 
 Or on PowerShell:
 
 ```
-$env:ORIGIN = "http://localhost:3000"
+$env:ORIGIN = "http://localhost:51901"
+$env:PORT = "51901"
+bun install
 bun build/index.js
 ```
 
-Change the port with a `PORT` environment variable:
-
-```
-PORT=12345 ORIGIN=http://localhost:12345 bun build.index.js
-```
-
 Configure your image hosts, torrent client, and trackers on the settings page.
+
+## Docker image
+
+Or use the Docker image at `ghcr.io/aqtku/ak-automated-uploader:latest`.
+
+Here's a docker-compose:
+
+```
+services:
+  uploader:
+    image: ghcr.io/aqtku/ak-automated-uploader:latest
+    container_name: ak-automated-uploader
+    ports:
+      - "51901:51901"
+    volumes:
+      - ./config:/config
+      - /path/to/your/media:/mnt:ro
+    environment:
+      - PORT=51901
+      - ORIGIN=http://localhost:51901
+      - APPDATA=/config
+      - HOME=/mnt
+    restart: unless-stopped
+```
 
 ## Known issues
 

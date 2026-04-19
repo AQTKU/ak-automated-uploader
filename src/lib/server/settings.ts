@@ -215,30 +215,30 @@ class Settings {
 
         let authToken;
 
+        log('Loading settings from file');
+
+        const path = await appDataPath('settings.json');
+        let data;
+
         try {
-
-            log('Loading settings from file');
-
-            const path = await appDataPath('settings.json');
-            const data = await file(path).json();
-
-            authToken = data.authToken;
-
-            if (!authToken) {
-                this._isFirstBoot = true;
-                authToken = this.generateAuthToken();
-                data.authToken = authToken;
-            }
-
-            await this.set(data, true);
-
-            log('Settings loaded', 'aquamarine');
-
+            data = await file(path).json();
         } catch (error) {
             log(errorString('Error reading settings from file', error), 'tomato');
             log('Using default settings', 'tomato');
-            this.settings = v.parse(SettingsSchema, { authToken });
+            data = v.parse(SettingsSchema, {});
         }
+
+        authToken = data.authToken;
+
+        if (!authToken) {
+            this._isFirstBoot = true;
+            authToken = this.generateAuthToken();
+            data.authToken = authToken;
+        }
+
+        await this.set(data, true);
+
+        log('Settings loaded', 'aquamarine');
 
     }
 
