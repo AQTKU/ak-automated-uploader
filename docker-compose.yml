@@ -1,0 +1,18 @@
+services:
+  uploader:
+    image: ak-automated-uploader
+    build: .
+    container_name: ak-automated-uploader
+    ports:
+      - "51901:51901"
+    volumes:
+      # App config/data
+      - /your/config/location:/config
+      # Content folder
+      - /your/content/folder:/mnt:ro
+    environment:
+      - PORT=51901
+      - ORIGIN=http://localhost:51901
+      - APPDATA=/config
+      - HOME=/mnt
+    restart: unless-stopped

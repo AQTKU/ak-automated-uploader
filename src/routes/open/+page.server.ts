@@ -5,6 +5,7 @@ import { homedir } from 'node:os';
 import { normalize, sep, parse, join } from 'node:path';
 import { Temporal } from '@js-temporal/polyfill';
 import { uploads } from '$lib/server/uploads';
+import { env } from 'bun';
 
 const sortTable: Record<string, string> = {};
 
@@ -92,12 +93,12 @@ function sortFiles(files: FileInfo[], sort: string): string {
 export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 
     if (url.searchParams.get('home') !== null) {
-        url.searchParams.set('browse', homedir());
+        url.searchParams.set('browse', env.HOME || homedir());
         url.searchParams.delete('home');
         redirect(302, url);
     }
 
-    const rawPath = url.searchParams.get('browse') || cookies.get('lastBrowsePath') || homedir();
+    const rawPath = url.searchParams.get('browse') || cookies.get('lastBrowsePath') || env.HOME || homedir();
     
     const path = normalize(rawPath);
 

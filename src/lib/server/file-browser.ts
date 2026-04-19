@@ -36,7 +36,7 @@ async function getItem(name: string, path: string): Promise<FileInfo | null> {
         }
 
         if (fileInfo.mtimeMs) {
-            dir.modified = Temporal.Instant.fromEpochMilliseconds(fileInfo.mtimeMs).toString();
+            dir.modified = Temporal.Instant.fromEpochMilliseconds(Math.round(fileInfo.mtimeMs)).toString();
         }
 
         return dir;
@@ -48,7 +48,7 @@ async function getItem(name: string, path: string): Promise<FileInfo | null> {
             path,
             isDir,
             size: fileInfo.size,
-            modified: Temporal.Instant.fromEpochMilliseconds(fileInfo.mtimeMs).toString(),
+            modified: Temporal.Instant.fromEpochMilliseconds(Math.round(fileInfo.mtimeMs)).toString(),
         };
 
     }

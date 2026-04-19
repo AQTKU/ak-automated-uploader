@@ -1,0 +1,8 @@
+node_modules
+.svelte-kit
+build
+.git
+.env
+config
+*.md
+assets
