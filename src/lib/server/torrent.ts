@@ -59,14 +59,14 @@ function createWindowsProcessController(): ProcessController {
         suspend(pid: number) {
             withProcessHandle(pid, handle => {
                 const result = ntdll.NtSuspendProcess(handle);
-                if (result < 0) console.warn('Failed to suspend hashing');
+                if (result < 0) log('Failed to suspend hashing', 'tomato');
                 return result;
             });
         },
         resume(pid: number) {
             withProcessHandle(pid, handle => {
                 const result = ntdll.NtResumeProcess(handle);
-                if (result < 0) console.warn('Failed to resume hashing');
+                if (result < 0) log('Failed to resume hashing', 'tomato');
                 return result;
             });
         },
@@ -114,7 +114,8 @@ export function resumeHashing() {
     }
 }
 
-const queue = new PQueue({ concurrency: 1 });
+const createQueue = new PQueue({ concurrency: 1 });
+const editQueue = new PQueue({ concurrency: 1 });
 
 export default class Torrent {
 
@@ -141,7 +142,7 @@ export default class Torrent {
 
         if (this.hashPromise) return this.hashPromise;
 
-        this.hashPromise = queue.add(async () => {
+        this.hashPromise = createQueue.add(async () => {
 
             log(`Starting hashing for ${basename(this._contentPath)}`);
 
@@ -192,12 +193,10 @@ export default class Torrent {
 
         await this.create();
 
-        const editedTorrentPath = queue.add(async () => {
+        const editedTorrentPath = editQueue.add(async () => {
 
             const editedTorrentPath = join(tmpdir(), randomUUID() + '.torrent');
             this.editedTorrentPaths.push(editedTorrentPath);
-
-            let code;
 
             try {
 
