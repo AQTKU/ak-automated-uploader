@@ -8,22 +8,24 @@
     // svelte-ignore state_referenced_locally
     name = name ? name : field.id;
 
+    let orderedHosts: { id: number, name: string }[] = $state([]);
+
     // svelte-ignore state_referenced_locally
     if (field.type === 'imageHosts') {
         const order = String(value).split(','); // ['Catbox', 'Freeimage.host', 'ImgBB']
         const orderMap: Map<string, number> = new Map(order.map((name: string, index: number) => [name, index]));
-
-        imageHosts.sort((a, b) => {
+        // svelte-ignore state_referenced_locally
+        orderedHosts = [...imageHosts].sort((a, b) => {
             const aIndex = orderMap.get(a.name) ?? Infinity;
             const bIndex = orderMap.get(b.name) ?? Infinity;
             return aIndex - bIndex;
         });
     }
 
-    let imageHostFieldValue = $derived(imageHosts.map(item => item.name));
+    let imageHostFieldValue = $derived(orderedHosts.map(item => item.name));
 
     function handleSort(e: CustomEvent<DndEvent>) {
-        imageHosts = e.detail.items;
+        orderedHosts = e.detail.items as { id: number, name: string }[];
     }
 
 </script>
@@ -46,11 +48,11 @@
         {:else if field.type === 'imageHosts'}
             <input type="hidden" {name} {id} value={imageHostFieldValue} />
             <span
-                use:dndzone={{items: imageHosts, flipDurationMs: 150 }}
+                use:dndzone={{items: orderedHosts, flipDurationMs: 150 }}
                 onconsider={handleSort}
                 onfinalize={handleSort}
             >
-                {#each imageHosts as item (item.id)}
+                {#each orderedHosts as item (item.id)}
                     <span animate:flip={{ duration: 300 }}><span>⋮⋮ </span> {item.name}</span>
                 {/each}
             </span>
