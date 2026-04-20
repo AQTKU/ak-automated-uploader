@@ -139,17 +139,17 @@ export const settings: SettingsField[] = [
 
 export const fields = [
     { key: 'name', label: 'Title', type: 'text', default: '' },
-    { key: 'category_id', label: 'Category', type: 'select', default: 'Movies', options: categories, size: 13 },
-    { key: 'type_id', label: 'Type', type: 'select', default: 'Other', options: types, size: 13 },
-    { key: 'resolution_id', label: 'Resolution', type: 'select', default: 'Other', options: resolutions, size: 13 },
+    { key: 'categoryId', label: 'Category', type: 'select', default: 'Movies', options: categories, size: 13 },
+    { key: 'typeId', label: 'Type', type: 'select', default: 'Other', options: types, size: 13 },
+    { key: 'resolutionId', label: 'Resolution', type: 'select', default: 'Other', options: resolutions, size: 13 },
     { key: 'provider', label: 'Provider', type: 'text', default: '', size: 13 },
-    { key: 'distributor_id', label: 'Distributor', type: 'select', default: '', options: distributors, size: 35 },
-    { key: 'region_id', label: 'Region', type: 'select', default: '', options: regions, size: 13 },
-    { key: 'edition_id', label: 'Edition', type: 'select', default: '', options: editions, size: 13 },
-    { key: 'season_number', label: 'Season', type: 'text', default: '', size: 3 },
-    { key: 'episode_number', label: 'Episode', type: 'text', default: '', size: 3 },
-    { key: 'hdr_dv', label: 'HDR/DV', type: 'select', default: 'None', options: hdrDvs, size: 20 },
-    { key: 'dual_audio', label: 'Dual audio', type: 'checkbox', default: false },
+    { key: 'distributorId', label: 'Distributor', type: 'select', default: '', options: distributors, size: 35 },
+    { key: 'regionId', label: 'Region', type: 'select', default: '', options: regions, size: 13 },
+    { key: 'editionId', label: 'Edition', type: 'select', default: '', options: editions, size: 13 },
+    { key: 'seasonNumber', label: 'Season', type: 'text', default: '', size: 3 },
+    { key: 'episodeNumber', label: 'Episode', type: 'text', default: '', size: 3 },
+    { key: 'hdrDv', label: 'HDR/DV', type: 'select', default: 'None', options: hdrDvs, size: 20 },
+    { key: 'dualAudio', label: 'Dual audio', type: 'checkbox', default: false },
     { key: 'tmdb', label: 'TMDB ID', type: 'text', default: '', size: 10 },
     { key: 'imdb', label: 'IMDB ID', type: 'text', default: '', size: 10 },
     { key: 'tvdb', label: 'TVDB ID', type: 'text', default: '', size: 10 },
@@ -159,30 +159,30 @@ export const fields = [
     { key: 'mediainfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
     { key: 'bdinfo', label: 'BDInfo', type: 'multiline', default: '' },
     { key: 'anonymous', label: 'Anonymous', type: 'checkbox', default: false },
-    { key: 'personal_release', label: 'Personal release', type: 'checkbox', default: false },
-    { key: 'mod_queue_opt_in', label: 'Opt in to mod queue', type: 'checkbox', default: false },
-    { key: 'draft_queue_opt_in', label: 'Save as draft', type: 'checkbox', default: false },
+    { key: 'personalRelease', label: 'Personal release', type: 'checkbox', default: false },
+    { key: 'modQueueOptIn', label: 'Opt in to mod queue', type: 'checkbox', default: false },
+    { key: 'draftQueueOptIn', label: 'Save as draft', type: 'checkbox', default: false },
     { key: 'internal', label: 'Internal', type: 'checkbox', default: false },
     { key: 'refundable', label: 'Refundable', type: 'checkbox', default: false },
     { key: 'free', label: 'Freeleech', type: 'select', default: 'No Freeleech', options: frees, size: 16 },
 ] as const satisfies TrackerField[];
 
 const layout = [
-    ['name',               'name',           'name',          'name'],
-    ['category_id',        'type_id',        'resolution_id', 'provider'],
-    ['distributor_id',     'distributor_id', 'region_id',     'edition_id'],
-    ['season_number',      'episode_number'],
-    ['hdr_dv',             'hdr_dv'],
-    ['dual_audio'],
-    ['tmdb',               'imdb',           'tvdb',          'mal'],
-    ['keywords',           'keywords',       'keywords',      'keywords'],
-    ['description',        'description',    'description',   'description'],
-    ['mediainfo',          'mediainfo',      'mediainfo',     'mediainfo'],
-    ['bdinfo',             'bdinfo',         'bdinfo',        'bdinfo'],
-    ['anonymous',          'internal'],
-    ['personal_release',   'refundable'],
-    ['mod_queue_opt_in',   'free'],
-    ['draft_queue_opt_in', 'free'],
+    ['name',          'name',          'name',         'name'],
+    ['categoryId',    'typeId',        'resolutionId', 'provider'],
+    ['distributorId', 'distributorId', 'regionId',     'editionId'],
+    ['seasonNumber',  'episodeNumber'],
+    ['hdrDv',         'hdrDv'],
+    ['dualAudio'],
+    ['tmdb',          'imdb',          'tvdb',         'mal'],
+    ['keywords',      'keywords',      'keywords',     'keywords'],
+    ['description',   'description',   'description',  'description'],
+    ['mediainfo',     'mediainfo',     'mediainfo',    'mediainfo'],
+    ['bdinfo',        'bdinfo',        'bdinfo',       'bdinfo'],
+    ['anonymous',     'internal'],
+    ['personalRelease', 'refundable'],
+    ['modQueueOptIn', 'free'],
+    ['draftQueueOptIn', 'free'],
 ] as const satisfies TrackerLayout;
 
 const bannedGroupsCache = new TTLCache<unknown, string[]>({ ttl: 1000 * 60 * 60 });
@@ -228,28 +228,28 @@ export default class LST extends Tracker {
 
     applyRelease(release: Release) {
 
-        this.setOption('resolution_id', 'Other');
-        if (release.resolution) this.setOption('resolution_id', release.resolution);
+        this.setOption('resolutionId', 'Other');
+        if (release.resolution) this.setOption('resolutionId', release.resolution);
 
-        this.setOption('type_id', 'Other');
+        this.setOption('typeId', 'Other');
         if (release.fullDisc) {
-            this.setOption('type_id', 'Full Disc');
+            this.setOption('typeId', 'Full Disc');
         } else if (release.remux) {
-            this.setOption('type_id', 'Remux');
+            this.setOption('typeId', 'Remux');
         } else if (release.source === 'BluRay' || release.source === 'DVDRip') {
-            this.setOption('type_id', 'Encode');
+            this.setOption('typeId', 'Encode');
         } else if (release.source?.endsWith('WEB-DL')) {
-            this.setOption('type_id', 'WEB-DL');
+            this.setOption('typeId', 'WEB-DL');
         } else if (release.source?.endsWith('WEBRip')) {
-            this.setOption('type_id', 'WEBRip');
+            this.setOption('typeId', 'WEBRip');
         } else if (release.source === 'HDTV') {
-            this.setOption('type_id', 'HDTV');
+            this.setOption('typeId', 'HDTV');
         }
 
         if (release.streamingService) this.data.provider = release.streamingService;
 
-        if (release.censored === 'UNCUT') this.setOption('edition_id', 'Uncut');
-        if (release.censored === 'UNRATED') this.setOption('edition_id', 'Unrated');
+        if (release.censored === 'UNCUT') this.setOption('editionId', 'Uncut');
+        if (release.censored === 'UNRATED') this.setOption('editionId', 'Unrated');
 
         switch (release.edition) {
             case 'Alternative Cut':
@@ -258,12 +258,12 @@ export default class LST extends Tracker {
             case 'Limited Edition':
             case 'Special Edition':
             case 'Theatrical Cut':
-                this.setOption('edition_id', release.edition);
+                this.setOption('editionId', release.edition);
                 break;
             case 'Extended':
-                this.setOption('edition_id', 'Extended Cut');
-                if (release.censored === 'UNCUT') this.setOption('edition_id', 'Extended Uncut');
-                if (release.censored === 'UNRATED') this.setOption('edition_id', 'Extended Unrated');
+                this.setOption('editionId', 'Extended Cut');
+                if (release.censored === 'UNCUT') this.setOption('editionId', 'Extended Uncut');
+                if (release.censored === 'UNRATED') this.setOption('editionId', 'Extended Unrated');
                 break;
         }
 
@@ -273,28 +273,28 @@ export default class LST extends Tracker {
             if (release.hdr) hdrParts.push(release.hdr.plus);
             if (hdrParts.length > 0) {
                 const hdrString = hdrParts.join(' ')
-                try { this.setOption('hdr_dv', hdrString); }
+                try { this.setOption('hdrDv', hdrString); }
                 catch (error) { log(`Invalid HDR option for LST: ${hdrString}`, 'khaki') }
             }
         }
 
-        if (release.multiAudio) this.data.dual_audio = true;
+        if (release.multiAudio) this.data.dualAudio = true;
 
-        const type = this.getOption('type_id');
+        const type = this.getOption('typeId');
 
         let titleFormat = '';
 
         if (release.category === 'tv') {
 
-            this.setOption('category_id', 'TV');
-            this.data.season_number = release.season ? String(release.season) : '0';
-            this.data.episode_number = release.episode ? String(release.episode) : '0';
+            this.setOption('categoryId', 'TV');
+            this.data.seasonNumber = release.season ? String(release.season) : '0';
+            this.data.episodeNumber = release.episode ? String(release.episode) : '0';
 
             titleFormat = '{title aka} {season_episode} {edition} {attributes} {repack} {resolution} {source} ';
 
         } else if (release.category === 'movie') {
 
-            this.setOption('category_id', 'Movies');
+            this.setOption('categoryId', 'Movies');
 
             titleFormat = '{title aka} {year} {edition} {attributes} {repack} {resolution} {source} ';
 
@@ -368,18 +368,18 @@ export default class LST extends Tracker {
     private appendCommonSearchParams(params: URLSearchParams) {
 
         params.append('tmdbId', this.data.tmdb);
-        params.append('categories[]', this.data.category_id);
-        params.append('resolutions[]', this.data.resolution_id);
-        if (this.data.hdr_dv) params.append('hdrDv[]', this.data.hdr_dv);
+        params.append('categories[]', this.data.categoryId);
+        params.append('resolutions[]', this.data.resolutionId);
+        if (this.data.hdrDv) params.append('hdrDv[]', this.data.hdrDv);
 
         // Treating HDTV/WEBRip/WEB-DL as the same for searches like Aither
         // but it's probably unnecessary
-        if (['4', '5', '6'].includes(this.data.type_id)) {
+        if (['4', '5', '6'].includes(this.data.typeId)) {
             params.append('types[]', '4');
             params.append('types[]', '5');
             params.append('types[]', '6');
         } else {
-            params.append('types[]', this.data.type_id);
+            params.append('types[]', this.data.typeId);
         }
     }
 
@@ -389,8 +389,8 @@ export default class LST extends Tracker {
         const params = url.searchParams;
         this.appendCommonSearchParams(params);
 
-        if (this.data.season_number) params.append('seasonNumber', this.data.season_number);
-        if (this.data.episode_number) params.append('episodeNumber', this.data.episode_number);
+        if (this.data.seasonNumber) params.append('seasonNumber', this.data.seasonNumber);
+        if (this.data.episodeNumber) params.append('episodeNumber', this.data.episodeNumber);
 
         const response = await fetch(url, { headers: this.headers });
         const data = await response.json();
@@ -422,11 +422,11 @@ export default class LST extends Tracker {
         formData.set('torrent', torrent, filename);
 
         const {
-            name, description, mediainfo, bdinfo, keywords, season_number,
-            episode_number, tmdb, imdb, tvdb, mal, category_id, type_id,
-            resolution_id, region_id, distributor_id, hdr_dv, provider,
-            dual_audio, anonymous, personal_release, internal, free, edition_id,
-            refundable, mod_queue_opt_in, draft_queue_opt_in
+            name, description, mediainfo, bdinfo, keywords, seasonNumber,
+            episodeNumber, tmdb, imdb, tvdb, mal, categoryId, typeId,
+            resolutionId, regionId, distributorId, hdrDv, provider,
+            dualAudio, anonymous, personalRelease, internal, free, editionId,
+            refundable, modQueueOptIn, draftQueueOptIn
 
         } = this.data;
 
@@ -435,20 +435,20 @@ export default class LST extends Tracker {
         formData.set('mediainfo', mediainfo);
         formData.set('bdinfo', bdinfo);
 
-        formData.set('category_id', category_id);
-        formData.set('type_id', type_id);
-        formData.set('resolution_id', resolution_id);
+        formData.set('category_id', categoryId);
+        formData.set('type_id', typeId);
+        formData.set('resolution_id', resolutionId);
         formData.set('keywords', keywords);
 
-        if (region_id) formData.set('region_id', region_id);
-        if (distributor_id) formData.set('distributor_id', distributor_id);
-        if (edition_id) formData.set('edition_id', edition_id);
-        if (hdr_dv) formData.set('hdr_dv', hdr_dv);
+        if (regionId) formData.set('region_id', regionId);
+        if (distributorId) formData.set('distributor_id', distributorId);
+        if (editionId) formData.set('edition_id', editionId);
+        if (hdrDv) formData.set('hdr_dv', hdrDv);
         if (provider) formData.set('provider', provider);
 
-        if (category_id === '2') {  // TV
-            formData.set('season_number', season_number);
-            formData.set('episode_number', episode_number);
+        if (categoryId === '2') {  // TV
+            formData.set('season_number', seasonNumber);
+            formData.set('episode_number', episodeNumber);
         }
 
         formData.set('tmdb', tmdb || '0');
@@ -458,11 +458,11 @@ export default class LST extends Tracker {
         formData.set('igdb', '0');
 
         formData.set('anonymous', anonymous ? '1' : '0');
-        formData.set('dual_audio', dual_audio ? '1' : '0');
-        formData.set('personal_release', personal_release ? '1' : '0');
+        formData.set('dual_audio', dualAudio ? '1' : '0');
+        formData.set('personal_release', personalRelease ? '1' : '0');
 
-        if (mod_queue_opt_in) formData.set('mod_queue_opt_in', '1');
-        if (draft_queue_opt_in) formData.set('draft_queue_opt_in', '1');
+        if (modQueueOptIn) formData.set('mod_queue_opt_in', '1');
+        if (draftQueueOptIn) formData.set('draft_queue_opt_in', '1');
 
         if (internal) formData.set('internal', '1');
         if (refundable) formData.set('refundable', '1');
@@ -476,8 +476,6 @@ export default class LST extends Tracker {
         });
 
         const body = await response.json();
-
-        console.log(body);
 
         if (!response.ok || !body.success) {
             const ErrorSchema = v.record(v.string(), v.array(v.string()));
@@ -497,7 +495,7 @@ export default class LST extends Tracker {
         return validated.data;
 
     }
-    
+
     private async getUploadedUrl(signal: AbortSignal) {
 
         const url = new URL(SEARCH_URL);
@@ -512,7 +510,7 @@ export default class LST extends Tracker {
 
         const found = validated.find(torrent => torrent.attributes.name === this.data.name);
         if (!found) throw Error("Couldn't find torrent");
-        
+
         return found.attributes.details_link;
 
     }
@@ -525,8 +523,8 @@ export default class LST extends Tracker {
         const params = url.searchParams;
 
         this.appendCommonSearchParams(params);
-        if (this.data.season_number) params.append('seasonNumber', this.data.season_number);
-        if (this.data.episode_number) params.append('episodeNumber', this.data.episode_number);
+        if (this.data.seasonNumber) params.append('seasonNumber', this.data.seasonNumber);
+        if (this.data.episodeNumber) params.append('episodeNumber', this.data.episodeNumber);
 
         const response = await fetch(url, { headers: this.headers, signal });
         const body = await response.json();
@@ -550,7 +548,7 @@ export default class LST extends Tracker {
         const url = new URL(SEARCH_URL);
         const params = url.searchParams;
         this.appendCommonSearchParams(params);
-        params.append('seasonNumber', this.data.season_number);
+        params.append('seasonNumber', this.data.seasonNumber);
 
         const results = [];
         let next: string | null = null;
