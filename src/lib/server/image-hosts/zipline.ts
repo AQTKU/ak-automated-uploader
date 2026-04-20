@@ -63,14 +63,16 @@ class Zipline extends ImageHost {
         const Schema = v.object({
             files: v.pipe(
                 v.array(
-                    v.pipe(v.string(), v.url())
+                    v.object({
+                        url: v.pipe(v.string(), v.url())
+                    })
                 ), v.length(1)
             ),
         });
 
         const validated = v.parse(Schema, body);
 
-        return validated.files[0]!;
+        return validated.files[0]!.url;
     }
 
     async upload(path: string, width = 350, signal: AbortSignal) {
