@@ -95,6 +95,7 @@ export type TrackerSettings = v.InferOutput<typeof TrackerSettingsSchema>;
 export const ImageHostSettingsSchema = v.object({
     name: v.string(),
     apiKey: v.optional(v.string()),
+    server: v.optional(v.pipe(v.string(), v.url())),
 });
 
 export type ImageHostSettings = v.InferOutput<typeof ImageHostSettingsSchema>;
