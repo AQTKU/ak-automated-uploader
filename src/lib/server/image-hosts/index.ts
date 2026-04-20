@@ -5,6 +5,7 @@ import { freeimageHost, freeimageHostFields } from './freeimage-host';
 import { imgBB, imgBBSettings as imgBBFields } from './imgbb';
 import { imgbox } from './imgbox';
 import { pixhost } from './pixhost';
+import { ptpimg, ptpimgFields } from './ptpimg';
 
 export const imageHosts: Record<string, { object: ImageHost, fields: SettingsField[] }> = {
     'Catbox': { object: catbox, fields: [] },
@@ -12,4 +13,5 @@ export const imageHosts: Record<string, { object: ImageHost, fields: SettingsFie
     'ImgBB': { object: imgBB, fields: imgBBFields },
     'imgbox': { object: imgbox, fields: [] },
     'PiXhost': { object: pixhost, fields: [] },
+    'ptpimg': { object: ptpimg, fields: ptpimgFields },
 };
