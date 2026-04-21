@@ -21,6 +21,8 @@ Supported image hosts:
 - ImgBB
 - imgbox
 - PiXhost
+- ptpimg
+- Zipline (untested)
 
 Supported torrent clients:
 - qBittorrent
