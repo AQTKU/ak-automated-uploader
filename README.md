@@ -84,3 +84,4 @@ services:
 ## Known issues
 
 - Questionable filenames may or may not work.
+- No support for full discs yet.
