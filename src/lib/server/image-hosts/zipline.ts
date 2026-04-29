@@ -5,6 +5,7 @@ import PQueue from 'p-queue';
 import { file } from 'bun';
 import sharp from 'sharp';
 import { basename } from 'node:path';
+import { log } from '../util/log';
 
 export const ziplineFields: SettingsField[] = [{
     id: 'server',
@@ -47,14 +48,25 @@ class Zipline extends ImageHost {
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                Authorization: this.apiKey,
-            },
+            headers: { Authorization: this.apiKey },
             body: formData,
             signal,
         });
 
         const body = await response.json();
+
+        if (response.status === 429) {
+            const match = body.error?.match(/retry in (\d+) seconds/i);
+            const delay = match ? Number(match[1]) : null;
+
+            if (delay !== null && delay <= 60) {
+                log(`Zipline rate limited, retrying in ${delay}s`);
+                await new Promise(r => setTimeout(r, delay * 1000));
+                return this.post(image, filename, signal);
+            }
+
+            throw Error(`Rate limited${delay ? ` (${delay}s)` : ''} - retry window too long or unparseable`);
+        }
 
         if (!response.ok) {
             throw Error(body.error ?? response.statusText);
@@ -62,17 +74,12 @@ class Zipline extends ImageHost {
 
         const Schema = v.object({
             files: v.pipe(
-                v.array(
-                    v.object({
-                        url: v.pipe(v.string(), v.url())
-                    })
-                ), v.length(1)
+                v.array(v.object({ url: v.pipe(v.string(), v.url()) })),
+                v.length(1),
             ),
         });
 
-        const validated = v.parse(Schema, body);
-
-        return validated.files[0]!.url;
+        return v.parse(Schema, body).files[0]!.url;
     }
 
     async upload(path: string, width = 350, signal: AbortSignal) {
