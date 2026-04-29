@@ -55,6 +55,12 @@ export const settings: SettingsField[] = [
         type: 'password',
         description: 'Your API key is in your profile settings.',
     },
+    {
+        id: 'defaultDescription',
+        label: 'Default description',
+        type: 'multiline',
+        default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}',
+    },
 ];
 
 export const fields = [
