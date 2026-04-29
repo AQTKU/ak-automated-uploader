@@ -177,7 +177,6 @@ export default class Seedpool extends Tracker {
             this.setOption('typeId', 'HDTV');
         }
 
-        // Category Logic from SP.py
         const sportsPatterns = [
             /EFL.*/i, /.*mlb.*/i, /.*formula1.*/i, /.*nascar.*/i, /.*nfl.*/i, /.*wrc.*/i, /.*wwe.*/i,
             /.*fifa.*/i, /.*boxing.*/i, /.*rally.*/i, /.*ufc.*/i, /.*ppv.*/i, /.*uefa.*/i, /.*nhl.*/i,
@@ -219,7 +218,7 @@ export default class Seedpool extends Tracker {
         }
 
         titleFormat += '-{group}';
-        this.data.name = release.format(titleFormat).replace(/\s+/g, '.');
+        this.data.name = release.format(titleFormat);
     }
 
     async search(): Promise<TrackerSearchResults> {
