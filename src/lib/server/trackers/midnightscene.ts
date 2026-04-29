@@ -152,10 +152,10 @@ export default class MidnightScene extends Tracker {
             this.setOption('categoryId', 'TV');
             this.data.seasonNumber = release.season ? String(release.season) : '0';
             this.data.episodeNumber = release.episode ? String(release.episode) : '0';
-            titleFormat = '{title aka} {season_episode} {edition} {repack} {resolution} {source} {audio plus} {video encoder}';
+            titleFormat = '{title aka} {season_episode} {edition} {repack} {resolution} {source} {audio plus} {video like_h264}';
         } else {
             this.setOption('categoryId', 'Movie');
-            titleFormat = '{title aka} {year} {edition} {repack} {resolution} {source} {audio plus} {video encoder}';
+            titleFormat = '{title aka} {year} {edition} {repack} {resolution} {source} {audio plus} {video like_h264}';
         }
 
         titleFormat += '-{group}';
