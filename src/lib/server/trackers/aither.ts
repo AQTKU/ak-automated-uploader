@@ -92,7 +92,7 @@ export const settings: SettingsField[] = [
         id: 'defaultDescription',
         label: 'Default description',
         type: 'multiline',
-        default: '{screenshots 350}[url={link}][img={width}]{image}[/img][/url]{/screenshots}',
+        default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}',
     }
 ];
 
