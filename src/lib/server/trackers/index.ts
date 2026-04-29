@@ -9,5 +9,5 @@ export const trackers: Record<string, { class: new (settings: TrackerSettings) =
     'Aither': { class: Aither, settings: aitherSettings, fields: aitherFields },
     'LST': { class: LST, settings: lstSettings, fields: lstFields },
     'MNS': { class: MNS, settings: mnsSettings, fields: mnsFields },
-    SP: { class: SP, settings: spSettings, fields: spFields },
+    'SP': { class: SP, settings: spSettings, fields: spFields },
 };
