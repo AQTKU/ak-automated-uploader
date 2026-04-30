@@ -10,10 +10,12 @@ Upload files by picking them via the web UI, or go fully automated with the API.
 
 Supported trackers:
 
-| Tracker | Features |
-| ------- | -------- |
-| Aither  | Duplicate search, banned groups, season pack trumping, repack trumping |
-| LST     | Duplicate search, banned groups, season pack trumping, repack trumping |
+| Tracker       | Features |
+| ------------- | -------- |
+| Aither        | Duplicate search, banned groups, season pack trumping, repack trumping |
+| LST           | Duplicate search, banned groups, season pack trumping, repack trumping |
+| MidnightScene | Untested |
+| Seedpool      | Untested |
 
 Supported image hosts:
 - Catbox
@@ -84,4 +86,5 @@ services:
 ## Known issues
 
 - Questionable filenames may or may not work.
+- BluRay encodes will likely show AVC where they should show x264.
 - No support for full discs yet.
