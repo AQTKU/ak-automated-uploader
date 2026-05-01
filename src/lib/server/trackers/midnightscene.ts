@@ -127,7 +127,7 @@ export default class MidnightScene extends Tracker {
         this.data.imdb = metadata.imdbId ? metadata.imdbId.replace(/^tt/i, '') : '0';
         this.data.tvdb = metadata.tvdbId ? String(metadata.tvdbId) : '0';
         this.data.mal = metadata.malId ? String(metadata.malId) : '0';
-        this.data.keywords = metadata.keywords.join(', ');
+        this.data.keywords = (metadata.keywords || []).join(', ');
     }
 
     applyRelease(release: Release) {
