@@ -308,11 +308,13 @@ export default abstract class Tracker {
         this.torrentPromise = torrent;
     }
 
-    async submit() {
+    async submit(transformTags = false) {
 
         let torrentPath;
 
         try {
+
+            if (transformTags) await this.transformTags();
 
             this.emitStatus('🚦 Checking release');
 
