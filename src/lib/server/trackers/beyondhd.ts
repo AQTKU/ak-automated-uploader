@@ -459,7 +459,10 @@ export default class BeyondHD extends Tracker {
         }
 
         if (this.data.categoryId === '1') url.searchParams.set('categories', 'Movies');
-        if (this.data.categoryId === '2') url.searchParams.set('categories', 'TV');
+        if (this.data.categoryId === '2') {
+            url.searchParams.set('categories', 'TV');
+            if (this.release?.seasonEpisode) url.searchParams.set('search', this.release.seasonEpisode);
+        }
 
         if (this.data.type && this.data.type !== 'Other') {
             url.searchParams.set('types', this.data.type);
