@@ -6,3 +6,4 @@ build
 config
 *.md
 assets
+.claude
