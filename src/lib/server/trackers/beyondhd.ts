@@ -162,12 +162,12 @@ export const settings: SettingsField[] = [
         id: 'announce',
         label: 'Announce URL',
         type: 'password',
-        description: 'Your announce URL from the <a href="https://beyond-hd.me/torrents/create">upload page</a>.',
+        description: 'Your announce URL from the <a href="https://beyond-hd.me/upload">upload page</a>.',
     }, {
         id: 'apiKey',
         label: 'API key',
         type: 'password',
-        description: 'Your API key from BHD settings.',
+        description: 'Your API key from <a href="https://beyond-hd.me/settings/security/apikey">settings, security, API</a>.',
     }, {
         id: 'defaultDescription',
         label: 'Default description',
