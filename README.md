@@ -10,12 +10,15 @@ Upload files by picking them via the web UI, or go fully automated with the API.
 
 Supported trackers:
 
-| Tracker       | Features |
-| ------------- | -------- |
-| Aither        | Duplicate search, banned groups, season pack trumping, repack trumping |
-| LST           | Duplicate search, banned groups, season pack trumping, repack trumping |
-| MidnightScene | Untested |
-| Seedpool      | Untested |
+| Tracker         | Features |
+| --------------- | -------- |
+| Aither          | Duplicate search, banned groups, season pack trumping, repack trumping |
+| BeyondHD\*      | Duplicate search, banned groups |
+| LST             | Duplicate search, banned groups, season pack trumping, repack trumping |
+| MidnightScene\* | Untested |
+| Seedpool\*      | Untested |
+
+\* These ones probably work but could use a little testing.
 
 Supported image hosts:
 - Catbox

@@ -17,6 +17,7 @@ export default abstract class Tracker {
     abstract name: string;
     private actions: TrackerAfterUploadAction[] = [];
     private actionsAddedCallbacks: Array<(data: TrackerAfterUploadActionState[]) => void> = [];
+    allowedImageHosts: string[] | undefined = undefined;
     announce?: string;
     abstract data: FieldsToType<typeof this.fields>;
     private dataChangedCallbacks: Array<(data: Record<string, string | boolean>) => void> = [];
@@ -429,6 +430,7 @@ export default abstract class Tracker {
                         paths: screenshotPaths,
                         imageHostOrder: imageHostOrder,
                         thumbnailWidth: width,
+                        allowedImageHosts: tracker.allowedImageHosts,
                         limit,
                         signal,
                     });

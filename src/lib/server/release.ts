@@ -68,6 +68,9 @@ export interface ReleaseState {
     fileName: string;
     group: string | null;
     hdr: { short: string, plus: string, long: string } | null;
+    hybrid: boolean;
+    isSeasonPack: boolean;
+    isSpecial: boolean;
     language: string | null;
     multiAudio: string | null;
     originalTitle: string | null;
@@ -75,6 +78,7 @@ export interface ReleaseState {
     repack: string | null;
     resolution: string | null;
     scanType: 'Interlaced' | 'Progressive' | null;
+    sdr: boolean;
     season: number | null;
     seasonEpisode: string | null;
     source: string | null;
@@ -99,6 +103,7 @@ export default class Release {
     private _fileName: string;
     private _group: string | null = null;
     private _hdr: { short: string, plus: string, long: string } | null = null;
+    private _hybrid = false;
     private _language: string | null = null;
     private _multiAudio: string | null = null;
     private _originalTitle: string | null = null;
@@ -225,7 +230,7 @@ export default class Release {
 
             const [tagName, ..._arguments] = tag.split(' ');
 
-            if (_arguments.includes('if_special') && !(this.season === 0 || this.episode === 0)) {
+            if (_arguments.includes('if_special') && !this.isSpecial) {
                 return '';
             }
 
@@ -256,7 +261,7 @@ export default class Release {
                 case 'season_title': output = this.seasonTitle; break;
                 case 'episode_title': output = this.episodeTitle; break;
                 case 'edition': output = this.edition; break;
-                case 'attributes': output = this.censored; break;
+                case 'attributes': output = this.attributes; break;
                 case 'language': output = this.language; break;
                 case 'repack': output = this.repack; break;
                 case 'remux': output = this.remux ? 'REMUX' : null; break;
@@ -285,9 +290,15 @@ export default class Release {
                         output = `DV ${output}`;
                     }
 
+                    if (this.sdr && _arguments.includes('sdr')) {
+                        output = `SDR ${output}`;
+                    }
+
                     break;
 
-                case 'group': output = this.group; break;
+                case 'group':
+                    output = this.group ?? (_arguments.includes('or_NOGROUP', 'NOGROUP', null));
+                    break;
 
             }
 
@@ -300,7 +311,13 @@ export default class Release {
     }
 
     get atmos() { return this._atmos; }
-    get attributes() { return this._censored; }
+    get attributes() {
+        const parts = [
+            this.censored,
+            this.hybrid ? 'Hybrid' : null,
+        ];
+        return parts.filter(Boolean).join(' ');
+    }
     get audio() { return this._audio; }
     get audioCodec() { return this._audioCodec; }
     get category() { return this._category; }
@@ -311,21 +328,28 @@ export default class Release {
     get edition() { return this._edition; }
     get episode() { return this._episode; }
     get episodeTitle() {
-        if (!this._seasonOrEpisodeTitle) return null;
-        if (null === this._episode) return null;
+        if (!this.seasonOrEpisodeTitle) return null;
+        if (null === this.episode) return null;
         return this._seasonOrEpisodeTitle;
     }
     get extension() { return this._extension; }
     get fileName() { return this._fileName; }
     get fullDisc() { return false; }
     get group() { return this._group; }
-    get hdr() { return this._hdr };
+    get hdr() { return this._hdr }
+    get hybrid() { return this._hybrid }
     get isSeasonPack() {
-        if (this._category === 'movie') return false;
-        if (this._episode !== null) return false;
-        if (this._season === null) return false;
-        if (this._season === 0) return false;
+        if (this.category === 'movie') return false;
+        if (this.episode !== null) return false;
+        if (this.season === null) return false;
+        if (this.season === 0) return false;
         return true;
+    }
+    get isSpecial() {
+        if (this.category === 'movie') return false;
+        if (this.isSeasonPack) return false;
+        if (this.episode === 0 || this.season === 0) return true;
+        return false;
     }
     get language() { return this._language; }
     get multiAudio() { return this._multiAudio; }
@@ -334,6 +358,7 @@ export default class Release {
     get repack() { return this._repack; }
     get resolution() { return this._resolution; }
     get scanType() { return this._scanType; }
+    get sdr() { return !this.dv && !this.hdr }
     get season() { return this._season; }
     get seasonEpisode() { return this._seasonEpisode; }
     get seasonOrEpisodeTitle() { return this._seasonOrEpisodeTitle; }
@@ -361,6 +386,7 @@ export default class Release {
         const editionRegexp = this.buildEditionRegexp();
         const languageRegexp = this.buildLanguageRegexp();
         const censoredRegexp = /(?:^| )(censored|uncensored|uncut|unrated)$/i;
+        const hybridRegexp = /(?:^| )(hybrid)$/i;
         const repackRegexp = /(?:^| )(repack[1-9]?|proper|dirfix)$/i;
         const resolutionRegexp = /(?:^| )(480[pi]|576[pi]|720p|1080[pi]|2160p)$/i;
         const webSourceRegexp = /(?:^| )(?:([a-z][a-z0-9]{1,3}|amazon|netflix|criterion) )?(web-dl|web-rip|web-cap|webdl|webrip|webcap|web)$/i;
@@ -375,6 +401,7 @@ export default class Release {
         let foundEdition = false;
         let foundLanguage = false;
         let foundCensored = false;
+        let foundHybrid = false;
         let foundRepack = false;
         let foundResolution = false;
         let foundSource = false;
@@ -465,6 +492,11 @@ export default class Release {
                 foundRepack = true;
                 const [, repack] = matches;
                 this.setRepack(repack!);
+
+            } else if ((matches = nextDetails.match(hybridRegexp)) && !foundHybrid) {
+
+                foundHybrid = true;
+                this.setHybrid(true);
 
             // Censored/uncensored/uncut/unrated
             } else if ((matches = nextDetails.match(censoredRegexp)) && !foundCensored) {
@@ -755,6 +787,10 @@ export default class Release {
 
     }
 
+    setHybrid(hybrid: boolean) {
+        this._hybrid = hybrid;
+    }
+
     setLanguage(input: string) {
 
         if (!input || input.toLowerCase() === 'und') {
@@ -971,6 +1007,9 @@ export default class Release {
             fileName: this.fileName,
             group: this.group,
             hdr: this.hdr,
+            hybrid: this.hybrid,
+            isSeasonPack: this.isSeasonPack,
+            isSpecial: this.isSpecial,
             language: this.language,
             multiAudio: this.multiAudio,
             originalTitle: this.originalTitle,
@@ -978,6 +1017,7 @@ export default class Release {
             repack: this.repack,
             resolution: this.resolution,
             scanType: this.scanType,
+            sdr: this.sdr,
             season: this.season,
             seasonEpisode: this.seasonEpisode,
             source: this.source,
