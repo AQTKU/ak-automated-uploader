@@ -229,6 +229,9 @@ export default class Seedpool extends Tracker {
         params.append('resolutions[]', this.data.resolutionId);
         params.append('types[]', this.data.typeId);
 
+        if (this.data.seasonNumber) params.append('seasonNumber', this.data.seasonNumber);
+        if (this.data.episodeNumber) params.append('episodeNumber', this.data.episodeNumber);
+
         const response = await fetch(url, { headers: this.headers });
         const data = await response.json();
         const validated = v.parse(SearchResultsSchema, data).data;
