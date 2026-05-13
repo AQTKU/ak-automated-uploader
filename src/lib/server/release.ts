@@ -277,7 +277,7 @@ export default class Release {
                 case 'video':
 
                     if (this.videoCodec) {
-                        if (_arguments.includes('encoder')) output = this.videoCodec.encoder || this.videoCodec.likeAvc;
+                        if (_arguments.includes('encoder')) output = this.videoCodec.encoder || this.videoCodec.likeH264;
                         else if (_arguments.includes('like_h264')) output = this.videoCodec.likeH264;
                         else output = this.videoCodec.likeAvc;
                     }
@@ -959,14 +959,36 @@ export default class Release {
 
     setVideoCodec(codec: string) {
 
-        if (!codec) {
-            this._videoCodec = null;
-            return;
+        /* This bit is a little bit gnarly. If we have an encoder from the
+           filename, we don't want it to be overridden by MediaInfo if the file
+           has had its encoding settings stripped, so we check if it's in the
+           same family as the MediaInfo codec, and keep the encoder if it
+           matches.
+
+           So if the filename has x264 but MediaInfo just has AVC, we keep x264.
+           But if the filename has x264 and MediaInfo has HEVC, we switch to
+           H.265 or whatever. */
+        
+        if (this._videoCodec?.encoder) {
+
+            const match = videoTranslationTable.find(translation =>
+                translation.toEncoder && translation.toEncoder.toLowerCase() === this._videoCodec?.encoder?.toLowerCase()
+            );
+
+            if (match) {
+                const encoder = this._videoCodec.encoder.toLowerCase();
+                const matchingCodecNames = [...match.from, match.to.toLowerCase()];
+                if (match.toLikeH264) matchingCodecNames.push(match.toLikeH264.toLowerCase());
+                if (matchingCodecNames.includes(codec.toLowerCase())) {
+                    codec = encoder;
+                }
+            }
+
         }
 
-        const match = videoTranslationTable.find(translation => {
-            return translation.from.includes(codec.toLowerCase());
-        });
+        const match = videoTranslationTable.find(translation =>
+            translation.from.includes(codec.toLowerCase())
+        );
 
         if (!match) {
             console.log(`Couldn't find matching video codec for ${codec}`);

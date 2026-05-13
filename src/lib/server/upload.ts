@@ -318,13 +318,12 @@ export default class Upload {
             const mediaInfo = await this.mediaInfo;
             this.signal.throwIfAborted();
 
-
             if (mediaInfo.defaultVideo) {
 
                 const { Format, Width, Height, ScanType, HDR_Format, HDR_Format_Profile, transfer_characteristics,
-                        MaxCLL } = mediaInfo.defaultVideo;
-
-                if (Format) this.release.setVideoCodec(Format);
+                        MaxCLL, Encoded_Library_Name } = mediaInfo.defaultVideo;
+                        
+                if (Format) this.release.setVideoCodec(Encoded_Library_Name || Format);
                 if (Width && Height) this.release.setDimensions(Width, Height, ScanType);
                 if (HDR_Format) this.release.setHdrFormat(HDR_Format, HDR_Format_Profile, transfer_characteristics, MaxCLL);
 
