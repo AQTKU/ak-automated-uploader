@@ -41,7 +41,13 @@ type Edition = typeof editionTranslationTable[number]['to'] | null;
 const sourceTranslationTable: { from: string[], to: string }[] = [
     { from: ['web', 'webdl', 'web-dl'], to: 'WEB-DL' },
     { from: ['webrip', 'web-rip', 'webcap', 'web-cap'], to: 'WEBRip' },
-    { from: ['bluray', 'bdrip'], to: 'BluRay' },
+    { from: ['hd bluray', 'hd blu-ray', 'blu-ray', 'bluray', 'bdrip'], to: 'BluRay' },
+    { from: ['uhd bluray', 'uhd blu-ray', 'uhd brrip'], to: 'UHD BluRay' },
+    { from: ['pal dvd'], to: 'PAL DVD' },
+    { from: ['ntsc dvd'], to: 'NTSC DVD' },
+    { from: ['dvd'], to: 'DVD' },
+    { from: ['hdtv'], to: 'HDTV' },
+    { from: ['sdtv'], to: 'SDTV' },
 ];
 
 const videoTranslationTable: { from: string[], to: string, toLikeH264?: string, toEncoder?: string }[] = [
@@ -374,6 +380,17 @@ export default class Release {
     get videoCodec() { return this._videoCodec; };
     get year() { return this._year; }
 
+    inferRemuxSourceFromResolution() {
+        if (this.remux && this.resolution && !this.source) {
+            switch (this.resolution) {
+                case '2160p': this.setSource('UHD BluRay'); break;
+                case '1080p': case '1080i': case '720p': this.setSource('BluRay'); break;
+                case '576p': case '576i': this.setSource('PAL DVD'); break;
+                case '480p': case '480i': this.setSource('NTSC DVD'); break;
+            }
+        }
+    }
+
     /**
      * Parses video details from a release group string, starting from the end of the string and moving forward until
      * no explicit matches are found, then assumes whatever is left over is an episode name.
@@ -391,7 +408,7 @@ export default class Release {
         const repackRegexp = /(?:^| )(repack[1-9]?|proper|dirfix)$/i;
         const resolutionRegexp = /(?:^| )(480[pi]|576[pi]|720p|1080[pi]|2160p)$/i;
         const webSourceRegexp = /(?:^| )(?:([a-z][a-z0-9]{1,3}|amazon|netflix|criterion) )?(web-dl|web-rip|web-cap|webdl|webrip|webcap|web)$/i;
-        const sourceRegexp = /(?:^| )((?:[a-z]{3} )?(?:uhd )?blu-?ray|hdtv|sdtv|(?:ntsc |pal )?dvd(?:rip)?|dvd5|dvd9)$/i;
+        const sourceRegexp = /(?:^| )((?:[a-z]{3} )?(?:u?hd )?blu-?ray|hdtv|sdtv|(?:ntsc |pal )?dvd(?:rip)?|dvd5|dvd9)$/i;
         const remuxRegexp = /(?:^| )(remux)$/i;
         const audioRegexp = this.buildAudioRegexp(); 
         const multiAudioRegexp = /(?:^| )(dual|dual-audio|multi|multilang|multi-audio|multilingual)$/i;
@@ -857,6 +874,7 @@ export default class Release {
 
     setRemux(remux: boolean) {
         this._remux = remux;
+        this.inferRemuxSourceFromResolution();
     }
 
     setRepack(repack: string) {
@@ -877,6 +895,8 @@ export default class Release {
                 this._scanType = 'Progressive';
             }
         }
+
+        this.inferRemuxSourceFromResolution();
 
     }
 
