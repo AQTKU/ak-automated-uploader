@@ -41,7 +41,8 @@ type Edition = typeof editionTranslationTable[number]['to'] | null;
 const sourceTranslationTable: { from: string[], to: string }[] = [
     { from: ['web', 'webdl', 'web-dl'], to: 'WEB-DL' },
     { from: ['webrip', 'web-rip', 'webcap', 'web-cap'], to: 'WEBRip' },
-]
+    { from: ['bluray', 'bdrip'], to: 'BluRay' },
+];
 
 const videoTranslationTable: { from: string[], to: string, toLikeH264?: string, toEncoder?: string }[] = [
     { from: ['av1'], to: 'AV1' },
