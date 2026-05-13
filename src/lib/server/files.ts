@@ -40,6 +40,7 @@ export default class Files {
                     this._path = path;
                 }
                 const dir = await readdir(path);
+                dir.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
                 for (const file of dir) {
                     await this.add(join(path, file));
                 }
