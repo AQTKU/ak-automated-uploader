@@ -6,7 +6,7 @@ import Files, { type FilesState } from './files';
 import Torrent from './torrent';
 import Screenshots from './screenshots';
 import getMediaInfo from '$lib/server/mediainfo';
-import type { TmdbHydratedSearchResult, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResults, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState } from '$lib/types';
+import type { TmdbHydratedSearchResult, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResults, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState, Metadata } from '$lib/types';
 import { Trackers } from './trackers';
 import { normalize } from './util/normalize';
 import { getMalId } from './jikan';
@@ -187,12 +187,17 @@ export default class Upload {
             if (results.match) {
                 await this.selectTmdbResult(results.match.result.tmdbId, results.match.name);
                 this.signal.throwIfAborted();
+            } else {
+                // No auto-match found, set empty metadata to unblock workflow
+                this.setEmptyMetadata();
             }
 
 
         } catch (error) {
             this.errors.push(errorString('Problem with TMDB', error));
             this.emitUpdate('errors');
+            // Even on error, unblock workflow with empty metadata
+            this.setEmptyMetadata();
         }
 
     }
@@ -241,6 +246,36 @@ export default class Upload {
 
     onUpdate(callback: (callback: Partial<UploadState>) => void) {
         this.updateCallbacks.push(callback);
+    }
+
+    // ADDED THIS NEW METHOD:
+    private async setEmptyMetadata() {
+        // Set minimal metadata to unblock the "Ready to edit" status
+        // when TMDB auto-match fails or errors occur
+        const emptyMetadata: Metadata = {
+            malId: null,
+            originCountry: null,
+            originalLanguage: '',
+            originalTitle: '',
+            overview: '',
+            year: this.release.year,
+            title: this.release.title,
+            genres: [],
+            posterUrl: null,
+            tmdbId: 0,
+            imdbId: null,
+            tvdbId: null,
+            keywords: [],
+        };
+
+        // Wait for MediaInfo before setting metadata
+        if (this.mediaInfo) await this.mediaInfo;
+        this.signal.throwIfAborted();
+
+        if (this.trackers) {
+            this.trackers.setMetadata(emptyMetadata);
+            // Don't search for duplicates without real TMDB data
+        }
     }
 
     async selectTmdbResult(id: number, matchedTitle?: string) {
