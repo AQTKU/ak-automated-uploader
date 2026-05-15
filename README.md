@@ -88,6 +88,6 @@ services:
 
 ## Known issues
 
-- Questionable filenames may or may not work.
-- BluRay encodes will likely show AVC where they should show x264.
+- Needs a pretty clean scene or P2P filename to work because the checker for
+  data in the filename is a whitelist.
 - No support for full discs yet.
