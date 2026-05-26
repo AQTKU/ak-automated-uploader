@@ -63,6 +63,7 @@ export interface ReleaseState {
     atmos: boolean;
     audio: { p: string, plus: string } | null;
     audioCodec: { p: string, plus: string } | null;
+    audioDescription: boolean;
     category: 'tv' | 'movie' | null;
     censored: string | null;
     channels: string | null;
@@ -88,6 +89,7 @@ export interface ReleaseState {
     sdr: boolean;
     season: number | null;
     seasonEpisode: string | null;
+    signLanguage: 'ASL' | 'BSL' | null;
     source: string | null;
     streamingService: string | null;
     title: string;
@@ -97,9 +99,10 @@ export interface ReleaseState {
 
 export default class Release {
 
-    private _atmos: boolean = false;
-    private _audio: { p: string; plus: string } | null = null;
+    private _atmos: ReleaseState['atmos'] = false;
+    private _audio: ReleaseState['audio'] = null;
     private _audioCodec: { p: string; plus: string } | null = null;
+    private _audioDescription: ReleaseState['audioDescription'] = false;
     private _category: 'tv' | 'movie' | null = null;
     private _censored: 'CENSORED' | 'UNCENSORED' | 'UNCUT' | 'UNRATED' | null = null;
     private _channels: string | null = null;
@@ -121,6 +124,7 @@ export default class Release {
     private _season: number | null = null;
     private _seasonEpisode: string | null = null;
     private _seasonOrEpisodeTitle: string | null = null;
+    private _signLanguage: ReleaseState['signLanguage'] = null;
     private _source: string | null = null;
     private _streamingService: string | null = null;
     private _title = '';
@@ -322,11 +326,13 @@ export default class Release {
         const parts = [
             this.censored,
             this.hybrid ? 'Hybrid' : null,
+            this.signLanguage ? `with ${this.signLanguage}` : null,
         ];
         return parts.filter(Boolean).join(' ');
     }
     get audio() { return this._audio; }
     get audioCodec() { return this._audioCodec; }
+    get audioDescription() { return this._audioDescription; }
     get category() { return this._category; }
     get censored() { return this._censored; }
     get channels() { return this._channels; }
@@ -374,10 +380,11 @@ export default class Release {
         if (this._episode) return null;
         return this._seasonOrEpisodeTitle;
     }
+    get signLanguage() { return this._signLanguage; }
     get source() { return this._source; }
     get streamingService() { return this._streamingService; }
     get title() { return this._title; }
-    get videoCodec() { return this._videoCodec; };
+    get videoCodec() { return this._videoCodec; }
     get year() { return this._year; }
 
     inferRemuxSourceFromResolution() {
@@ -405,6 +412,8 @@ export default class Release {
         const languageRegexp = this.buildLanguageRegexp();
         const censoredRegexp = /(?:^| )(censored|uncensored|uncut|unrated)$/i;
         const hybridRegexp = /(?:^| )(hybrid)$/i;
+        const signLanguageRegexp = /(?:^| )(?:with (asl|bsl))$/i;
+        const audioDescriptionRegexp = /(?:^| )(with audio description)$/i;
         const repackRegexp = /(?:^| )(repack[1-9]?|proper|dirfix)$/i;
         const resolutionRegexp = /(?:^| )(480[pi]|576[pi]|720p|1080[pi]|2160p)$/i;
         const webSourceRegexp = /(?:^| )(?:([a-z][a-z0-9]{1,3}|amazon|netflix|criterion) )?(web-dl|web-rip|web-cap|webdl|webrip|webcap|web)$/i;
@@ -420,6 +429,8 @@ export default class Release {
         let foundLanguage = false;
         let foundCensored = false;
         let foundHybrid = false;
+        let foundSignLanguage = false;
+        let foundAudioDescription = false;
         let foundRepack = false;
         let foundResolution = false;
         let foundSource = false;
@@ -511,10 +522,23 @@ export default class Release {
                 const [, repack] = matches;
                 this.setRepack(repack!);
 
+            // Hybrid
             } else if ((matches = nextDetails.match(hybridRegexp)) && !foundHybrid) {
 
                 foundHybrid = true;
                 this.setHybrid(true);
+
+            // Sign language
+            } else if ((matches = nextDetails.match(signLanguageRegexp)) && !foundSignLanguage) {
+
+                foundSignLanguage = true;
+                const [, signLanguage] = matches;
+                this.setSignLanguage(signLanguage!);
+
+            } else if ((matches = nextDetails.match(audioDescriptionRegexp)) && !foundAudioDescription) {
+
+                foundAudioDescription = true;
+                this.setAudioDescription(true);
 
             // Censored/uncensored/uncut/unrated
             } else if ((matches = nextDetails.match(censoredRegexp)) && !foundCensored) {
@@ -561,6 +585,7 @@ export default class Release {
     private setAudio() {
 
         const parts: string[] = [];
+        if (this.audioDescription) parts.push('with Audio Description');
         if (this.multiAudio) parts.push(this.multiAudio);
         if (this.audioCodec?.p) parts.push(this.audioCodec.p);
         if (this.channels) parts.push(this.channels);
@@ -568,6 +593,7 @@ export default class Release {
         const p = parts.join(' ');
 
         const plusParts: string[] = [];
+        if (this.audioDescription) plusParts.push('with Audio Description');
         if (this.multiAudio) plusParts.push(this.multiAudio);
         if (this.audioCodec?.plus) plusParts.push(this.audioCodec.plus);
         if (this.channels) plusParts.push(this.channels);
@@ -587,7 +613,7 @@ export default class Release {
         });
 
         if (!match) {
-            console.log(`Couldn't find matching audio codec for ${codec}`);
+            log(`Couldn't find matching audio codec for ${codec}`, 'khaki');
             this._audioCodec = {
                 p: codec.toUpperCase(),
                 plus: codec.toUpperCase(),
@@ -606,6 +632,11 @@ export default class Release {
 
         this.setAudio();
 
+    }
+
+    setAudioDescription(audioDescription: boolean) {
+        this._audioDescription = audioDescription;
+        this.setAudio();
     }
 
     setCensored(censored: string) {
@@ -933,6 +964,18 @@ export default class Release {
         this._seasonOrEpisodeTitle = title;
     }
 
+    setSignLanguage(signLanguage: string | null) {
+        if (!signLanguage) {
+            this._signLanguage = null;
+            return;
+        }
+        switch (signLanguage.toLowerCase()) {
+            case 'asl': this._signLanguage = 'ASL'; break;
+            case 'bsl': this._signLanguage = 'BSL'; break;
+            default: throw Error(`Unrecognized sign language format: ${signLanguage}`);
+        }
+    }
+
     setSource(source: string) {
 
         source = source.trim();
@@ -1012,7 +1055,7 @@ export default class Release {
         );
 
         if (!match) {
-            console.log(`Couldn't find matching video codec for ${codec}`);
+            log(`Couldn't find matching video codec for ${codec}`, 'khaki');
             this._videoCodec = {
                 likeAvc: codec.toUpperCase(),
                 likeH264: codec.toUpperCase(),
@@ -1038,6 +1081,7 @@ export default class Release {
             atmos: this.atmos,
             audio: this.audio,
             audioCodec: this.audioCodec,
+            audioDescription: this.audioDescription,
             category: this.category,
             censored: this.censored,
             channels: this.channels,
@@ -1063,6 +1107,7 @@ export default class Release {
             sdr: this.sdr,
             season: this.season,
             seasonEpisode: this.seasonEpisode,
+            signLanguage: this.signLanguage,
             source: this.source,
             streamingService: this.streamingService,
             title: this.title,

@@ -77,6 +77,13 @@ export const frees: KeyValueData = [
 export const regions: KeyValueData = unit3dRegions;
 export const distributors: KeyValueData = unit3dDistributors;
 
+const accessibilityTypes: KeyValueData = [
+    ['', ''],
+    ['ad', 'Audio Description'],
+    ['asl', 'ASL'],
+    ['bsl', 'BSL'],
+];
+
 export const settings: SettingsField[] = [   
     {
         id: 'announce',
@@ -118,6 +125,7 @@ export const fields = [
     { key: 'hdr10p', label: 'HDR10+', type: 'checkbox', default: false },
     { key: 'sd', label: 'Standard definition', type: 'checkbox', default: false },
     { key: 'stream', label: 'Stream optimized', type: 'checkbox', default: false },
+    { key: 'accessibilityType', label: 'Accessibility', type: 'select', default: '', options: accessibilityTypes, size: 13 },
     { key: 'anonymous', label: 'Anonymous', type: 'checkbox', default: false },
     { key: 'personalRelease', label: 'Personal release', type: 'checkbox', default: false },
     { key: 'modQueueOptIn', label: 'Opt in to mod queue', type: 'checkbox', default: false },
@@ -128,20 +136,21 @@ export const fields = [
 ] as const satisfies TrackerField[];
 
 const layout = [
-    ['name',          'name',            'name',        'name'],
-    ['categoryId',    'typeId',          'resolutionId'],
-    ['distributorId', 'distributorId',   'regionId'],
-    ['seasonNumber',  'episodeNumber'],
-    ['tmdb',          'imdb',            'tvdb',        'mal'],
-    ['keywords',      'keywords',        'keywords',    'keywords'],
-    ['description',   'description',     'description', 'description'],
-    ['mediaInfo',     'mediaInfo',       'mediaInfo',   'mediaInfo'],
-    ['bdInfo',        'bdInfo',          'bdInfo',      'bdInfo'],
-    ['dv',            'anonymous',       'internal'],
-    ['hdr',           'personalRelease', 'exclusive'],
-    ['hdr10p',        'modQueueOptIn',   'refundable'],
-    ['sd',            null,              'free'],
-    ['stream',        null,              'free'],
+    ['name',              'name',            'name',        'name'],
+    ['categoryId',        'typeId',          'resolutionId'],
+    ['distributorId',     'distributorId',   'regionId'],
+    ['seasonNumber',      'episodeNumber'],
+    ['tmdb',              'imdb',            'tvdb',        'mal'],
+    ['keywords',          'keywords',        'keywords',    'keywords'],
+    ['description',       'description',     'description', 'description'],
+    ['mediaInfo',         'mediaInfo',       'mediaInfo',   'mediaInfo'],
+    ['bdInfo',            'bdInfo',          'bdInfo',      'bdInfo'],
+    ['dv',                'anonymous',       'internal'],
+    ['hdr',               'personalRelease', 'exclusive'],
+    ['hdr10p',            'modQueueOptIn',   'refundable'],
+    ['sd',                null,              'free'],
+    ['stream',            null,              'free'],
+    ['accessibilityType', 'accessibilityType'],
 ] as const satisfies TrackerLayout;
 
 const bannedGroupsCache = new TTLCache<unknown, {name: string, types: string[] }[]>({ ttl: 1000 * 60 * 60 });
@@ -212,6 +221,9 @@ export default class Aither extends Tracker {
         if (release.hdr?.plus === 'HDR10+') this.data.hdr = true;
         const resolution = parseInt(release.resolution ?? '0');
         if (resolution <= 576 && resolution > 0) this.data.sd = true;
+        if (release.signLanguage === 'ASL') this.setOption('accessibilityType', 'ASL');
+        if (release.signLanguage === 'BSL') this.setOption('accessibilityType', 'BSL');
+        if (release.audioDescription) this.setOption('accessibilityType', 'Audio Description');
 
         let titleFormat = '';
 
@@ -386,8 +398,8 @@ export default class Aither extends Tracker {
             name, description, mediaInfo, bdInfo, keywords, seasonNumber,
             episodeNumber, tmdb, imdb, tvdb, mal, categoryId, typeId,
             resolutionId, regionId, distributorId, free, anonymous, stream,
-            sd, dv, hdr, hdr10p, personalRelease, internal, exclusive,
-            modQueueOptIn, refundable
+            sd, dv, hdr, hdr10p, accessibilityType, personalRelease, internal,
+            exclusive, modQueueOptIn, refundable
         } = this.data;
 
         formData.set('name', name);
@@ -422,6 +434,8 @@ export default class Aither extends Tracker {
         formData.set('hdr', hdr ? '1' : '0');
         formData.set('hdr10p', hdr10p ? '1' : '0');
         formData.set('personal_release', personalRelease ? '1' : '0');
+
+        if (accessibilityType) formData.set('accessibility_type', accessibilityType);
 
         if (modQueueOptIn) formData.set('mod_queue_opt_in', '1');
 

@@ -331,7 +331,7 @@ export default class Upload {
 
             if (mediaInfo.defaultAudio) {
 
-                const { Format, Format_AdditionalFeatures, Channels, ChannelLayout, Language } = mediaInfo.defaultAudio;
+                const { Format, Format_AdditionalFeatures, Channels, ChannelLayout, Language, Title } = mediaInfo.defaultAudio;
 
                 if (Format) this.release.setAudioCodec(
                     Format_AdditionalFeatures ? `${Format} ${Format_AdditionalFeatures}` : Format
@@ -349,6 +349,17 @@ export default class Upload {
                 }
 
                 if (Language) this.release.setLanguage(Language);
+
+                const audioDescriptionTitles = [
+                    'descriptive',
+                    'audio description',
+                    'video description',
+                    'described video',
+                    'visual description',
+                ];
+                if (Title && audioDescriptionTitles.includes(Title.toLowerCase())) {
+                    this.release.setAudioDescription(true);
+                }
 
             }
 
