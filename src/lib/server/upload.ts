@@ -89,6 +89,10 @@ export default class Upload {
         }
     }
 
+    get contentPath() {
+        return this.path;
+    }
+
     get name() {
         return this.release.fileName;
     }
@@ -100,6 +104,19 @@ export default class Upload {
                 if ((statusCounts || 0) >= (this.trackers?.count || Infinity)) resolve();
             });
             this.onError((message) => reject(message));
+        });
+    }
+
+    trackerReadyToEdit(trackerName: string): Promise<void> {
+        const tracker = this.getTrackerByName(trackerName);
+        return new Promise((resolve, reject) => {
+            const status = tracker.getStatusState();
+            if (status === '✏️ Ready to edit') return resolve();
+            if (status === '❌ Error') return reject(Error(`${trackerName} failed before becoming ready`));
+            tracker.onStatusChanged(status => {
+                if (status === '✏️ Ready to edit') resolve();
+                else if (status === '❌ Error') reject(Error(`${trackerName} failed before becoming ready`));
+            });
         });
     }
 

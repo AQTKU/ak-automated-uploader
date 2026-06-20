@@ -1,5 +1,8 @@
-import type { UploadsState } from '$lib/types';
+import { normalize } from 'node:path';
+import type { TrackerStatus, UploadsState } from '$lib/types';
 import Upload from './upload';
+
+const API_REUSABLE_STATUSES: TrackerStatus[] = ['', '⏳ Waiting for MediaInfo and metadata', '✏️ Ready to edit'];
 
 class Uploads {
 
@@ -13,6 +16,27 @@ class Uploads {
         upload.onStatusUpdate(() => this.emitUpdate());
         this.uploads.set(id, upload);
         return id;
+    }
+
+    findOrCreate(path: string, trackerName: string): number {
+        const reusable = this.findReusable(path, trackerName);
+        if (reusable) return reusable.id;
+        return this.create(path);
+    }
+
+    private findReusable(path: string, trackerName: string): Upload | undefined {
+        const normalizedPath = normalize(path);
+        for (const upload of [...this.uploads.values()].reverse()) {
+            if (normalize(upload.contentPath) !== normalizedPath) continue;
+            try {
+                const tracker = upload.getTrackerByName(trackerName);
+                if (API_REUSABLE_STATUSES.includes(tracker.getStatusState())) return upload;
+            } catch {
+                // This Upload's tracker set doesn't include trackerName — only possible if
+                // settings changed between this Upload's creation and now.
+            }
+        }
+        return undefined;
     }
 
     delete(id: number) {

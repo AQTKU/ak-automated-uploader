@@ -20,10 +20,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
     try {
 
-        const uploadId = uploads.create(input.contentPath);
+        const uploadId = uploads.findOrCreate(input.contentPath, input.tracker);
         const upload = uploads.get(uploadId);
         if (!upload) return why(500, "Upload didn't get created for a mysterious reason");
-        await upload.readyToEdit;
+        await upload.trackerReadyToEdit(input.tracker);
 
         const tracker = upload.getTrackerByName(input.tracker);
 
