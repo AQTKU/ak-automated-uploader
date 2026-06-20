@@ -530,6 +530,7 @@ h3 {
         grid-template-areas:
             "tabs form"
             "add-tab form";
+        grid-template-rows: 1fr auto;
     }
 
 }

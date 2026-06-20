@@ -15,8 +15,8 @@
     function add() {
         const availableItem = available.find((item: SettingsOption) => item.name === toAdd);
         if (!availableItem) return;
-        selected = [...selected, availableItem];
-        available = available.filter((item: SettingsOption) => item.name !== toAdd);
+        available = [...available.filter((item: SettingsOption) => item.name !== toAdd), ...selected];
+        selected = [availableItem];
         active = toAdd;
     }
     
@@ -61,7 +61,7 @@
                         <option value={client.name}>{client.name}</option>
                     {/each}
                 </select>
-                <button type="button" onclick={add}>➕ Add</button>
+                <button type="button" onclick={add}>{selected.length > 0 ? '🔄 Replace' : '➕ Add'}</button>
             </p>
         {/if}
 

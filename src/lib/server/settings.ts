@@ -183,8 +183,8 @@ class Settings {
     }
 
     getAvailableTorrentClientOptions() {
-        if (this.settings.torrentClient && this.torrentClientOptions.find(option => option.name === this.settings.torrentClient?.name)) return [];
-        return this.torrentClientOptions;
+        const selected = this.settings.torrentClient ? [this.settings.torrentClient.name] : [];
+        return this.torrentClientOptions.filter(option => !selected.includes(option.name));
     }
 
     getAvailableTrackerOptions() {
