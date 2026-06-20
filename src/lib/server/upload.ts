@@ -219,10 +219,8 @@ export default class Upload {
             this.emitStatusUpdate();
         });
         this.trackers.onActionsAdded(() => this.emitUpdate('trackerActions'));
-        this.trackers.onError(() => {
-            for (const errorState of this.trackers?.getErrorState() || []) {
-                this.handleError(`Problem with ${errorState.tracker}`, errorState.errors.join('; '));
-            }
+        this.trackers.onError(({ tracker, error }) => {
+            this.handleError(`Problem with ${tracker}`, error);
         });
         this.trackers.setRelease(this.release);
     }

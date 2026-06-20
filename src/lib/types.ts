@@ -169,7 +169,7 @@ export type TrackerStatus = '' |
 
 export interface TrackerErrorState {
     tracker: string,
-    errors: string[],
+    error: string,
 };
 
 export interface TrackerAfterUploadAction {

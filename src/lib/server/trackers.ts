@@ -12,7 +12,7 @@ export class Trackers {
 
     actionsAddedCallbacks: Array<(actions: TrackersAfterUploadActionsState[]) => void> = [];
     dataChangedCallbacks: Array<(state: TrackerState[]) => void> = [];
-    errorCallbacks: Array<(state: TrackerErrorState[]) => void> = [];
+    errorCallbacks: Array<(state: TrackerErrorState) => void> = [];
     searchResultCallbacks: Array<(state: TrackerSearchResultState[]) => void> = [];
     searchResults: TrackerSearchResultState[] = [];
     signal: AbortSignal;
@@ -38,7 +38,7 @@ export class Trackers {
 
     add(tracker: Tracker) {
         tracker.onDataChanged(() => this.emitDataChanged());
-        tracker.onError(() => this.emitErrors());
+        tracker.onError(error => this.emitErrors({ tracker: tracker.name, error }));
         tracker.onStatusChanged(() => this.emitStatusChanged());
         tracker.onActionAdded(() => this.emitActions());
         tracker.setSignal(this.signal);
@@ -96,9 +96,9 @@ export class Trackers {
         }
     }
 
-    emitErrors() {
+    emitErrors(state: TrackerErrorState) {
         for (const callback of this.errorCallbacks) {
-            callback(this.getErrorState());
+            callback(state);
         }
     }
     
@@ -123,14 +123,6 @@ export class Trackers {
             tracker: tracker.name,
             actions: tracker.getActionState(),
         }));
-    }
-
-    getErrorState(): TrackerErrorState[] {
-        const errors = this.trackers.map(tracker => ({
-            tracker: tracker.name,
-            errors: tracker.getErrorState(),
-        }));
-        return errors;
     }
 
     getFields(): TrackerFieldsState[] {
@@ -195,7 +187,7 @@ export class Trackers {
         this.dataChangedCallbacks.push(callback);
     }
 
-    onError(callback: (reason: TrackerErrorState[]) => void) {
+    onError(callback: (reason: TrackerErrorState) => void) {
         this.errorCallbacks.push(callback);
     }
 

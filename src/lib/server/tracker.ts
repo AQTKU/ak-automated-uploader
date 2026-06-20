@@ -22,7 +22,7 @@ export default abstract class Tracker {
     abstract data: FieldsToType<typeof this.fields>;
     private dataChangedCallbacks: Array<(data: Record<string, string | boolean>) => void> = [];
     private errorCallbacks: Array<(reason: string) => void> = [];
-    errors: string[] = [];
+    private errorReported = false;
     abstract readonly fields: TrackerField[];
     abstract readonly layout: TrackerLayout;
     imageHosts: string[] = [];
@@ -74,7 +74,7 @@ export default abstract class Tracker {
     }
 
     emitError(error: string) {
-        this.errors.push(error);
+        this.errorReported = true;
         for (const callback of this.errorCallbacks) {
             callback(error);
         }
@@ -110,10 +110,6 @@ export default abstract class Tracker {
 
         return output;
 
-    }
-
-    getErrorState() {
-        return this.errors;
     }
 
     getFieldState() {
@@ -311,6 +307,7 @@ export default abstract class Tracker {
     async submit(transformTags = false) {
 
         let torrentPath;
+        this.errorReported = false;
 
         try {
 
@@ -376,6 +373,7 @@ export default abstract class Tracker {
             this.emitStatus('✅ Done');
 
         } catch (error) {
+            if (this.errorReported) throw error;
             const status = this.status;
             this.emitError(errorString(`${status} failed`, error));
             throw Error(errorString(`${status} failed`, error));
