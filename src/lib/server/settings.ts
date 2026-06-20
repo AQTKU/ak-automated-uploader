@@ -270,9 +270,11 @@ class Settings {
     async set(data: Object, saveAuthToken = false, throwOnMisconfigured = false) {
 
         const currentAuthToken = this.settings.authToken;
+        const currentApiKey = this.settings.apiKey;
 
         const settings = v.parse(SettingsSchema, data);
         settings.authToken = (saveAuthToken && settings.authToken) ? settings.authToken : currentAuthToken;
+        settings.apiKey = ('apiKey' in data && data.apiKey) ? settings.apiKey : currentApiKey;
 
         try {
             await this.configureApp(settings);
