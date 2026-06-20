@@ -6,27 +6,12 @@
 
     let { available, selected, settings } = $props();
 
+    const allOptions: SettingsOption[] = [...selected, ...available];
+
     // svelte-ignore state_referenced_locally
-    const first: string = selected.length > 0 ? selected[0].name : '';
+    let active = $state(selected.length > 0 ? selected[0].name : '');
 
-    let toAdd = $state('');
-    let active = $state(first);
-
-    function add() {
-        const availableItem = available.find((item: SettingsOption) => item.name === toAdd);
-        if (!availableItem) return;
-        available = [...available.filter((item: SettingsOption) => item.name !== toAdd), ...selected];
-        selected = [availableItem];
-        active = toAdd;
-    }
-    
-    function remove(toRemove: string) {
-        const selectedItem = selected.find((item: SettingsOption) => item.name === toRemove);
-        if (!selectedItem) return;
-        available = [...available, selectedItem];
-        selected = selected.filter((item: SettingsOption) => item.name !== toRemove);
-        active = selected.length > 0 ? selected[0].name : '';
-    }
+    const client = $derived(allOptions.find((option) => option.name === active));
 
     function findValue(name: string, field: SettingsField) {
         if (settings?.name !== name) return field.default || '';
@@ -36,37 +21,22 @@
 
 </script>
 
-<section id="torrent-client" class={available.length > 0 ? 'tab-group addable' : 'tab-group'}>
+<section id="torrent-client" class={allOptions.length > 0 ? 'tab-group selectable' : 'tab-group'}>
     <h3>Torrent Client</h3>
 
     <div>
-    
+
         <nav class="tabs">
-            <ul class="selector">
-                {#each selected as client (client.name)}
-                    <li class:selected={active === client.name}>
-                        <button 
-                            type="button"
-                            onclick={() => active = client.name}
-                        >{client.name}</button>
-                    </li>
+            <select bind:value={active}>
+                <option value="">(none)</option>
+                {#each allOptions as option (option.name)}
+                    <option value={option.name}>{option.name}</option>
                 {/each}
-            </ul>
+            </select>
         </nav>
 
-        {#if available.length > 0}
-            <p class="add-tab">
-                <select bind:value={toAdd}>
-                    {#each available as client (client.name)}
-                        <option value={client.name}>{client.name}</option>
-                    {/each}
-                </select>
-                <button type="button" onclick={add}>{selected.length > 0 ? '🔄 Replace' : '➕ Add'}</button>
-            </p>
-        {/if}
-
-        {#each selected as client (client.name)}
-            <fieldset hidden={active !== client.name}>
+        {#if client}
+            <fieldset>
                 <legend>{client.name}</legend>
 
                 <input type="hidden" name="torrentClient[name]" value={client.name}>
@@ -83,14 +53,8 @@
                         value={findValue(client.name, field)}
                     />
                 {/each}
-
-                <p class="buttons">
-                    <button type="button" onclick={() => remove(client.name)}>➖ Remove</button>
-                </p>
-
             </fieldset>
-
-        {/each}
+        {/if}
 
     </div>
 

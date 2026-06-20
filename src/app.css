@@ -515,6 +515,15 @@ h3 {
         text-align: left;
     }
 
+    .tab-group.selectable .tabs {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .tab-group.selectable .tabs select {
+        flex-grow: 1;
+    }
+
     #settings .add-tab {
         flex-direction: column;
     }
