@@ -102,7 +102,9 @@ export type ImageHostSettings = v.InferOutput<typeof ImageHostSettingsSchema>;
 
 export const TorrentClientSettingsSchema = v.object({
     name: v.string(),
-    url: v.optional(v.pipe(v.string(), v.url()))
+    url: v.optional(v.pipe(v.string(), v.url())),
+    username: v.optional(v.string()),
+    password: v.optional(v.string()),
 })
 
 export type TorrentClientSettings = v.InferOutput<typeof TorrentClientSettingsSchema>;
