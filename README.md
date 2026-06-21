@@ -31,7 +31,7 @@ Supported image hosts:
 
 Supported torrent clients:
 - qBittorrent
-- rtorrent (experimental)
+- rTorrent (experimental)
 - Just saving the .torrent file to a folder
 
 ## Prerequisites
