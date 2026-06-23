@@ -6,18 +6,19 @@ import posixPath from 'node:path/posix';
 import win32Path from 'node:path/win32';
 import { file } from 'bun';
 import { buildXmlRpcRequest, parseXmlRpcResponse, type XmlRpcParam } from '../util/xml-rpc';
+import { scgiRequest } from '../util/scgi';
 
 export const settings: SettingsField[] = [
     {
         id: 'url',
         label: 'RPC URL',
-        description: 'The XML-RPC endpoint exposed in front of rtorrent (like http://192.168.0.100/RPC2).',
+        description: 'The XML-RPC endpoint exposed in front of rtorrent (like http://192.168.0.100/RPC2), or a direct connection to its SCGI socket (like unix:/var/run/rtorrent.rpc).',
         type: 'url',
     },
     {
         id: 'username',
         label: 'User name',
-        description: 'Leave blank for no authentication.',
+        description: 'Leave blank for no authentication. Not used when the RPC URL is a unix socket.',
         type: 'text',
     },
     {
@@ -38,6 +39,7 @@ class RTorrent extends TorrentClient {
     public name: string = 'rTorrent';
 
     private url: string = '';
+    private socketPath: string | undefined;
     private username: string = '';
     private password: string = '';
 
@@ -48,6 +50,7 @@ class RTorrent extends TorrentClient {
         if (!settings.url) throw Error('Missing URL');
 
         this.url = settings.url;
+        this.socketPath = settings.url.startsWith('unix:') ? settings.url.slice('unix:'.length) : undefined;
         this.username = settings.username;
         this.password = settings.password;
 
@@ -66,10 +69,14 @@ class RTorrent extends TorrentClient {
        to a torrent still need that first param present, just empty. */
     private async call(method: string, params: XmlRpcParam[] = [], signal?: AbortSignal): Promise<string> {
 
+        const body = buildXmlRpcRequest(method, [{ type: 'string', value: '' }, ...params]);
+
+        if (this.socketPath) {
+            return parseXmlRpcResponse(await scgiRequest(this.socketPath, body, signal));
+        }
+
         const headers: Record<string, string> = { 'Content-Type': 'text/xml' };
         if (this.username) headers.Authorization = `Basic ${Buffer.from(`${this.username}:${this.password}`).toString('base64')}`;
-
-        const body = buildXmlRpcRequest(method, [{ type: 'string', value: '' }, ...params]);
 
         const response = await fetch(this.url, { method: 'POST', headers, body, signal });
 
