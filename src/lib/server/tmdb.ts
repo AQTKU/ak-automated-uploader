@@ -377,11 +377,12 @@ class Tmdb {
 
     private matchResult(title: string, results: TmdbSearchResult[]): { result: TmdbSearchResult, name: string } | null {
 
+        const normalizedTitle = normalize(title);
+        const candidates: { result: TmdbSearchResult, name: string }[] = [];
+
         for (const result of results) {
 
-            let possibleNames: Set<string>;
-
-            possibleNames = this.buildPossibleNamesFromResult(
+            const possibleNames = this.buildPossibleNamesFromResult(
                 result.title,
                 result.originalTitle,
                 result.year,
@@ -389,14 +390,29 @@ class Tmdb {
             );
 
             for (const possibleName of possibleNames) {
-                if (normalize(title) === normalize(possibleName)) {
-                    return { result, name: possibleName };
+                if (normalizedTitle === normalize(possibleName)) {
+                    candidates.push({ result, name: possibleName });
+                    break;
                 }
             }
 
         }
 
-        return null;
+        if (candidates.length === 0) return null;
+
+        // An undisambiguated title matches the earliest series of that name; later ones
+        // carry a country/year suffix that narrows the bucket. `results` is in popularity
+        // order, so a stable sort keeps popularity as the tiebreak when years are equal.
+        candidates.sort((a, b) => {
+            const yearA = a.result.year;
+            const yearB = b.result.year;
+            if (yearA === yearB) return 0;
+            if (yearA === null) return 1;
+            if (yearB === null) return -1;
+            return yearA - yearB;
+        });
+
+        return candidates[0]!;
 
     }
 
