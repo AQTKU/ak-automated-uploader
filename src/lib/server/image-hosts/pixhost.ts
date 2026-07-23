@@ -33,7 +33,7 @@ class PiXhost extends ImageHost {
         formData.append('content_type', '0'); // 1 for NSFW, dunno what it actually does, maybe displays NSFW ads
         formData.append('max_th_size', thumbnailWidth.toString());
 
-        const response = await fetch('https://api.pixhost.to/images', {
+        const response = await fetch('https://api.pixhost.cc/images', {
             method: 'POST',
             headers: { accept: 'application/json' },
             body: formData,
