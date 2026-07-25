@@ -218,7 +218,7 @@ export default class Aither extends Tracker {
 
         if (release.dv) this.data.dv = true;
         if (release.hdr?.plus === 'HDR') this.data.hdr = true;
-        if (release.hdr?.plus === 'HDR10+') this.data.hdr = true;
+        if (release.hdr?.plus === 'HDR10+') this.data.hdr10p = true;
         const resolution = parseInt(release.resolution ?? '0');
         if (resolution <= 576 && resolution > 0) this.data.sd = true;
         if (release.signLanguage === 'ASL') this.setOption('accessibilityType', 'ASL');
