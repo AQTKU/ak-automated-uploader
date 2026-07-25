@@ -7,12 +7,14 @@ import { imgbox } from './imgbox';
 import { pixhost } from './pixhost';
 import { ptpimg, ptpimgFields } from './ptpimg';
 import { zipline, ziplineFields } from './zipline';
+import { lostImg, fields as lostImgFields } from './lostimg';
 
 export const imageHosts: Record<string, { object: ImageHost, fields: SettingsField[] }> = {
     'Catbox': { object: catbox, fields: [] },
     'Freeimage.host': { object: freeimageHost, fields: freeimageHostFields },
     'ImgBB': { object: imgBB, fields: imgBBFields },
     'imgbox': { object: imgbox, fields: [] },
+    'LostImg': { object: lostImg, fields: lostImgFields },
     'PiXhost': { object: pixhost, fields: [] },
     'ptpimg': { object: ptpimg, fields: ptpimgFields },
     'Zipline': { object: zipline, fields: ziplineFields },
