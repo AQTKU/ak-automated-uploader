@@ -99,7 +99,7 @@ class MediaInfo {
             `$&Complete name                            : ${basename(this.path)}$1`
         );
 
-        this.fullText = this.fullText.replace(/ {2,}/g, ' ');
+        if (this.fullText.length > 60000) this.fullText = this.fullText.replace(/ {2,}/g, ' ');
 
         this.general = this.tracks.filter(value => value['@type'] === 'General');
         this.audio = this.tracks.filter(value => value['@type'] === 'Audio');
