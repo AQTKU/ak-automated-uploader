@@ -1,135 +1,267 @@
 import { iso6392 } from 'iso-639-2';
 import { log } from './util/log';
-
-const audioTranslationTable: { from: string[], to: string, plus?: string }[] = [
-    { from: ['aac', 'aac lc'], to: 'AAC' },
-    { from: ['alac'], to: 'ALAC' },
-    { from: ['dd', 'ac-3'], to: 'DD' },
-    { from: ['ddp', 'dd+', 'e-ac-3', 'e-ac-3 joc', 'ddpa', 'ddp atmos', 'dd+ atmos'], to: 'DDP', plus: 'DD+' },
-    { from: ['dts'], to: 'DTS' },
-    { from: ['dts-hd ma', 'dts xll'], to: 'DTS-HD MA' },
-    { from: ['dts-x', 'dts xll x'], to: 'DTS:X' },
-    { from: ['flac'], to: 'FLAC' },
-    { from: ['opus'], to: 'Opus' },
-    { from: ['pcm'], to: 'LPCM' },
-    { from: ['truehd', 'mlp fba', 'mlp fba 16-ch', 'mlp fba ac-3 16-ch', 'truehd atmos'], to: 'TrueHD' },
-    { from: ['vorbis'], to: 'Vorbis' },
-];
-
-const atmosFormats = [
-    'ddpa',
-    'ddp atmos',
-    'dd+ atmos',
-    'e-ac-3 joc',
-    'mlp fba 16-ch',
-    'mlp fba ac-3 16-ch',
-    'truehd atmos',
-];
-
-const editionTranslationTable = [
-    { from: ['alternative cut', 'alternate cut'], to: 'Alternative Cut' },
-    { from: ['collectors edition', "collector's edition"], to: "Collector's Edition" },
-    { from: ['directors cut', "director's cut", 'directors edition', "director's edition"], to: "Director's Cut" },
-    { from: ['extended cut', 'extended edition', 'extended'], to: 'Extended' },
-    { from: ['limited edition', 'limited'], to: 'Limited Edition' },
-    { from: ['special edition'], to: 'Special Edition' },
-    { from: ['theatrical cut', 'theatrical'], to: 'Theatrical Cut' },
-] as const satisfies { from: string[], to: string }[];
-
-type Edition = typeof editionTranslationTable[number]['to'] | null;
-
-const sourceTranslationTable: { from: string[], to: string }[] = [
-    { from: ['web', 'webdl', 'web-dl'], to: 'WEB-DL' },
-    { from: ['webrip', 'web-rip', 'webcap', 'web-cap'], to: 'WEBRip' },
-    { from: ['hd bluray', 'hd blu-ray', 'blu-ray', 'bluray', 'bdrip'], to: 'BluRay' },
-    { from: ['uhd bluray', 'uhd blu-ray', 'uhd brrip'], to: 'UHD BluRay' },
-    { from: ['pal dvd'], to: 'PAL DVD' },
-    { from: ['ntsc dvd'], to: 'NTSC DVD' },
-    { from: ['dvd'], to: 'DVD' },
-    { from: ['hdtv'], to: 'HDTV' },
-    { from: ['sdtv'], to: 'SDTV' },
-];
-
-const videoTranslationTable: { from: string[], to: string, toLikeH264?: string, toEncoder?: string }[] = [
-    { from: ['av1'], to: 'AV1' },
-    { from: ['mpeg video', 'mpeg-2'], to: 'MPEG-2' },
-    { from: ['x264'], to: 'AVC', toLikeH264: 'H.264', toEncoder: 'x264' },
-    { from: ['avc', 'h264', 'h 264', 'h.264'], to: 'AVC', toLikeH264: 'H.264' },
-    { from: ['x265'], to: 'HEVC', toLikeH264: 'H.265', toEncoder: 'x265' },
-    { from: ['hevc', 'h265', 'h 265', 'h.265'], to: 'HEVC', toLikeH264: 'H.265' },
-];
+import {
+    audioCodecs, censoredStates, channelPositions, dvProfiles, editions, hdrFormats,
+    multiAudioFormats, repackAliases, repackNames, resolutions, signLanguages, sources,
+    streamingServiceAliases, streamingServices, videoCodecs,
+    type AudioCodec, type Category, type Censored, type ChannelPosition, type DvProfile,
+    type Edition, type Hdr, type MultiAudio, type Repack, type Resolution, type ScanType,
+    type SignLanguage, type Source, type StreamingService, type VideoCodec,
+} from './release-tables';
 
 export interface ReleaseState {
     atmos: boolean;
+    attributes: string;
     audio: { p: string, plus: string } | null;
-    audioCodec: { p: string, plus: string } | null;
+    audioCodec: AudioCodec | null;
     audioDescription: boolean;
-    category: 'tv' | 'movie' | null;
-    censored: string | null;
+    category: Category | null;
+    censored: Censored | null;
     channels: string | null;
-    dv: string | null;
-    dvProfile: 5 | 7 | 8 | 10 | 20 | null;
-    edition: Edition;
+    dv: boolean;
+    dvProfile: DvProfile | null;
+    edition: Edition | null;
     episode: number | null;
     episodeTitle: string | null;
     extension: string | null;
     fileName: string;
     group: string | null;
-    hdr: { short: string, plus: string, long: string } | null;
+    hdr: Hdr | null;
     hybrid: boolean;
     isSeasonPack: boolean;
     isSpecial: boolean;
     language: string | null;
-    multiAudio: string | null;
+    multiAudio: MultiAudio | null;
     originalTitle: string | null;
     remux: boolean;
-    repack: string | null;
-    resolution: string | null;
-    scanType: 'Interlaced' | 'Progressive' | null;
+    repack: Repack | null;
+    resolution: Resolution | null;
+    scanType: ScanType | null;
     sdr: boolean;
     season: number | null;
     seasonEpisode: string | null;
-    signLanguage: 'ASL' | 'BSL' | null;
-    source: string | null;
-    streamingService: string | null;
+    seasonOrEpisodeTitle: string | null;
+    seasonTitle: string | null;
+    signLanguage: SignLanguage | null;
+    source: Source | null;
+    streamingService: StreamingService | null;
     title: string;
-    videoCodec: { likeAvc: string, likeH264: string, encoder: string | null } | null;
+    videoCodec: VideoCodec | null;
     year: number | null;
 }
 
-export default class Release {
+/* Longest first, so "HD BluRay" wins over "BluRay" when both could start at the
+   same position. */
+function alternation(values: readonly string[]) {
+    return [...new Set(values)]
+        .sort((first, second) => second.length - first.length)
+        .map(value => RegExp.escape(value))
+        .join('|');
+}
+
+function fromValues(table: readonly { from: readonly string[] }[]) {
+    return table.flatMap(row => [...row.from]);
+}
+
+function findTranslation<T extends { from: readonly string[] }>(table: readonly T[], value: string) {
+    const lookup = value.toLowerCase().trim();
+    return table.find(row => (row.from as readonly string[]).includes(lookup));
+}
+
+const resolutionNames = resolutions.flatMap(row =>
+    'interlacedTo' in row ? [row.to, row.interlacedTo] : [row.to]
+);
+
+const streamingServiceNames: string[] = [...streamingServices];
+for (const aliases of Object.values(streamingServiceAliases)) {
+    streamingServiceNames.push(...aliases);
+}
+
+const channelPositionsByName = new Map<string, ChannelPosition>();
+for (const [position, names] of Object.entries(channelPositions) as [ChannelPosition, readonly string[]][]) {
+    for (const name of names) channelPositionsByName.set(name, position);
+}
+
+/* Every pattern that translates to a table value is built from that table, so
+   the setters can throw on anything they don't recognise without the filename
+   parser ever being able to trigger it. */
+
+const audioPattern = new RegExp(`(?:^| )(${alternation(fromValues(audioCodecs))})(?: ?((?:[1-9]|[1-2][0-9]).[0-2](?:.[0-9])?))?(?: ?(atmos))?$`, 'i');
+const audioDescriptionPattern = /(?:^| )with audio description$/i;
+const censoredPattern = new RegExp(`(?:^| )(${alternation(fromValues(censoredStates))})$`, 'i');
+const dvPattern = /(?:^| )(?:dv|dovi)$/i;
+const editionPattern = new RegExp(`(?:^| )(${alternation(fromValues(editions))})$`, 'i');
+const hdrPattern = new RegExp(`(?:^| )(${alternation(fromValues(hdrFormats))})$`, 'i');
+const hybridPattern = /(?:^| )hybrid$/i;
+const multiAudioPattern = new RegExp(`(?:^| )(${alternation(fromValues(multiAudioFormats))})$`, 'i');
+const remuxPattern = /(?:^| )remux$/i;
+const repackPattern = new RegExp(`(?:^| )(${alternation([...repackNames, ...Object.keys(repackAliases)])})$`, 'i');
+const resolutionPattern = new RegExp(`(?:^| )(${alternation(resolutionNames)})$`, 'i');
+const signLanguagePattern = new RegExp(`(?:^| )with (${alternation(fromValues(signLanguages))})$`, 'i');
+const sourcePattern = new RegExp(`(?:^| )(${alternation(fromValues(sources))})$`, 'i');
+const streamingSourcePattern = new RegExp(
+    `(?:^| )(?:(${alternation(streamingServiceNames)}) )?(${alternation(fromValues(sources.filter(row => 'streaming' in row)))})$`,
+    'i'
+);
+const videoCodecPattern = new RegExp(`(?:^| )(${alternation(fromValues(videoCodecs))})$`, 'i');
+
+/* Deliberately case sensitive, and deliberately not built with `alternation`'s
+   deduplication in mind: plenty of language names are also ordinary nouns, so
+   we match "spanish", "SPANISH" and "SPANiSH" but not "Spanish", which stops
+   "Lucy Learns Spanish" being tagged as a Spanish-language release. */
+const languagePattern = (() => {
+    const names: string[] = [];
+    for (const language of iso6392) {
+        for (const name of language.name.split('; ')) {
+            if (!/^[a-z]+$/i.test(name)) continue;
+            names.push(name.toLowerCase());
+            names.push(name.toUpperCase());
+            if (name.toLowerCase().includes('i')) names.push(name.toUpperCase().replace(/I/g, 'i'));
+        }
+    }
+    return new RegExp(`(?:^| )(${alternation(names)})$`);
+})();
+
+/* Applied in order against the tail of the remaining filename, each one eating
+   what it matches. Order is precedence: video codec before HDR before DV, and
+   the streaming-prefixed source before the bare one. Matchers run at most once
+   unless `repeat` says otherwise, keyed on `name` — which is why both source
+   matchers share a name. */
+
+type DetailMatcher = {
+    name: string;
+    pattern: RegExp;
+    repeat?: boolean;
+    apply(release: Release, match: RegExpMatchArray): void;
+};
+
+const detailMatchers: DetailMatcher[] = [
+    {
+        name: 'videoCodec',
+        pattern: videoCodecPattern,
+        apply: (release, [, codec]) => release.setVideoCodec(codec!),
+    },
+    {
+        /* Filenames stack HDR tags ("HDR.HDR10Plus") and we want to swallow all
+           of them, but the most specific one is normally rightmost and we read
+           right to left, so the first one we see is the one worth keeping. */
+        name: 'hdr',
+        pattern: hdrPattern,
+        repeat: true,
+        apply: (release, [, hdr]) => { if (!release.hdr) release.setHdr(hdr!); },
+    },
+    {
+        name: 'dv',
+        pattern: dvPattern,
+        apply: release => release.setDv(true),
+    },
+    {
+        name: 'multiAudio',
+        pattern: multiAudioPattern,
+        apply: (release, [, multiAudio]) => release.setMultiAudio(multiAudio!),
+    },
+    {
+        name: 'audio',
+        pattern: audioPattern,
+        apply: (release, [, codec, channels, atmos]) => {
+            release.setAudioCodec(codec!);
+            if (channels) release.setChannels(channels);
+            if (atmos) release.setAtmos(true);
+        },
+    },
+    {
+        name: 'source',
+        pattern: streamingSourcePattern,
+        apply: (release, [, streamingService, source]) => {
+            release.setSource(source!);
+            if (streamingService) release.setStreamingService(streamingService);
+        },
+    },
+    {
+        name: 'source',
+        pattern: sourcePattern,
+        apply: (release, [, source]) => release.setSource(source!),
+    },
+    {
+        name: 'remux',
+        pattern: remuxPattern,
+        apply: release => release.setRemux(true),
+    },
+    {
+        name: 'resolution',
+        pattern: resolutionPattern,
+        apply: (release, [, resolution]) => release.setResolution(resolution!),
+    },
+    {
+        name: 'repack',
+        pattern: repackPattern,
+        apply: (release, [, repack]) => release.setRepack(repack!),
+    },
+    {
+        name: 'hybrid',
+        pattern: hybridPattern,
+        apply: release => release.setHybrid(true),
+    },
+    {
+        name: 'signLanguage',
+        pattern: signLanguagePattern,
+        apply: (release, [, signLanguage]) => release.setSignLanguage(signLanguage!),
+    },
+    {
+        name: 'audioDescription',
+        pattern: audioDescriptionPattern,
+        apply: release => release.setAudioDescription(true),
+    },
+    {
+        name: 'censored',
+        pattern: censoredPattern,
+        apply: (release, [, censored]) => release.setCensored(censored!),
+    },
+    {
+        name: 'language',
+        pattern: languagePattern,
+        apply: (release, [, language]) => release.setLanguage(language!),
+    },
+    {
+        name: 'edition',
+        pattern: editionPattern,
+        apply: (release, [, edition]) => release.setEdition(edition!),
+    },
+];
+
+export default class Release implements Readonly<ReleaseState> {
 
     private _atmos: ReleaseState['atmos'] = false;
-    private _audio: ReleaseState['audio'] = null;
-    private _audioCodec: { p: string; plus: string } | null = null;
+    private _audioCodec: ReleaseState['audioCodec'] = null;
     private _audioDescription: ReleaseState['audioDescription'] = false;
-    private _category: 'tv' | 'movie' | null = null;
-    private _censored: 'CENSORED' | 'UNCENSORED' | 'UNCUT' | 'UNRATED' | null = null;
-    private _channels: string | null = null;
-    private _dv: true | 5 | 7 | 8 | 10 | 20 | null = null;
-    private _edition: Edition = null;
-    private _episode: number | null = null;
-    private _extension: string | null = null;
-    private _fileName: string;
-    private _group: string | null = null;
-    private _hdr: { short: string, plus: string, long: string } | null = null;
-    private _hybrid = false;
-    private _language: string | null = null;
-    private _multiAudio: string | null = null;
-    private _originalTitle: string | null = null;
-    private _remux: boolean = false;
-    private _repack: string | null = null;
-    private _resolution: string | null = null;
-    private _scanType: 'Interlaced' | 'Progressive' | null = null;
-    private _season: number | null = null;
-    private _seasonEpisode: string | null = null;
-    private _seasonOrEpisodeTitle: string | null = null;
+    private _category: ReleaseState['category'] = null;
+    private _censored: ReleaseState['censored'] = null;
+    private _channels: ReleaseState['channels'] = null;
+    private _dv: ReleaseState['dv'] = false;
+    private _dvProfile: ReleaseState['dvProfile'] = null;
+    private _edition: ReleaseState['edition'] = null;
+    private _episode: ReleaseState['episode'] = null;
+    private _extension: ReleaseState['extension'] = null;
+    private _fileName: ReleaseState['fileName'];
+    private _group: ReleaseState['group'] = null;
+    private _hdr: ReleaseState['hdr'] = null;
+    private _hybrid: ReleaseState['hybrid'] = false;
+    private _language: ReleaseState['language'] = null;
+    private _multiAudio: ReleaseState['multiAudio'] = null;
+    private _originalTitle: ReleaseState['originalTitle'] = null;
+    private _remux: ReleaseState['remux'] = false;
+    private _repack: ReleaseState['repack'] = null;
+    private _resolution: ReleaseState['resolution'] = null;
+    private _scanType: ReleaseState['scanType'] = null;
+    private _season: ReleaseState['season'] = null;
+    private _seasonEpisode: ReleaseState['seasonEpisode'] = null;
+    private _seasonOrEpisodeTitle: ReleaseState['seasonOrEpisodeTitle'] = null;
     private _signLanguage: ReleaseState['signLanguage'] = null;
-    private _source: string | null = null;
-    private _streamingService: string | null = null;
-    private _title = '';
-    private _videoCodec: { likeAvc: string, likeH264: string, encoder: string | null } | null = null;
-    private _year: number | null = null;
+    private _source: ReleaseState['source'] = null;
+    private _streamingService: ReleaseState['streamingService'] = null;
+    private _title: ReleaseState['title'] = '';
+    private _videoCodec: ReleaseState['videoCodec'] = null;
+    private _year: ReleaseState['year'] = null;
 
     constructor(input: string) {
 
@@ -173,83 +305,27 @@ export default class Release {
 
     }
 
-    private buildAudioRegexp() {
-        
-        let froms: string[] = [];
+    format(template: string) {
 
-        for (const translation of audioTranslationTable) {
-            froms.push(...translation.from);
-        }
-
-        froms = froms.map(value => RegExp.escape(value));
-
-        return new RegExp(`(?:^| )(${froms.join('|')})(?: ?((?:[1-9]|[1-2][0-9]).[0-2](?:.[0-9])?))?(?: ?(atmos))?$`, 'i');
-
-    }
-
-    private buildEditionRegexp() {
-
-        const editions: string[] = [];
-
-        for (const translation of editionTranslationTable) {
-            editions.push(...translation.from);
-        }
-
-        const escaped = editions.map(edition => RegExp.escape(edition));
-
-        return new RegExp(`(?:^| )(${escaped.join('|')})$`, 'i')
-    
-    }
-
-    private buildLanguageRegexp() {
-
-        const languages: string[] = [];
-
-        for (const language of iso6392) {
-            const names = language.name.split('; ');
-            for (const name of names) {
-                if (!/^[a-z]+$/i.test(name)) continue;
-                languages.push(name.toLowerCase());
-                languages.push(name.toUpperCase());
-                if (name.toLowerCase().includes('i')) languages.push(name.toUpperCase().replace(/I/g, 'i'));
-            }
-        }
-
-        return new RegExp(`(?:^| )(${languages.join('|')})$`, 'i');
-
-    }
-
-    private buildVideoCodecRegexp() {
-
-        let froms: string[] = [];
-
-        for (const translation of videoTranslationTable) {
-            froms.push(...translation.from);
-        }
-
-        froms = froms.map(value => RegExp.escape(value));
-
-        return new RegExp(`(?:^| )(${froms.join('|')})$`, 'i');
-
-    }
-
-    format(format: string) {
-
-        format = format.replace(/([- .]+)?{(.+?)}/ig, (fullMatch, whitespace, tag): string => {
+        return template.replace(/([- .]+)?\{(.+?)\}/g, (
+            fullMatch: string,
+            whitespace: string | undefined,
+            tag: string
+        ): string => {
 
             let output: string | null = null;
 
-            const [tagName, ..._arguments] = tag.split(' ');
+            const [tagName, ...tagArguments] = tag.split(' ');
 
-            if (_arguments.includes('if_special') && !this.isSpecial) {
+            if (tagArguments.includes('if_special') && !this.isSpecial) {
                 return '';
             }
 
-            if (_arguments.includes('if_not_english') && this.language === null) {
+            if (tagArguments.includes('if_not_english') && this.language === null) {
                 return '';
             }
 
-            if (_arguments.includes('if_not_dual_audio') && this.multiAudio) {
+            if (tagArguments.includes('if_not_dual_audio') && this.multiAudio) {
                 return '';
             }
 
@@ -258,14 +334,14 @@ export default class Release {
                 case 'title':
                     output = this.title;
                     if (
-                        _arguments.includes('aka') &&
+                        tagArguments.includes('aka') &&
                         this.originalTitle &&
                         this.originalTitle !== this.title
                     ) {
                         output += ` AKA ${this.originalTitle}`;
                     }
                     break;
-                
+
                 case 'year': output = this.year ? String(this.year) : null; break;
                 case 'season_episode': output = this.seasonEpisode; break;
                 case 'season_or_episode_title': output = this.seasonOrEpisodeTitle; break;
@@ -277,19 +353,26 @@ export default class Release {
                 case 'repack': output = this.repack; break;
                 case 'remux': output = this.remux ? 'REMUX' : null; break;
                 case 'resolution': output = this.resolution; break;
-                case 'source': output = this.source; break;
+
+                case 'source':
+                    if (this.source) {
+                        output = this.streamingService
+                            ? `${this.streamingService} ${this.source}`
+                            : this.source;
+                    }
+                    break;
 
                 case 'audio':
                     if (this.audio) {
-                        output = _arguments.includes('plus') ? this.audio?.plus : this.audio?.p;
+                        output = tagArguments.includes('plus') ? this.audio.plus : this.audio.p;
                     }
                     break;
 
                 case 'video':
 
                     if (this.videoCodec) {
-                        if (_arguments.includes('encoder')) output = this.videoCodec.encoder || this.videoCodec.likeH264;
-                        else if (_arguments.includes('like_h264')) output = this.videoCodec.likeH264;
+                        if (tagArguments.includes('encoder')) output = this.videoCodec.encoder || this.videoCodec.likeH264;
+                        else if (tagArguments.includes('like_h264')) output = this.videoCodec.likeH264;
                         else output = this.videoCodec.likeAvc;
                     }
 
@@ -301,23 +384,21 @@ export default class Release {
                         output = `DV ${output}`;
                     }
 
-                    if (this.sdr && _arguments.includes('sdr')) {
+                    if (this.sdr && tagArguments.includes('sdr')) {
                         output = `SDR ${output}`;
                     }
 
                     break;
 
                 case 'group':
-                    output = this.group ?? (_arguments.includes('or_NOGROUP', 'NOGROUP', null));
+                    output = this.group ?? (tagArguments.includes('or_NOGROUP') ? 'NOGROUP' : null);
                     break;
 
             }
 
-            return output ? `${whitespace || ''}${output}` : '';
+            return output ? `${whitespace ?? ''}${output}` : '';
 
         });
-
-        return format;
 
     }
 
@@ -330,27 +411,57 @@ export default class Release {
         ];
         return parts.filter(Boolean).join(' ');
     }
-    get audio() { return this._audio; }
+    get audio() {
+
+        const parts: string[] = [];
+        const plusParts: string[] = [];
+
+        if (this._audioDescription) {
+            parts.push('with Audio Description');
+            plusParts.push('with Audio Description');
+        }
+        if (this._multiAudio) {
+            parts.push(this._multiAudio);
+            plusParts.push(this._multiAudio);
+        }
+        if (this._audioCodec) {
+            parts.push(this._audioCodec.p);
+            plusParts.push(this._audioCodec.plus);
+        }
+        if (this._channels) {
+            parts.push(this._channels);
+            plusParts.push(this._channels);
+        }
+        if (this._atmos) {
+            parts.push('Atmos');
+            plusParts.push('Atmos');
+        }
+
+        if (!parts.length) return null;
+
+        return { p: parts.join(' '), plus: plusParts.join(' ') };
+
+    }
     get audioCodec() { return this._audioCodec; }
     get audioDescription() { return this._audioDescription; }
     get category() { return this._category; }
     get censored() { return this._censored; }
     get channels() { return this._channels; }
-    get dv() { return this._dv ? 'DV' : null; }
-    get dvProfile() { return typeof this._dv === 'number' ? this._dv : null; }
+    get dv() { return this._dv; }
+    get dvProfile() { return this._dvProfile; }
     get edition() { return this._edition; }
     get episode() { return this._episode; }
     get episodeTitle() {
-        if (!this.seasonOrEpisodeTitle) return null;
-        if (null === this.episode) return null;
+        if (!this._seasonOrEpisodeTitle) return null;
+        if (this._episode === null) return null;
         return this._seasonOrEpisodeTitle;
     }
     get extension() { return this._extension; }
     get fileName() { return this._fileName; }
     get fullDisc() { return false; }
     get group() { return this._group; }
-    get hdr() { return this._hdr }
-    get hybrid() { return this._hybrid }
+    get hdr() { return this._hdr; }
+    get hybrid() { return this._hybrid; }
     get isSeasonPack() {
         if (this.category === 'movie') return false;
         if (this.episode !== null) return false;
@@ -371,13 +482,13 @@ export default class Release {
     get repack() { return this._repack; }
     get resolution() { return this._resolution; }
     get scanType() { return this._scanType; }
-    get sdr() { return !this.dv && !this.hdr }
+    get sdr() { return !this.dv && !this.hdr; }
     get season() { return this._season; }
     get seasonEpisode() { return this._seasonEpisode; }
     get seasonOrEpisodeTitle() { return this._seasonOrEpisodeTitle; }
     get seasonTitle() {
         if (!this._seasonOrEpisodeTitle) return null;
-        if (this._episode) return null;
+        if (!this.isSeasonPack) return null;
         return this._seasonOrEpisodeTitle;
     }
     get signLanguage() { return this._signLanguage; }
@@ -388,14 +499,16 @@ export default class Release {
     get year() { return this._year; }
 
     inferRemuxSourceFromResolution() {
-        if (this.remux && this.resolution && !this.source) {
-            switch (this.resolution) {
-                case '2160p': this.setSource('UHD BluRay'); break;
-                case '1080p': case '1080i': case '720p': this.setSource('BluRay'); break;
-                case '576p': case '576i': this.setSource('PAL DVD'); break;
-                case '480p': case '480i': this.setSource('NTSC DVD'); break;
-            }
+
+        if (!this._remux || !this._resolution || this._source) return;
+
+        switch (this._resolution) {
+            case '4320p': case '2160p': this._source = 'UHD BluRay'; break;
+            case '1440p': case '1080p': case '1080i': case '720p': this._source = 'BluRay'; break;
+            case '576p': case '576i': this._source = 'PAL DVD'; break;
+            case '480p': case '480i': this._source = 'NTSC DVD'; break;
         }
+
     }
 
     /**
@@ -407,170 +520,31 @@ export default class Release {
     private parseVideoDetails(details: string) {
 
         let position = details.length;
-
-        const editionRegexp = this.buildEditionRegexp();
-        const languageRegexp = this.buildLanguageRegexp();
-        const censoredRegexp = /(?:^| )(censored|uncensored|uncut|unrated)$/i;
-        const hybridRegexp = /(?:^| )(hybrid)$/i;
-        const signLanguageRegexp = /(?:^| )(?:with (asl|bsl))$/i;
-        const audioDescriptionRegexp = /(?:^| )(with audio description)$/i;
-        const repackRegexp = /(?:^| )(repack[1-9]?|proper|dirfix)$/i;
-        const resolutionRegexp = /(?:^| )(480[pi]|576[pi]|720p|1080[pi]|2160p)$/i;
-        const webSourceRegexp = /(?:^| )(?:([a-z][a-z0-9]{1,3}|amazon|netflix|criterion) )?(web-dl|web-rip|web-cap|webdl|webrip|webcap|web)$/i;
-        const sourceRegexp = /(?:^| )((?:[a-z]{3} )?(?:u?hd )?blu-?ray|hdtv|sdtv|(?:ntsc |pal )?dvd(?:rip)?|dvd5|dvd9)$/i;
-        const remuxRegexp = /(?:^| )(remux)$/i;
-        const audioRegexp = this.buildAudioRegexp(); 
-        const multiAudioRegexp = /(?:^| )(dual|dual-audio|multi|multilang|multi-audio|multilingual)$/i;
-        const videoCodecRegexp = this.buildVideoCodecRegexp();
-        const videoHdrRegexp = /(?:^| )(pq10|hlg|hdr(?:10(?:[+p]|plus)?)?)$/i;
-        const videoDvRegexp = /(?:^| )(dv|dovi)$/i;
-
-        let foundEdition = false;
-        let foundLanguage = false;
-        let foundCensored = false;
-        let foundHybrid = false;
-        let foundSignLanguage = false;
-        let foundAudioDescription = false;
-        let foundRepack = false;
-        let foundResolution = false;
-        let foundSource = false;
-        let foundRemux = false;
-        let foundAudio = false;
-        let foundMultiAudio = false;
-        let foundVideoCodec = false;
-        let foundVideoHdr = false;
-        let foundVideoDv = false;
+        const consumed = new Set<string>();
 
         while (position > 0) {
 
-            const nextDetails = details.substring(0, position);
+            const remaining = details.substring(0, position);
+            let matched = false;
 
-            let matches: RegExpMatchArray | null = null;
+            for (const matcher of detailMatchers) {
 
-            // Video
-            if ((matches = nextDetails.match(videoCodecRegexp)) && !foundVideoCodec) {
+                if (!matcher.repeat && consumed.has(matcher.name)) continue;
 
-                foundVideoCodec = true;
-                const [, codec] = matches;
-                this.setVideoCodec(codec!);
+                const match = remaining.match(matcher.pattern);
+                if (!match) continue;
 
-            // HDR
-            } else if ((matches = nextDetails.match(videoHdrRegexp))) {
-                
-                foundVideoHdr = true;
-                const [, hdr] = matches;
-                this.setHdr(hdr!);
-
-            // DV
-            } else if ((matches = nextDetails.match(videoDvRegexp)) && !foundVideoDv) {
-
-                foundVideoDv = true;
-                const [, dv] = matches;
-                this.setDv(true);
-
-            // Dual/multi audio
-            } else if ((matches = nextDetails.match(multiAudioRegexp)) && !foundMultiAudio) {
-
-                foundMultiAudio = true;
-                const [, multiAudio] = matches;
-                this.setMultiAudio(multiAudio!);
-
-            // Audio
-            } else if ((matches = nextDetails.match(audioRegexp)) && !foundAudio) {
-
-                foundAudio = true;
-                const [, codec, channels, atmos] = matches;
-                this.setAudioCodec(codec!);
-                if (channels) this.setChannels(channels);
-                if (atmos) this.setAtmos(true);
-
-            // Web source
-            } else if ((matches = nextDetails.match(webSourceRegexp)) && !foundSource) {
-
-                foundSource = true;
-                const [, streamingService, source] = matches;
-                if (streamingService) {
-                    this.setSource(`${streamingService} ${source}`);
-                } else {
-                    this.setSource(source!);
-                }
-
-            // Other sources
-            } else if ((matches = nextDetails.match(sourceRegexp)) && !foundSource) {
-
-                foundSource = true;
-                const [, source] = matches;
-                this.setSource(source!);
-
-            // Remux
-            } else if ((matches = nextDetails.match(remuxRegexp)) && !foundRemux) {
-
-                foundRemux = true;
-                this.setRemux(true);
-
-            // Resolution
-            } else if ((matches = nextDetails.match(resolutionRegexp)) && !foundResolution) {
-
-                foundResolution = true;
-                const [, resolution] = matches;
-                this.setResolution(resolution!);
-
-            // Repack
-            } else if ((matches = nextDetails.match(repackRegexp)) && !foundRepack) {
-
-                foundRepack = true;
-                const [, repack] = matches;
-                this.setRepack(repack!);
-
-            // Hybrid
-            } else if ((matches = nextDetails.match(hybridRegexp)) && !foundHybrid) {
-
-                foundHybrid = true;
-                this.setHybrid(true);
-
-            // Sign language
-            } else if ((matches = nextDetails.match(signLanguageRegexp)) && !foundSignLanguage) {
-
-                foundSignLanguage = true;
-                const [, signLanguage] = matches;
-                this.setSignLanguage(signLanguage!);
-
-            } else if ((matches = nextDetails.match(audioDescriptionRegexp)) && !foundAudioDescription) {
-
-                foundAudioDescription = true;
-                this.setAudioDescription(true);
-
-            // Censored/uncensored/uncut/unrated
-            } else if ((matches = nextDetails.match(censoredRegexp)) && !foundCensored) {
-
-                foundCensored = true;
-                const [, censored] = matches;
-                this.setCensored(censored!);
-
-            // Language
-            } else if ((matches = nextDetails.match(languageRegexp)) && !foundLanguage) {
-
-                foundLanguage = true;
-                const [, language] = matches;
-                this.setLanguage(language!);
-
-            // Edition
-            } else if ((matches = nextDetails.match(editionRegexp)) && !foundEdition) {
-
-                foundEdition = true;
-                const [, edition] = matches;
-                this.setEdition(edition!);
-
-            // Unmatched
-            } else {
-
-                this.setSeasonOrEpisodeTitle(nextDetails);
+                consumed.add(matcher.name);
+                matcher.apply(this, match);
+                position -= match[0].length;
+                matched = true;
                 break;
 
             }
 
-            if (matches) {
-                position -= matches[0].length;
+            if (!matched) {
+                this.setSeasonOrEpisodeTitle(remaining);
+                break;
             }
 
         }
@@ -579,173 +553,83 @@ export default class Release {
 
     setAtmos(atmos: boolean) {
         this._atmos = atmos;
-        this.setAudio();
-    }
-
-    private setAudio() {
-
-        const parts: string[] = [];
-        if (this.audioDescription) parts.push('with Audio Description');
-        if (this.multiAudio) parts.push(this.multiAudio);
-        if (this.audioCodec?.p) parts.push(this.audioCodec.p);
-        if (this.channels) parts.push(this.channels);
-        if (this.atmos) parts.push('Atmos');
-        const p = parts.join(' ');
-
-        const plusParts: string[] = [];
-        if (this.audioDescription) plusParts.push('with Audio Description');
-        if (this.multiAudio) plusParts.push(this.multiAudio);
-        if (this.audioCodec?.plus) plusParts.push(this.audioCodec.plus);
-        if (this.channels) plusParts.push(this.channels);
-        if (this.atmos) plusParts.push('Atmos');
-        const plus = plusParts.join(' ');
-
-        this._audio = { p, plus };
-
     }
 
     setAudioCodec(codec: string) {
 
-        codec = codec.toLowerCase().trim();
+        const match = findTranslation(audioCodecs, codec);
+        if (!match) throw Error(`Unrecognized audio codec: ${codec}`);
 
-        const match = audioTranslationTable.find(translation => {
-            return translation.from.includes(codec);
-        });
+        this._audioCodec = match.codec;
 
-        if (!match) {
-            log(`Couldn't find matching audio codec for ${codec}`, 'khaki');
-            this._audioCodec = {
-                p: codec.toUpperCase(),
-                plus: codec.toUpperCase(),
-            };
-            return;
-        }
-
-        this._audioCodec = {
-            p: match.to,
-            plus: match.plus || match.to,
-        }
-
-        if (atmosFormats.includes(codec)) {
-            this.setAtmos(true);
-        }
-
-        this.setAudio();
+        if ('atmos' in match) this._atmos = true;
 
     }
 
     setAudioDescription(audioDescription: boolean) {
         this._audioDescription = audioDescription;
-        this.setAudio();
     }
 
     setCensored(censored: string) {
-        switch (censored.trim().toLowerCase()) {
-            case 'censored': this._censored = 'CENSORED'; break;
-            case 'uncensored': this._censored = 'UNCENSORED'; break;
-            case 'unrated': this._censored = 'UNRATED'; break;
-            case 'uncut': this._censored = 'UNCUT'; break;
-            default: this._censored = null;
-        }
+        const match = findTranslation(censoredStates, censored);
+        if (!match) throw Error(`Unrecognized censored state: ${censored}`);
+        this._censored = match.to;
     }
 
     setChannels(channels: string) {
-        channels = channels.toLowerCase().trim().replace(/ /g, '.');
-        this._channels = channels;
-        this.setAudio();
+        this._channels = channels.toLowerCase().trim().replace(/ /g, '.');
     }
 
-    setChannelLayout(layout: string): void {
-        
-        let numChannels = 0;
-        let numLfes = 0;
-        let numHigh = 0;
-        let numLow = 0;
+    setChannelLayout(layout: string) {
 
-        const channels: string[] = layout.trim().split(' ');
-        for (const channel of channels) {
-            if (['C', 'Rc', 'R', 'Rw', 'Rss', 'Rs', 'Rsd', 'Rb', 'Cb', 'Lb', 'Lsd', 'Ls', 'Lss', 'Lw', 'L', 'Lc'].includes(channel)) {
-                numChannels++;
-            } else if (['LFE', 'LFE2'].includes(channel)) {
-                numLfes++;
-            } else if (['Tfc', 'Tfr', 'Tsr', 'Rvs', 'Tbr', 'Tbc', 'Tbl', 'Lvs', 'Tsl', 'Tfl', 'Tc'].includes(channel)) {
-                numHigh++;
-            } else if (['Bfc', 'Bfr', 'Bsr', 'Bbr', 'Bbc', 'Bbl', 'Bsl', 'Bfl'].includes(channel)) {
-                numLow++;
-            } else if (['Objects'].includes(channel)) {
-                // Positional audio from DTS:X
-            } else {
+        const counts: Record<ChannelPosition, number> = { main: 0, lfe: 0, height: 0, floor: 0, object: 0 };
+
+        for (const channel of layout.trim().split(' ')) {
+            const position = channelPositionsByName.get(channel);
+            if (!position) {
                 log(`Found unknown audio channel type ${channel}, not updating channels from MediaInfo`, 'khaki');
                 return;
             }
+            counts[position]++;
         }
 
-        let output = `${numChannels}.${numLfes}`;
-
-        if (numHigh > 0 || numLow > 0) {
-            output += `.${numHigh}`;
-        }
-
-        if (numLow > 0) {
-            output += `.${numLow}`;
-        }
+        let output = `${counts.main}.${counts.lfe}`;
+        if (counts.height > 0 || counts.floor > 0) output += `.${counts.height}`;
+        if (counts.floor > 0) output += `.${counts.floor}`;
 
         this._channels = output;
 
-        this.setAudio();
-
     }
 
-    setDimensions(width: number, height: number, scanType?: string): void {
+    setDimensions(width: number, height: number, scanType?: string) {
 
         if (scanType === 'Interlaced' || scanType === 'Progressive') {
             this._scanType = scanType;
         }
 
-        const resolutions: [number, number][] = [
-            [8192, 4320],
-            [3840, 2160],
-            [1920, 1080],
-            [1280, 720],
-            [1024, 576],
-            [720, 480],
-        ];
+        const interlaced = this._scanType === 'Interlaced';
 
-        for (const resolution of resolutions) {
-
-            const [checkWidth, checkHeight] = resolution;
-
-            if (checkWidth * 0.9 > width && checkHeight * 0.9 > height) {
-                continue;
-            }
-
-            this.setResolution(`${checkHeight}${this._scanType === 'Interlaced' ? 'i' : 'p'}`);
-
+        for (const rung of resolutions) {
+            if (rung.width * 0.9 > width && rung.height * 0.9 > height) continue;
+            this._resolution = interlaced && 'interlacedTo' in rung ? rung.interlacedTo : rung.to;
+            this.inferRemuxSourceFromResolution();
             return;
-
         }
+
+        /* Below the bottom of the ladder, so whatever the filename claimed is a
+           better guess than anything we can offer */
 
     }
 
-    setDv(dv: typeof this._dv | 'DV') {
-        this._dv = dv === 'DV' ? true : dv;
+    setDv(dv: boolean, profile: DvProfile | null = null) {
+        this._dv = dv;
+        this._dvProfile = dv ? profile : null;
     }
 
     setEdition(edition: string) {
-
-        log(`Matched edition ${edition}`, 'khaki');
-
-        edition = edition.toLowerCase().trim();
-
-        for (const translation of editionTranslationTable) {
-            for (const from of translation.from) {
-                if (from === edition) {
-                    this._edition = translation.to;
-                    return;
-                }
-            }
-        }
-        this._edition = null;
+        const match = findTranslation(editions, edition);
+        if (!match) throw Error(`Unrecognized edition: ${edition}`);
+        this._edition = match.to;
     }
 
     setExtension(extension: string) {
@@ -758,34 +642,21 @@ export default class Release {
 
     setHdr(hdr: string | null) {
 
-        hdr = hdr ? hdr.toLowerCase().trim() : null;
-
-        switch (hdr) {
-
-            case 'hdr': case 'hdr10':
-                this._hdr = { short: 'HDR', plus: 'HDR', long: 'HDR10' };
-                break;
-            
-            case 'hdr10+': case 'hdr10p': case 'hdr10plus':
-                this._hdr = { short: 'HDR', plus: 'HDR10+', long: 'HDR10Plus' };
-                break;
-            
-            case 'hdr vivid':
-                this._hdr = { short: 'HDR', plus: 'HDR Vivid', long: 'HDR Vivid' };
-                break;
-            
-            case 'hlg':
-                this._hdr = { short: 'HLG', plus: 'HLG', long: 'HLG' };
-                break;
-            
-            case 'pq10':
-                this._hdr = { short: 'PQ', plus: 'PQ10', long: 'PQ10' };
-                break;
-            
-            default:
-                this._hdr = null;
-
+        if (!hdr) {
+            this._hdr = null;
+            return;
         }
+
+        const lookup = hdr.toLowerCase().trim();
+
+        const match = hdrFormats.find(row =>
+            (row.from as readonly string[]).includes(lookup) ||
+            ('mediaInfo' in row && (row.mediaInfo as readonly string[]).includes(lookup))
+        );
+
+        if (!match) throw Error(`Unrecognized HDR format: ${hdr}`);
+
+        this._hdr = match.hdr;
 
     }
 
@@ -796,20 +667,21 @@ export default class Release {
         maxCll: string | undefined
     ) {
 
-        this.setDv(null);
+        this.setDv(false);
         this.setHdr(null);
 
         if (profile) {
 
             const match = profile.match(/\bdv(?:he|me)\.(\d+)/i);
+
             if (match) {
                 const dvProfile = parseInt(match[1]!, 10);
-                switch (dvProfile) {
-                    case 5: case 7: case 8: case 10: case 20:
-                        this.setDv(dvProfile);
-                        break;
-                    default:
-                        log(`Unrecognized DV profile ${dvProfile}`, 'khaki');
+                if ((dvProfiles as readonly number[]).includes(dvProfile)) {
+                    this.setDv(true, dvProfile as DvProfile);
+                } else {
+                    /* Still Dolby Vision, we just can't say which flavour */
+                    log(`Unrecognized DV profile ${dvProfile}`, 'khaki');
+                    this.setDv(true);
                 }
             }
 
@@ -817,21 +689,18 @@ export default class Release {
 
         if (format) {
 
-            const segments = format.split(' / ');
-            if (segments.some(segment => segment === 'SMPTE ST 2094 App 4')) {
-                this.setHdr('HDR10+');
-            } else if (segments.some(segment => segment === 'HDR Vivid')) {
-                this.setHdr('HDR Vivid');
-            } else if (segments.some(segment => segment === 'SMPTE ST 2086')) {
-                this.setHdr('HDR10');
-            }
+            const segments = format.split(' / ').map(segment => segment.toLowerCase().trim());
 
-        } else {
-            if (transferCharacteristics === 'HLG') {
-                this.setHdr('HLG');
-            } else if (transferCharacteristics === 'PQ') {
-                this.setHdr(maxCll ? 'HDR10' : 'PQ10');
-            }
+            const match = hdrFormats.find(row =>
+                'mediaInfo' in row && (row.mediaInfo as readonly string[]).some(name => segments.includes(name))
+            );
+
+            if (match) this._hdr = match.hdr;
+
+        } else if (transferCharacteristics === 'HLG') {
+            this.setHdr('HLG');
+        } else if (transferCharacteristics === 'PQ') {
+            this.setHdr(maxCll ? 'HDR10' : 'PQ10');
         }
 
     }
@@ -850,57 +719,54 @@ export default class Release {
         const countryCodeMatches = input.match(/([a-z]{2,3})-[a-z0-9]{2,3}/i);
         if (countryCodeMatches && countryCodeMatches[1]) input = countryCodeMatches[1];
 
-        this._language = '';
+        const lookup = input.toLowerCase();
+        let language: string | null = null;
 
-        for (const language of iso6392) {
+        /* Codes before names, because a few names collide with another
+           language's code — "ga" is both the Ga language of Ghana and the
+           ISO-639-1 code for Irish, and MediaInfo only ever gives us codes. */
+        for (const entry of iso6392) {
+            if (
+                entry.iso6392B.toLowerCase() === lookup ||
+                entry.iso6392T?.toLowerCase() === lookup ||
+                entry.iso6391?.toLowerCase() === lookup
+            ) {
+                language = entry.name.split('; ')[0]!;
+                break;
+            }
+        }
 
-            const names = language.name.split('; ');
-
-            for (const name of names) {
-                if (name.toLowerCase() === input.toLowerCase()) {
-                    this._language = name;
-                    break;
-                } else if (language.iso6392B.toLowerCase() === input.toLowerCase()) {
-                    this._language = name;
-                    break;
-                } else if (language.iso6391 && language.iso6391.toLowerCase() === input.toLowerCase()) {
-                    this._language = name;
+        if (!language) {
+            for (const entry of iso6392) {
+                const name = entry.name.split('; ').find(name => name.toLowerCase() === lookup);
+                if (name) {
+                    language = name;
                     break;
                 }
             }
-
         }
 
-        if (!this._language) this._language = input;
+        /* Anything MediaInfo hands us that isn't in the list is still better
+           than nothing, so this one keeps its passthrough */
+        language ??= input;
 
-        if (['en', 'eng', 'english'].includes(this._language.toLowerCase())) {
+        if (['en', 'eng', 'english'].includes(language.toLowerCase())) {
             this._language = null;
             return;
         }
 
-        this._language = this._language.toUpperCase();
+        this._language = language.toUpperCase();
 
     }
 
     setMultiAudio(multiAudio: string) {
-
-        multiAudio = multiAudio.toLowerCase().trim();
-
-        if (multiAudio.startsWith('dual')) {
-            this._multiAudio = 'Dual-Audio';
-        } else if (multiAudio.startsWith('multi')) {
-            this._multiAudio = 'Multi';
-        } else {
-            this._multiAudio = null;
-        }
-
-        this.setAudio();
-
+        const match = findTranslation(multiAudioFormats, multiAudio);
+        if (!match) throw Error(`Unrecognized multi audio format: ${multiAudio}`);
+        this._multiAudio = match.to;
     }
 
     setOriginalTitle(title: string) {
-        title = title.trim();
-        this._originalTitle = title || null;
+        this._originalTitle = title.trim() || null;
     }
 
     setRemux(remux: boolean) {
@@ -909,23 +775,30 @@ export default class Release {
     }
 
     setRepack(repack: string) {
-        repack = repack.trim();
-        this._repack = repack || null;    
+
+        const lookup = repack.toLowerCase().trim();
+
+        const aliases = Object.entries(repackAliases) as [string, Repack][];
+        const alias = aliases.find(([name]) => name.toLowerCase() === lookup);
+        if (alias) {
+            this._repack = alias[1];
+            return;
+        }
+
+        const match = repackNames.find(name => name.toLowerCase() === lookup);
+        if (!match) throw Error(`Unrecognized repack: ${repack}`);
+        this._repack = match;
+
     }
 
     setResolution(resolution: string) {
 
-        this._resolution = null;
+        const lookup = resolution.toLowerCase().trim();
+        const match = resolutionNames.find(name => name === lookup);
+        if (!match) throw Error(`Unrecognized resolution: ${resolution}`);
 
-        const match = resolution.match(/^[0-9]+([ip])/i);
-        if (match) {
-            this._resolution = match[0];
-            if (match[1]!.toLowerCase() === 'i') {
-                this._scanType = 'Interlaced';
-            } else {
-                this._scanType = 'Progressive';
-            }
-        }
+        this._resolution = match;
+        this._scanType = match.endsWith('i') ? 'Interlaced' : 'Progressive';
 
         this.inferRemuxSourceFromResolution();
 
@@ -960,60 +833,47 @@ export default class Release {
     }
 
     setSeasonOrEpisodeTitle(title: string) {
-        title = title.trim();
-        this._seasonOrEpisodeTitle = title;
+        this._seasonOrEpisodeTitle = title.trim();
     }
 
     setSignLanguage(signLanguage: string | null) {
+
         if (!signLanguage) {
             this._signLanguage = null;
             return;
         }
-        switch (signLanguage.toLowerCase()) {
-            case 'asl': this._signLanguage = 'ASL'; break;
-            case 'bsl': this._signLanguage = 'BSL'; break;
-            default: throw Error(`Unrecognized sign language format: ${signLanguage}`);
-        }
+
+        const match = findTranslation(signLanguages, signLanguage);
+        if (!match) throw Error(`Unrecognized sign language: ${signLanguage}`);
+        this._signLanguage = match.to;
+
     }
 
     setSource(source: string) {
+        const match = findTranslation(sources, source);
+        if (!match) throw Error(`Unrecognized source: ${source}`);
+        this._source = match.to;
+    }
 
-        source = source.trim();
+    setStreamingService(streamingService: string) {
 
-        const webMatch = source.match(/^(?:([a-z0-9]+)\s+)?(?:(web[a-z-]*))$/i);
+        const lookup = streamingService.toLowerCase().trim();
 
-        if (webMatch) {
-
-            let [, streamingService, source] = webMatch;
-
-            if (streamingService && streamingService.toLowerCase() === 'amazon') streamingService = 'AMZN';
-            if (streamingService && streamingService.toLowerCase() === 'netflix') streamingService = 'NF';
-
-            const translation = sourceTranslationTable.find(translation => {
-                return translation.from.includes(source!.toLowerCase());
-            });
-
-            if (!translation) {
-                this._source = streamingService ? `${streamingService} WEBRip` : 'WEBRip';
-                return;
-            }
-
-            if (streamingService) {
-                this._streamingService = streamingService.toUpperCase();
-                this._source = `${streamingService} ${translation.to}`;
-            } else {
-                this._source = translation.to;
-            }
-
+        const canonical = streamingServices.find(name => name.toLowerCase() === lookup);
+        if (canonical) {
+            this._streamingService = canonical;
             return;
-
         }
 
-        const translation = sourceTranslationTable.find(translation => {
-            return translation.from.includes(source.toLowerCase());
-        });
+        const entries = Object.entries(streamingServiceAliases) as [StreamingService, readonly string[]][];
+        for (const [name, aliases] of entries) {
+            if (aliases.some(alias => alias.toLowerCase() === lookup)) {
+                this._streamingService = name;
+                return;
+            }
+        }
 
-        this._source = translation?.to || source;
+        throw Error(`Unrecognized streaming service: ${streamingService}`);
 
     }
 
@@ -1032,43 +892,28 @@ export default class Release {
            So if the filename has x264 but MediaInfo just has AVC, we keep x264.
            But if the filename has x264 and MediaInfo has HEVC, we switch to
            H.265 or whatever. */
-        
-        if (this._videoCodec?.encoder) {
 
-            const match = videoTranslationTable.find(translation =>
-                translation.toEncoder && translation.toEncoder.toLowerCase() === this._videoCodec?.encoder?.toLowerCase()
-            );
+        const encoder = this._videoCodec?.encoder;
 
-            if (match) {
-                const encoder = this._videoCodec.encoder.toLowerCase();
-                const matchingCodecNames = [...match.from, match.to.toLowerCase()];
-                if (match.toLikeH264) matchingCodecNames.push(match.toLikeH264.toLowerCase());
-                if (matchingCodecNames.includes(codec.toLowerCase())) {
-                    codec = encoder;
-                }
+        if (encoder) {
+
+            const existing = videoCodecs.find(row => row.codec.encoder === encoder);
+
+            if (existing) {
+                const family: string[] = [
+                    ...existing.from,
+                    existing.codec.likeAvc.toLowerCase(),
+                    existing.codec.likeH264.toLowerCase(),
+                ];
+                if (family.includes(codec.toLowerCase().trim())) codec = encoder;
             }
 
         }
 
-        const match = videoTranslationTable.find(translation =>
-            translation.from.includes(codec.toLowerCase())
-        );
+        const match = findTranslation(videoCodecs, codec);
+        if (!match) throw Error(`Unrecognized video codec: ${codec}`);
 
-        if (!match) {
-            log(`Couldn't find matching video codec for ${codec}`, 'khaki');
-            this._videoCodec = {
-                likeAvc: codec.toUpperCase(),
-                likeH264: codec.toUpperCase(),
-                encoder: null,
-            }
-            return;
-        }
-
-        this._videoCodec = {
-            likeAvc: match.to,
-            likeH264: match.toLikeH264 || match.to,
-            encoder: match.toEncoder || null,
-        };
+        this._videoCodec = match.codec;
 
     }
 
@@ -1079,6 +924,7 @@ export default class Release {
     toJSON(): ReleaseState {
         return {
             atmos: this.atmos,
+            attributes: this.attributes,
             audio: this.audio,
             audioCodec: this.audioCodec,
             audioDescription: this.audioDescription,
@@ -1107,6 +953,8 @@ export default class Release {
             sdr: this.sdr,
             season: this.season,
             seasonEpisode: this.seasonEpisode,
+            seasonOrEpisodeTitle: this.seasonOrEpisodeTitle,
+            seasonTitle: this.seasonTitle,
             signLanguage: this.signLanguage,
             source: this.source,
             streamingService: this.streamingService,

@@ -229,7 +229,10 @@ export default class LST extends Tracker {
     applyRelease(release: Release) {
 
         this.setOption('resolutionId', 'Other');
-        if (release.resolution) this.setOption('resolutionId', release.resolution);
+        if (release.resolution) {
+            try { this.setOption('resolutionId', release.resolution); }
+            catch { /* Resolution LST doesn't offer */ }
+        }
 
         this.setOption('typeId', 'Other');
         if (release.fullDisc) {

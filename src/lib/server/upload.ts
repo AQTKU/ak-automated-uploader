@@ -338,7 +338,12 @@ export default class Upload {
                 const { Format, Width, Height, ScanType, HDR_Format, HDR_Format_Profile, transfer_characteristics,
                         MaxCLL, Encoded_Library_Name } = mediaInfo.defaultVideo;
                         
-                if (Format) this.release.setVideoCodec(Encoded_Library_Name || Format);
+                /* Encoded_Library_Name is free text, so fall back to the format
+                   when it isn't an encoder we recognise */
+                if (Format) {
+                    try { this.release.setVideoCodec(Encoded_Library_Name || Format); }
+                    catch { this.release.setVideoCodec(Format); }
+                }
                 if (Width && Height) this.release.setDimensions(Width, Height, ScanType);
                 if (HDR_Format) this.release.setHdrFormat(HDR_Format, HDR_Format_Profile, transfer_characteristics, MaxCLL);
 

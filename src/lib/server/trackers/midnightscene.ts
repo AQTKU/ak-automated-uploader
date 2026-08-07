@@ -131,7 +131,10 @@ export default class MidnightScene extends Tracker {
     }
 
     applyRelease(release: Release) {
-        if (release.resolution) this.setOption('resolutionId', release.resolution);
+        if (release.resolution) {
+            try { this.setOption('resolutionId', release.resolution); }
+            catch { /* Resolution MidnightScene doesn't offer */ }
+        }
 
         if (release.fullDisc) {
             this.setOption('typeId', 'DISC');

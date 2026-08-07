@@ -105,6 +105,12 @@ Extend the `ImageHost` base class in `src/lib/server/image-hosts/`. Register in 
 
 **No comments by default**: Only add a comment if the *why* is genuinely non-obvious. Don't narrate what the code does.
 
-## No Tests
+## Tests
 
-There are no automated tests in this codebase. Type checking (`bun run check`) and manual testing are the current verification methods. Don't add a test framework without discussing it first.
+Coverage is deliberately narrow. `Release` is tested (`src/lib/server/release.test.ts`) because it's pure, self-contained and full of parsing edge cases. Everything else — trackers, image hosts, torrent clients — talks to the network or shells out, and is verified by type checking (`bun run check`) and manual testing.
+
+```bash
+bun test
+```
+
+Use Bun's built-in runner and don't add tests that need network access or external binaries without discussing it first.

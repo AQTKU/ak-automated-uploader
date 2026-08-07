@@ -197,7 +197,10 @@ export default class Aither extends Tracker {
     applyRelease(release: Release) {
         
         this.setOption('resolutionId', 'Other/Mixed');
-        if (release.resolution) this.setOption('resolutionId', release.resolution);
+        if (release.resolution) {
+            try { this.setOption('resolutionId', release.resolution); }
+            catch { /* Resolution Aither doesn't offer */ }
+        }
 
         this.setOption('typeId', 'Other');
         if (release.fullDisc) {

@@ -155,12 +155,16 @@ export default class Seedpool extends Tracker {
         this.data.imdb = metadata.imdbId ? metadata.imdbId.replace(/^tt/i, '') : '0';
         this.data.tvdb = metadata.tvdbId ? String(metadata.tvdbId) : '0';
         this.data.mal = metadata.malId ? String(metadata.malId) : '0';
+        if (metadata.malId && this.release?.category === 'tv') this.setOption('categoryId', 'Anime');
         this.data.keywords = metadata.keywords.join(', ');
     }
 
     applyRelease(release: Release) {
         this.setOption('resolutionId', 'Other');
-        if (release.resolution) this.setOption('resolutionId', release.resolution);
+        if (release.resolution) {
+            try { this.setOption('resolutionId', release.resolution); }
+            catch { /* Resolution Seedpool doesn't offer */ }
+        }
 
         this.setOption('typeId', 'Other');
         if (release.fullDisc) {
@@ -186,8 +190,6 @@ export default class Seedpool extends Tracker {
 
         if (sportsPatterns.some(pattern => pattern.test(release.title || ''))) {
             this.setOption('categoryId', 'Sports');
-        } else if (release.malId && release.category === 'tv') {
-            this.setOption('categoryId', 'Anime');
         } else if (release.category === 'tv') {
             this.setOption('categoryId', 'TV');
         } else {
