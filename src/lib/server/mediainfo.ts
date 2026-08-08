@@ -6,7 +6,7 @@ import errorString from './util/error-string';
 import { pauseHashing, resumeHashing } from './torrent';
 import { log } from './util/log';
 
-class MediaInfo {
+export class MediaInfo {
 
     private path: string;
 

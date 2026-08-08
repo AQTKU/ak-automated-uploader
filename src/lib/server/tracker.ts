@@ -6,7 +6,7 @@ import errorString from './util/error-string';
 import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
-import type { FieldsToType, TrackerField, TrackerSearchResults, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState, Metadata, TrackerLayout } from '$lib/types';
+import type { FieldsToType, TrackerField, TrackerSearchResults, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState, Metadata, FieldLayout } from '$lib/types';
 import { Context, Liquid, TagToken, type Emitter, type TopLevelToken } from 'liquidjs';
 import { uploadScreenshots } from './upload-screenshots';
 import { log } from './util/log';
@@ -24,7 +24,7 @@ export default abstract class Tracker {
     private errorCallbacks: Array<(reason: string) => void> = [];
     private errorReported = false;
     abstract readonly fields: TrackerField[];
-    abstract readonly layout: TrackerLayout;
+    abstract readonly layout: FieldLayout;
     imageHosts: string[] = [];
     metadata?: Metadata;
     mediaInfo?: ReturnType<typeof getMediaInfo>;

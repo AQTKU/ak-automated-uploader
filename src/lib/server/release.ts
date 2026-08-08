@@ -1,9 +1,10 @@
 import { iso6392 } from 'iso-639-2';
 import { log } from './util/log';
+import type { MediaInfo } from './mediainfo';
 import {
-    audioCodecs, censoredStates, channelPositions, dvProfiles, editions, hdrFormats,
-    multiAudioFormats, repackAliases, repackNames, resolutions, signLanguages, sources,
-    streamingServiceAliases, streamingServices, videoCodecs,
+    audioCodecs, categories, censoredStates, channelPositions, dvProfiles, editions, hdrFormats,
+    multiAudioFormats, repackAliases, repackNames, resolutionNames, resolutions, signLanguages,
+    sources, streamingServiceAliases, streamingServices, videoCodecs,
     type AudioCodec, type Category, type Censored, type ChannelPosition, type DvProfile,
     type Edition, type Hdr, type MultiAudio, type Repack, type Resolution, type ScanType,
     type SignLanguage, type Source, type StreamingService, type VideoCodec,
@@ -67,10 +68,6 @@ function findTranslation<T extends { from: readonly string[] }>(table: readonly 
     const lookup = value.toLowerCase().trim();
     return table.find(row => (row.from as readonly string[]).includes(lookup));
 }
-
-const resolutionNames = resolutions.flatMap(row =>
-    'interlacedTo' in row ? [row.to, row.interlacedTo] : [row.to]
-);
 
 const streamingServiceNames: string[] = [...streamingServices];
 for (const aliases of Object.values(streamingServiceAliases)) {
@@ -301,6 +298,70 @@ export default class Release implements Readonly<ReleaseState> {
             this.setExtension(extension!);
             this.parseVideoDetails(videoDetails!);
 
+        }
+
+    }
+
+    applyMediaInfo(mediaInfo: MediaInfo) {
+
+        if (mediaInfo.defaultVideo) {
+
+            const { Format, Width, Height, ScanType, HDR_Format, HDR_Format_Profile, transfer_characteristics,
+                    MaxCLL, Encoded_Library_Name } = mediaInfo.defaultVideo;
+
+            /* Encoded_Library_Name is free text, so fall back to the format
+               when it isn't an encoder we recognise */
+            if (Format) {
+                try { this.setVideoCodec(Encoded_Library_Name || Format, true); }
+                catch { this.setVideoCodec(Format, true); }
+            }
+            if (Width && Height) this.setDimensions(Width, Height, ScanType);
+            if (HDR_Format) this.setHdrFormat(HDR_Format, HDR_Format_Profile, transfer_characteristics, MaxCLL);
+
+        }
+
+        if (mediaInfo.defaultAudio) {
+
+            const { Format, Format_AdditionalFeatures, Channels, ChannelLayout, Language, Title } = mediaInfo.defaultAudio;
+
+            if (Format) this.setAudioCodec(
+                Format_AdditionalFeatures ? `${Format} ${Format_AdditionalFeatures}` : Format
+            );
+
+            if (ChannelLayout) {
+                this.setChannelLayout(ChannelLayout);
+            } else if (Channels) {
+                switch (Channels) {
+                    case 8: this.setChannels('7.1'); break;
+                    case 6: this.setChannels('5.1'); break;
+                    case 2: this.setChannels('2.0'); break;
+                    // Trust whatever was in the filename for any other unusual formats
+                }
+            }
+
+            if (Language) this.setLanguage(Language);
+
+            const audioDescriptionTitles = [
+                'descriptive',
+                'audio description',
+                'video description',
+                'described video',
+                'visual description',
+            ];
+            if (Title && audioDescriptionTitles.includes(Title.toLowerCase())) {
+                this.setAudioDescription(true);
+            }
+
+        }
+
+        const audioLanguages = new Set(mediaInfo.audio
+            .filter(track => !(track.Title?.toLowerCase().includes('commentary')))
+            .map(audio => audio.Language)
+        );
+        if (audioLanguages.size >= 3) {
+            this.setMultiAudio('Multi');
+        } else if (audioLanguages.size === 2) {
+            this.setMultiAudio('Dual-Audio');
         }
 
     }
@@ -555,7 +616,12 @@ export default class Release implements Readonly<ReleaseState> {
         this._atmos = atmos;
     }
 
-    setAudioCodec(codec: string) {
+    setAudioCodec(codec: string | null) {
+
+        if (!codec) {
+            this._audioCodec = null;
+            return;
+        }
 
         const match = findTranslation(audioCodecs, codec);
         if (!match) throw Error(`Unrecognized audio codec: ${codec}`);
@@ -570,14 +636,35 @@ export default class Release implements Readonly<ReleaseState> {
         this._audioDescription = audioDescription;
     }
 
-    setCensored(censored: string) {
+    setCategory(category: string | null) {
+
+        if (!category) {
+            this._category = null;
+            return;
+        }
+
+        const lookup = category.toLowerCase().trim();
+        const match = categories.find(name => name === lookup);
+        if (!match) throw Error(`Unrecognized category: ${category}`);
+        this._category = match;
+
+    }
+
+    setCensored(censored: string | null) {
+
+        if (!censored) {
+            this._censored = null;
+            return;
+        }
+
         const match = findTranslation(censoredStates, censored);
         if (!match) throw Error(`Unrecognized censored state: ${censored}`);
         this._censored = match.to;
+
     }
 
     setChannels(channels: string) {
-        this._channels = channels.toLowerCase().trim().replace(/ /g, '.');
+        this._channels = channels.toLowerCase().trim().replace(/ /g, '.') || null;
     }
 
     setChannelLayout(layout: string) {
@@ -626,10 +713,17 @@ export default class Release implements Readonly<ReleaseState> {
         this._dvProfile = dv ? profile : null;
     }
 
-    setEdition(edition: string) {
+    setEdition(edition: string | null) {
+
+        if (!edition) {
+            this._edition = null;
+            return;
+        }
+
         const match = findTranslation(editions, edition);
         if (!match) throw Error(`Unrecognized edition: ${edition}`);
         this._edition = match.to;
+
     }
 
     setExtension(extension: string) {
@@ -759,10 +853,17 @@ export default class Release implements Readonly<ReleaseState> {
 
     }
 
-    setMultiAudio(multiAudio: string) {
+    setMultiAudio(multiAudio: string | null) {
+
+        if (!multiAudio) {
+            this._multiAudio = null;
+            return;
+        }
+
         const match = findTranslation(multiAudioFormats, multiAudio);
         if (!match) throw Error(`Unrecognized multi audio format: ${multiAudio}`);
         this._multiAudio = match.to;
+
     }
 
     setOriginalTitle(title: string) {
@@ -774,7 +875,12 @@ export default class Release implements Readonly<ReleaseState> {
         this.inferRemuxSourceFromResolution();
     }
 
-    setRepack(repack: string) {
+    setRepack(repack: string | null) {
+
+        if (!repack) {
+            this._repack = null;
+            return;
+        }
 
         const lookup = repack.toLowerCase().trim();
 
@@ -791,7 +897,13 @@ export default class Release implements Readonly<ReleaseState> {
 
     }
 
-    setResolution(resolution: string) {
+    setResolution(resolution: string | null) {
+
+        if (!resolution) {
+            this._resolution = null;
+            this._scanType = null;
+            return;
+        }
 
         const lookup = resolution.toLowerCase().trim();
         const match = resolutionNames.find(name => name === lookup);
@@ -833,7 +945,7 @@ export default class Release implements Readonly<ReleaseState> {
     }
 
     setSeasonOrEpisodeTitle(title: string) {
-        this._seasonOrEpisodeTitle = title.trim();
+        this._seasonOrEpisodeTitle = title.trim() || null;
     }
 
     setSignLanguage(signLanguage: string | null) {
@@ -849,13 +961,25 @@ export default class Release implements Readonly<ReleaseState> {
 
     }
 
-    setSource(source: string) {
+    setSource(source: string | null) {
+
+        if (!source) {
+            this._source = null;
+            return;
+        }
+
         const match = findTranslation(sources, source);
         if (!match) throw Error(`Unrecognized source: ${source}`);
         this._source = match.to;
+
     }
 
-    setStreamingService(streamingService: string) {
+    setStreamingService(streamingService: string | null) {
+
+        if (!streamingService) {
+            this._streamingService = null;
+            return;
+        }
 
         const lookup = streamingService.toLowerCase().trim();
 
@@ -881,7 +1005,17 @@ export default class Release implements Readonly<ReleaseState> {
         this._title = title;
     }
 
-    setVideoCodec(codec: string) {
+    /**
+     * @param preserveEncoder If true, setting something like "HEVC" won't clear
+     * "x265" for example
+     */
+
+    setVideoCodec(codec: string | null, preserveEncoder = false) {
+
+        if (!codec) {
+            this._videoCodec = null;
+            return;
+        }
 
         /* This bit is a little bit gnarly. If we have an encoder from the
            filename, we don't want it to be overridden by MediaInfo if the file
@@ -893,7 +1027,7 @@ export default class Release implements Readonly<ReleaseState> {
            But if the filename has x264 and MediaInfo has HEVC, we switch to
            H.265 or whatever. */
 
-        const encoder = this._videoCodec?.encoder;
+        const encoder = preserveEncoder ? this._videoCodec?.encoder : null;
 
         if (encoder) {
 

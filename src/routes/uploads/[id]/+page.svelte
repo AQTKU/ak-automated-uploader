@@ -7,13 +7,14 @@
     import TorrentProgress from './TorrentProgress.svelte';
     import Screenshots from './Screenshots.svelte';
     import Trackers from './Trackers.svelte';
+    import ReleaseEditor from './ReleaseEditor.svelte';
     import insertWbr from '$lib/util/insert-wbr';
     import { getWhy } from '$lib/util/get-why';
     import { browser } from '$app/environment';
 
     let { data }: { data: PageData } = $props();
     // svelte-ignore state_referenced_locally
-    let { errors, id, release, tmdbResults, tmdbSelected, files,
+    let { errors, id, release, releaseValues, releaseBaseline, releaseSettled, tmdbResults, tmdbSelected, files,
         torrentProgress, screenshots, trackerFields, trackerData, trackerStatus,
         trackerSearchResults, trackerActions
     } = $state(data);
@@ -49,6 +50,9 @@
             if (update.id) id = update.id;
             if (update.release) {
                 release = update.release;
+                releaseValues = update.releaseValues;
+                releaseBaseline = update.releaseBaseline;
+                releaseSettled = update.releaseSettled;
                 updateTitleHeight();
             }
             if (update.tmdbResults) tmdbResults = update.tmdbResults;
@@ -97,9 +101,27 @@
 <main id="upload">
 
     <header>
-        <h2>{@html insertWbr(release?.fileName ?? '') }</h2>
+        <h2>
+            <button
+                popovertarget="release-editor"
+                disabled={!releaseSettled}
+                title={releaseSettled ? '' : 'Waiting for MediaInfo and metadata'}
+            >{@html insertWbr(release?.fileName ?? '') }</button>
+        </h2>
         <button onclick={close}>✖️ Close</button>
     </header>
+
+    {#if id && data.releaseFields && data.releaseLayout && releaseValues && releaseBaseline && errors}
+        <ReleaseEditor
+            fields={data.releaseFields}
+            layout={data.releaseLayout}
+            values={releaseValues}
+            baseline={releaseBaseline}
+            settled={releaseSettled ?? false}
+            uploadId={id}
+            bind:errors={errors}
+        />
+    {/if}
 
     {#if errors}
         {#each errors as error}

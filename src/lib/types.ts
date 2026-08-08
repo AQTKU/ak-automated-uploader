@@ -44,7 +44,7 @@ export type TrackerField =
         default: boolean;
     };
 
-export type TrackerLayout = (string | null)[][];
+export type FieldLayout = (string | null)[][];
 
 export type TrackerSearchResults = { name: string, url: string }[];
 
@@ -152,7 +152,7 @@ export interface TrackerState {
 export interface TrackerFieldsState {
     name: string;
     fields: TrackerFieldState[];
-    layout: TrackerLayout;
+    layout: FieldLayout;
 }
 
 export type TrackerStatus = '' |

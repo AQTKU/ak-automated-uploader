@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import Release from './release';
+import { getReleaseValues, releaseFields, releaseLayout, setReleaseValue } from './release-fields';
 
 describe('filename parsing', () => {
 
@@ -139,14 +140,20 @@ describe('video', () => {
 
     test('keeps the filename encoder when MediaInfo agrees on the family', () => {
         const release = new Release('Movie.Name.2019.1080p.BluRay.x264-GRP');
-        release.setVideoCodec('AVC');
+        release.setVideoCodec('AVC', true);
         expect(release.videoCodec?.encoder).toBe('x264');
     });
 
     test('drops the filename encoder when MediaInfo disagrees', () => {
         const release = new Release('Movie.Name.2019.1080p.BluRay.x264-GRP');
-        release.setVideoCodec('HEVC');
+        release.setVideoCodec('HEVC', true);
         expect(release.videoCodec).toEqual({ likeAvc: 'HEVC', likeH264: 'H.265', encoder: null });
+    });
+
+    test('takes the codec as given when the encoder is named on purpose', () => {
+        const release = new Release('Movie.Name.2019.1080p.BluRay.x264-GRP');
+        release.setVideoCodec('AVC');
+        expect(release.videoCodec).toEqual({ likeAvc: 'AVC', likeH264: 'H.264', encoder: null });
     });
 
 });
@@ -406,6 +413,103 @@ describe('unknown values', () => {
         const release = new Release('Movie.Name.2019.1080p.BluRay.x264-GRP');
         release.setLanguage('qqq');
         expect(release.language).toBe('QQQ');
+    });
+
+});
+
+describe('editing', () => {
+
+    test('every closed-set setter clears on null', () => {
+
+        const release = new Release('Movie.Name.2019.Extended.UNCUT.REPACK.Hybrid.2160p.AMZN.WEB-DL.HDR.DDP5.1.Atmos.with.ASL.x265-GRP');
+
+        release.setAudioCodec(null);
+        release.setCategory(null);
+        release.setCensored(null);
+        release.setEdition(null);
+        release.setMultiAudio(null);
+        release.setRepack(null);
+        release.setResolution(null);
+        release.setSignLanguage(null);
+        release.setSource(null);
+        release.setStreamingService(null);
+        release.setVideoCodec(null);
+        release.setHdr(null);
+
+        expect(release.audioCodec).toBeNull();
+        expect(release.category).toBeNull();
+        expect(release.censored).toBeNull();
+        expect(release.edition).toBeNull();
+        expect(release.multiAudio).toBeNull();
+        expect(release.repack).toBeNull();
+        expect(release.resolution).toBeNull();
+        expect(release.signLanguage).toBeNull();
+        expect(release.source).toBeNull();
+        expect(release.streamingService).toBeNull();
+        expect(release.videoCodec).toBeNull();
+        expect(release.hdr).toBeNull();
+
+    });
+
+    test('clearing the resolution clears the scan type with it', () => {
+        const release = new Release('Movie.Name.2019.1080i.HDTV.x264-GRP');
+        expect(release.scanType).toBe('Interlaced');
+        release.setResolution(null);
+        expect(release.scanType).toBeNull();
+    });
+
+    test('the category can be corrected after a misparse', () => {
+        const release = new Release('Movie.Name.2019.1080p.BluRay.x264-GRP');
+        expect(release.category).toBe('movie');
+        release.setCategory('tv');
+        expect(release.category).toBe('tv');
+        expect(() => release.setCategory('documentary')).toThrow();
+    });
+
+});
+
+describe('release fields', () => {
+
+    const release = new Release('Show.Name.S01E05.Episode.Title.2160p.AMZN.WEB-DL.HDR10Plus.DDP5.1.Atmos.DV.x265-GROUP.mkv');
+
+    test('offers every option as something a setter accepts', () => {
+        for (const field of releaseFields) {
+            if (field.type !== 'select') continue;
+            for (const option of field.options) {
+                expect(() => setReleaseValue(new Release(''), field.id, option.id)).not.toThrow();
+            }
+        }
+    });
+
+    test('round trips its own values', () => {
+
+        const values = getReleaseValues(release);
+        const before = release.toJSON();
+
+        for (const [key, value] of Object.entries(values)) {
+            if (key === 'fileName') continue;
+            setReleaseValue(release, key, value);
+        }
+
+        expect(release.toJSON()).toEqual(before);
+
+    });
+
+    test('rejects unknown fields and out of range options', () => {
+        expect(() => setReleaseValue(release, 'nonsense', 'x')).toThrow();
+        expect(() => setReleaseValue(release, 'source', 'betamax')).toThrow();
+        expect(() => setReleaseValue(release, 'remux', 'yes')).toThrow();
+        expect(() => setReleaseValue(release, 'title', true)).toThrow();
+    });
+
+    test("refuses to set the filename, which is the parser's input", () => {
+        expect(() => setReleaseValue(release, 'fileName', 'Other.Name.mkv')).toThrow();
+    });
+
+    test('every laid out area is a field, and every field is laid out', () => {
+        const ids = releaseFields.map(field => field.id).sort();
+        const areas = [...new Set(releaseLayout.flat().filter(area => area !== null))].sort();
+        expect(areas).toEqual(ids);
     });
 
 });

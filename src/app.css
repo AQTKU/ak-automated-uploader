@@ -136,6 +136,10 @@ fieldset:disabled {
     cursor: wait;
 }
 
+input:disabled {
+    opacity: 0.6;
+}
+
 legend {
     display: none;
 }
@@ -566,7 +570,32 @@ h3 {
     gap: 1rem;
 }
 
-#upload > div {
+#upload header h2 {
+    anchor-name: --release-title;
+}
+
+#upload header h2 > button {
+    background: none;
+    padding: 0;
+    text-align: left;
+    border-radius: .25rem;
+}
+
+#upload header h2 > button:enabled:hover, #upload header h2 > button:focus-visible {
+    color: var(--lighter-text-color);
+    text-decoration: underline dotted;
+    text-underline-offset: .3rem;
+}
+
+#upload header h2 > button:disabled {
+    cursor: wait;
+}
+
+#upload:has(:popover-open) header > button {
+    display: none;
+}
+
+#upload > div:not([popover]) {
     display: grid;
     gap: .5rem;
     grid-template-rows: auto 12.5rem auto auto auto;
@@ -580,7 +609,7 @@ h3 {
 
 @media (min-width: 800px) {
 
-    #upload > div {
+    #upload > div:not([popover]) {
         grid-template-columns: 25rem 1fr;
         grid-template-rows: auto 12.5rem auto auto;
         grid-template-areas:
@@ -593,7 +622,7 @@ h3 {
 
 @media (min-width: 1150px) {
 
-    #upload > div {
+    #upload > div:not([popover]) {
         grid-template-columns: 25rem 1fr 1fr;
         grid-template-rows: auto 12.5rem auto;
         grid-template-areas: 
@@ -606,7 +635,7 @@ h3 {
 
 @media (min-width: 2000px) {
     
-    #upload > div {
+    #upload > div:not([popover]) {
         grid-template-columns: 1fr 85rem;
         grid-template-rows: auto 12.5rem auto 1fr;
         grid-template-areas:
@@ -620,7 +649,7 @@ h3 {
 
 @media (min-width: 2200px) {
 
-    #upload > div {
+    #upload > div:not([popover]) {
         grid-template-columns: 2fr 1fr 85rem;
         grid-template-rows: auto 12.5rem 1fr;
         grid-template-areas: 
@@ -633,7 +662,7 @@ h3 {
 
 @media (min-width: 2600px) {
 
-    #upload > div {
+    #upload > div:not([popover]) {
         grid-template-columns: 25rem 1fr 1fr 85rem;
         grid-template-rows: auto 1fr;
         grid-template-areas:
@@ -641,7 +670,7 @@ h3 {
             "tmdb files screenshots trackers";
     }
 
-    #upload > div {
+    #upload > div:not([popover]) {
         position: fixed;
         bottom: 1rem;
         top: calc(5.3rem + var(--title-height));
@@ -663,6 +692,42 @@ h3 {
         top: 2.125rem;
     }
 
+}
+
+/*** Release editor ***********************************************************/
+
+#release-editor {
+    background: var(--background-color);
+    border: .1rem solid var(--accent-color);
+    border-radius: .25rem;
+    box-shadow: 0 1rem 3rem #00000099;
+    color: inherit;
+    max-width: min(80rem, calc(100vw - 3.5rem));
+    max-height: calc(100vh - 15rem);
+    overflow: auto;
+}
+
+@media (max-width: 1100px) {
+    #release-editor {
+        width: calc(100vw - 3.5rem);
+    }
+}
+
+@supports (position-area: block-end) {
+
+    #release-editor {
+        position-anchor: --release-title;
+        position-area: block-end span-inline-end;
+        position-try-fallbacks: flip-block, flip-inline;
+        margin: .25rem 0 0 0;
+    }
+
+}
+
+#release-editor .revert {
+    background: none;
+    padding: 0 .25rem;
+    align-self: center;
 }
 
 /*** Torrent progress *********************************************************/
@@ -848,22 +913,22 @@ h3 {
     font-size: smaller;
 }
 
-.tracker [size] {
+.tracker [size], #release-editor [size] {
     flex-grow: 0;
 }
 
 @media (min-width: 1100px) {
 
-    .tracker form > div {
+    .tracker form > div, #release-editor form > div {
         display: grid;
         gap: .5rem;
     }
 
-    .tracker .field {
+    .tracker .field, #release-editor .field {
         margin: 0;
     }
 
-    .tracker label {
+    .tracker label, #release-editor label {
         min-width: 7rem;
     }
 

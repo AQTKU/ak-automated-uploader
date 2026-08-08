@@ -1,4 +1,4 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, TrackerLayout } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, FieldLayout } from '$lib/types';
 import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
@@ -151,7 +151,7 @@ const layout = [
     ['sd',                null,              'free'],
     ['stream',            null,              'free'],
     ['accessibilityType', 'accessibilityType'],
-] as const satisfies TrackerLayout;
+] as const satisfies FieldLayout;
 
 const bannedGroupsCache = new TTLCache<unknown, {name: string, types: string[] }[]>({ ttl: 1000 * 60 * 60 });
 
@@ -219,11 +219,13 @@ export default class Aither extends Tracker {
 
         const type = this.getOption('typeId');
 
-        if (release.dv) this.data.dv = true;
-        if (release.hdr?.plus === 'HDR') this.data.hdr = true;
-        if (release.hdr?.plus === 'HDR10+') this.data.hdr10p = true;
+        this.data.dv = release.dv;
+        this.data.hdr = release.hdr?.plus === 'HDR';
+        this.data.hdr10p = release.hdr?.plus === 'HDR10+';
         const resolution = parseInt(release.resolution ?? '0');
-        if (resolution <= 576 && resolution > 0) this.data.sd = true;
+        this.data.sd = resolution <= 576 && resolution > 0;
+
+        this.setOption('accessibilityType', '');
         if (release.signLanguage === 'ASL') this.setOption('accessibilityType', 'ASL');
         if (release.signLanguage === 'BSL') this.setOption('accessibilityType', 'BSL');
         if (release.audioDescription) this.setOption('accessibilityType', 'Audio Description');

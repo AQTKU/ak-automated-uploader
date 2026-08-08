@@ -1,14 +1,15 @@
 <script lang="ts">
-    import type { TrackerAfterUploadActionState, TrackerFieldState, TrackerLayout, TrackerSearchResults, TrackerStatus } from '$lib/types';
+    import type { TrackerAfterUploadActionState, TrackerFieldState, FieldLayout, TrackerSearchResults, TrackerStatus } from '$lib/types';
     import { getWhy } from '$lib/util/get-why';
     import trackerNameToId from '$lib/util/tracker-name-to-id';
+    import buildGridTemplateArea from '$lib/util/build-grid-template-area';
     import { SvelteMap } from 'svelte/reactivity';
     import FormControl from './FormControl.svelte';
 
     let { name, fields, layout, data, uploadId, status, searchResults, actions, errors = $bindable(), hidden }: {
         name: string,
         fields: TrackerFieldState[],
-        layout: TrackerLayout,
+        layout: FieldLayout,
         data: Record<string, string | boolean> | undefined,
         uploadId: number,
         status: TrackerStatus,
@@ -70,19 +71,6 @@
 
     }
 
-    function buildGridTemplateArea(layout: TrackerLayout) {
-
-        const width = Math.max(...layout.map(row => row.length));
-        if (!width) return;
-
-        // Takes ['one', 'two', 'three'][] and transforms it to '"one two three" "..."'
-
-        return layout
-            .map(row => `"${Array.from({ length: width }, (_, i) => row[i] ?? '.').join(' ')}"`)
-            .join(' ');
-
-    }
-
 </script>
 
 
@@ -115,8 +103,8 @@
             style:grid-template-areas={buildGridTemplateArea(layout)}
         >
             {#each fields as field, i}
-                <FormControl 
-                    trackerName={name}
+                <FormControl
+                    idPrefix={trackerNameToId(name)}
                     {field}
                     value={data ? data[field.id] || undefined : undefined}
                 />

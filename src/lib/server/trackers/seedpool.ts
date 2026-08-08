@@ -1,4 +1,4 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, TrackerLayout } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, FieldLayout } from '$lib/types';
 import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
@@ -123,7 +123,7 @@ const layout = [
     ['dv',            'anonymous',       'internal'],
     ['hdr',           'exclusive',       'free'],
     ['hdr10p',        'sd',              'free'],
-] as const satisfies TrackerLayout;
+] as const satisfies FieldLayout;
 
 export default class Seedpool extends Tracker {
     apiKey: string = '';
@@ -196,12 +196,12 @@ export default class Seedpool extends Tracker {
             this.setOption('categoryId', 'Movie');
         }
 
-        if (release.dv) this.data.dv = true;
-        if (release.hdr?.plus === 'HDR') this.data.hdr = true;
-        if (release.hdr?.plus === 'HDR10+') this.data.hdr10p = true;
-        
+        this.data.dv = release.dv;
+        this.data.hdr = release.hdr?.plus === 'HDR';
+        this.data.hdr10p = release.hdr?.plus === 'HDR10+';
+
         const resolution = parseInt(release.resolution ?? '0');
-        if (resolution <= 576 && resolution > 0) this.data.sd = true;
+        this.data.sd = resolution <= 576 && resolution > 0;
 
         let titleFormat = '{title aka} {year} {edition} {language if_not_dual_audio} {attributes} {repack} {resolution} {source} ';
         

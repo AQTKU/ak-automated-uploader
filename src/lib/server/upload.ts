@@ -5,17 +5,21 @@ import errorString from './util/error-string';
 import Files, { type FilesState } from './files';
 import Torrent from './torrent';
 import Screenshots from './screenshots';
-import getMediaInfo from '$lib/server/mediainfo';
+import getMediaInfo, { type MediaInfo } from '$lib/server/mediainfo';
 import type { TmdbHydratedSearchResult, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResults, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState } from '$lib/types';
 import { Trackers } from './trackers';
 import { normalize } from './util/normalize';
 import { getMalId } from './jikan';
 import { log } from './util/log';
+import { getReleaseValues as getReleaseEditorValues, releaseFields, releaseFileNameField, setReleaseValue } from './release-fields';
 
 export interface UploadState {
     errors: string[];
     id: number;
     release: ReleaseState;
+    releaseValues: Record<string, string | boolean>;
+    releaseBaseline: Record<string, string | boolean>;
+    releaseSettled: boolean;
     tmdbResults: TmdbSearchResult[];
     tmdbSelected: TmdbHydratedSearchResult;
     files: FilesState;
@@ -46,6 +50,11 @@ export default class Upload {
     private mediaInfoFile?: string;
     private trackers?: Trackers;
     private matchedTitles: Map<number, string> = new Map();
+
+    private mediaInfoResult?: MediaInfo;
+    private tmdbTitles?: { title: string, originalTitle: string };
+    private releaseBaselineCache?: { key: string, values: Record<string, string | boolean> };
+
     private initializationPromise: Promise<void> | null = null;
 
     private errors: string[] = [];
@@ -67,6 +76,11 @@ export default class Upload {
         this.torrent?.stop();
         this.torrent?.cleanup();
         this.trackers?.cleanup();
+    }
+
+    checkReleaseSettled() {
+        if (!this.mediaInfoResult) throw Error('MediaInfo not ready');
+        if (!this.tmdbSelected) throw Error('TMDB not ready');
     }
 
     emitError(error: string) {
@@ -95,6 +109,10 @@ export default class Upload {
 
     get name() {
         return this.release.fileName;
+    }
+
+    get releaseSettled() {
+        return !!this.mediaInfoResult && !!this.tmdbSelected;
     }
 
     get readyToEdit(): Promise<void> {
@@ -277,20 +295,25 @@ export default class Upload {
             const normalizedMatchedTitle = normalize(matchedTitle);
 
             const normalizedTitle = normalize(hydrated.title);
-            this.release.setTitle(normalizedMatchedTitle.startsWith(normalizedTitle) ? matchedTitle : hydrated.title);
+            let originalTitle = '';
 
-            this.release.setOriginalTitle('');
             if (hydrated.title !== hydrated.originalTitle) {
                 const normalizedOriginalTitle = normalize(hydrated.originalTitle);
-                this.release.setOriginalTitle(
-                    normalizedMatchedTitle.startsWith(normalizedOriginalTitle) ?
-                        matchedTitle :
-                        hydrated.originalTitle
-                );
+                originalTitle = normalizedMatchedTitle.startsWith(normalizedOriginalTitle) ?
+                    matchedTitle :
+                    hydrated.originalTitle;
             }
+
+            this.tmdbTitles = {
+                title: normalizedMatchedTitle.startsWith(normalizedTitle) ? matchedTitle : hydrated.title,
+                originalTitle,
+            };
+            this.release.setTitle(this.tmdbTitles.title);
+            this.release.setOriginalTitle(this.tmdbTitles.originalTitle);
 
             this.tmdbSelected = hydrated;
             this.emitUpdate('tmdbSelected');
+            this.emitUpdate('release');
             this.trackers?.setRelease(this.release);
 
 
@@ -333,72 +356,69 @@ export default class Upload {
             const mediaInfo = await this.mediaInfo;
             this.signal.throwIfAborted();
 
-            if (mediaInfo.defaultVideo) {
-
-                const { Format, Width, Height, ScanType, HDR_Format, HDR_Format_Profile, transfer_characteristics,
-                        MaxCLL, Encoded_Library_Name } = mediaInfo.defaultVideo;
-                        
-                /* Encoded_Library_Name is free text, so fall back to the format
-                   when it isn't an encoder we recognise */
-                if (Format) {
-                    try { this.release.setVideoCodec(Encoded_Library_Name || Format); }
-                    catch { this.release.setVideoCodec(Format); }
-                }
-                if (Width && Height) this.release.setDimensions(Width, Height, ScanType);
-                if (HDR_Format) this.release.setHdrFormat(HDR_Format, HDR_Format_Profile, transfer_characteristics, MaxCLL);
-
-            }
-
-            if (mediaInfo.defaultAudio) {
-
-                const { Format, Format_AdditionalFeatures, Channels, ChannelLayout, Language, Title } = mediaInfo.defaultAudio;
-
-                if (Format) this.release.setAudioCodec(
-                    Format_AdditionalFeatures ? `${Format} ${Format_AdditionalFeatures}` : Format
-                );
-
-                if (ChannelLayout) {
-                    this.release.setChannelLayout(ChannelLayout);
-                } else if (Channels) {
-                    switch (Channels) {
-                        case 8: this.release.setChannels('7.1'); break;
-                        case 6: this.release.setChannels('5.1'); break;
-                        case 2: this.release.setChannels('2.0'); break;
-                        // Trust whatever was in the filename for any other unusual formats
-                    }
-                }
-
-                if (Language) this.release.setLanguage(Language);
-
-                const audioDescriptionTitles = [
-                    'descriptive',
-                    'audio description',
-                    'video description',
-                    'described video',
-                    'visual description',
-                ];
-                if (Title && audioDescriptionTitles.includes(Title.toLowerCase())) {
-                    this.release.setAudioDescription(true);
-                }
-
-            }
-
-            const audioLanguages = new Set(mediaInfo.audio
-                .filter(track => !(track.Title?.toLowerCase().includes('commentary')))
-                .map(audio => audio.Language)
-            );
-            if (audioLanguages.size >= 3) {
-                this.release.setMultiAudio('Multi');
-            } else if (audioLanguages.size === 2) {
-                this.release.setMultiAudio('Dual-Audio');
-            }
+            this.mediaInfoResult = mediaInfo;
+            this.release.applyMediaInfo(mediaInfo);
 
             this.emitUpdate('files');
+            this.emitUpdate('release');
             this.trackers?.setRelease(this.release);
 
         } catch (error) {
             this.handleError(`Couldn't set MediaInfo for ${basename(path)}`, error);
         }
+
+    }
+
+    setReleaseValues(values: Record<string, string | boolean>) {
+
+        this.checkReleaseSettled();
+
+        const fileName = values[releaseFileNameField];
+        if (typeof fileName === 'string' && fileName !== this.release.fileName) {
+            this.release = this.buildRelease(fileName);
+        }
+
+        // Order matters: DV profile turns Dolby Vision on, Atmos codec sets Atmos flag
+        const order = releaseFields.map(field => field.id);
+        const entries = Object.entries(values)
+            .filter(([key]) => key !== releaseFileNameField)
+            .sort(([first], [second]) => order.indexOf(first) - order.indexOf(second));
+
+        for (const [key, value] of entries) setReleaseValue(this.release, key, value);
+
+        this.emitUpdate('release');
+        this.trackers?.setRelease(this.release);
+
+    }
+
+    private buildRelease(fileName: string) {
+
+        const release = new Release(fileName);
+
+        if (this.mediaInfoResult) release.applyMediaInfo(this.mediaInfoResult);
+        if (this.tmdbTitles) {
+            release.setTitle(this.tmdbTitles.title);
+            release.setOriginalTitle(this.tmdbTitles.originalTitle);
+        }
+
+        return release;
+
+    }
+
+    private get releaseBaseline() {
+
+        const key = [
+            this.release.fileName, this.mediaInfoFile,
+            this.tmdbTitles?.title, this.tmdbTitles?.originalTitle,
+        ].join('\0');
+
+        if (this.releaseBaselineCache?.key !== key) {
+            const values = getReleaseEditorValues(this.buildRelease(this.release.fileName));
+            values[releaseFileNameField] = basename(this.path);
+            this.releaseBaselineCache = { key, values };
+        }
+
+        return this.releaseBaselineCache.values;
 
     }
 
@@ -413,7 +433,12 @@ export default class Upload {
 
         if (!key || key === 'errors') output.errors = this.errors;
         if (!key || key === 'id') output.id = this.id;
-        if (!key || key === 'release') output.release = this.release.toJSON();
+        if (!key || key === 'release') {
+            output.release = this.release.toJSON();
+            output.releaseValues = getReleaseEditorValues(this.release);
+            output.releaseBaseline = this.releaseBaseline;
+            output.releaseSettled = this.releaseSettled;
+        }
         if (!key || key === 'tmdbResults') output.tmdbResults = this.tmdbResults;
         if (!key || key === 'tmdbSelected') output.tmdbSelected = this.tmdbSelected;
         if (!key || key === 'files') output.files = this.files?.toJSON();

@@ -29,7 +29,7 @@ ORIGIN=http://localhost:51901 PORT=51901 bun build/index.js
 ## Project Structure
 
 ```
-src/lib/server/
+src/lib/server/        # Most base classes and models
   tracker.ts           # Abstract base class all trackers extend
   release.ts           # Parses filenames into structured metadata, some methods accept MediaInfo data
   upload.ts            # Orchestrates the full upload workflow
@@ -93,7 +93,7 @@ Extend the `ImageHost` base class in `src/lib/server/image-hosts/`. Register in 
 
 **Validation**: Use Valibot (`import * as v from 'valibot'`) for all external input validation. Define schemas near the code that uses them.
 
-**Error messages**: Use the `errorString()` utility. It's used to add human-readable context to any error message, and return a string. `catch (error) { throw Error(errorString("Couldn't upload torrent", error)); }` would include a flattened Valibot error for example, or `error.message` from an `Error`, or just pass through a string.
+**Error messages**: Use the `errorString()` utility. It's used to add human-readable context to any error message, and return a string. `catch (error) { throw Error(errorString("Couldn't upload torrent", error)); }` would include a flattened Valibot error for example, or `error.message` from an `Error`, or just pass through a string. Assume all written error messages will be read by a user. Use plain language in a neutral tone.
 
 **Logging**: Use `log()` from `src/lib/server/util/log.ts`. First argument is a color (`'tomato'`: fatal error, `'khaki'`: warning, `'aquamarine'`: success, `'lightgrey'`: note).
 

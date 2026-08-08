@@ -136,6 +136,10 @@ export type Resolution =
     | typeof resolutions[number]['to']
     | Extract<typeof resolutions[number], { interlacedTo: string }>['interlacedTo'];
 
+export const resolutionNames = resolutions.flatMap(row =>
+    'interlacedTo' in row ? [row.to, row.interlacedTo] : [row.to]
+);
+
 type SourceRow = { from: string[], to: string, streaming?: boolean };
 
 export const sources = [
@@ -261,4 +265,6 @@ export const scanTypes = ['Interlaced', 'Progressive'] as const;
 
 export type ScanType = typeof scanTypes[number];
 
-export type Category = 'tv' | 'movie';
+export const categories = ['tv', 'movie'] as const;
+
+export type Category = typeof categories[number];

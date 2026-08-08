@@ -1,4 +1,4 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, Metadata, TrackerLayout } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, Metadata, FieldLayout } from '$lib/types';
 import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
@@ -239,7 +239,7 @@ const layout = [
     ['special', 'live'],
     ['pack'],
     ['stream'],
-] as const satisfies TrackerLayout;
+] as const satisfies FieldLayout;
 
 const BANNED_GROUPS = [
     'sicario', 'tommy', 'x0r', 'nikt0', 'fgt', 'd3g', 'megusta', 'yify',
@@ -285,6 +285,7 @@ export default class BeyondHD extends Tracker {
             this.setOption('categoryId', 'Movies');
         }
 
+        this.setOption('type', 'Other');
         if (release.remux) {
             if (release.resolution === '2160p') this.setOption('type', 'UHD Remux');
             else if (['480p', '480i', '576p', '576i'].includes(release.resolution ?? '')) this.setOption('type', 'DVD Remux');
@@ -296,6 +297,7 @@ export default class BeyondHD extends Tracker {
 
         // Source — BHD only has 5 values, derived from release.source
 
+        this.setOption('source', 'WEB');
         if (release.source?.includes('HD-DVD')) {
             this.setOption('source', 'HD-DVD');
         } else if (release.source?.includes('WEB')) {
@@ -310,6 +312,7 @@ export default class BeyondHD extends Tracker {
 
         // Provider — streaming service, lowercase slug
 
+        this.setOption('provider', '');
         if (release.streamingService) {
             try { this.setOption('provider', release.streamingService); }
             catch { /* service not in BHD's list */ }
@@ -317,6 +320,8 @@ export default class BeyondHD extends Tracker {
 
         // Edition
 
+        this.setOption('edition', '');
+        this.data.customEdition = '';
         if (!release.edition) {
             if (release.censored === 'UNCUT') this.setOption('edition', 'Uncut');
             if (release.censored === 'UNRATED') this.setOption('edition', 'Unrated');
@@ -342,23 +347,21 @@ export default class BeyondHD extends Tracker {
 
         this.data.pack = release.isSeasonPack;
         this.data.special = release.isSpecial;
-        if (release.resolution) this.data.sd = ['480p', '480i', '576p', '576i', '540p'].includes(release.resolution);
+        this.data.sd = ['480p', '480i', '576p', '576i', '540p'].includes(release.resolution ?? '');
 
         // Tags
 
-        if (release.multiAudio) this.data.tagDualAudio = true;
-        if (release.dv) this.data.tagDV = true;
+        this.data.tagDualAudio = !!release.multiAudio;
+        this.data.tagDV = release.dv;
 
-        if (release.hdr) {
-            if (release.hdr.plus === 'HDR10+') this.data.tagHDR10P = true;
-            else if (release.hdr.short === 'HLG') this.data.tagHLG = true;
-            else this.data.tagHDR10 = true;
-        }
+        this.data.tagHDR10P = release.hdr?.plus === 'HDR10+';
+        this.data.tagHLG = release.hdr?.short === 'HLG';
+        this.data.tagHDR10 = !!release.hdr && release.hdr.plus !== 'HDR10+' && release.hdr.short !== 'HLG';
 
-        if (release.hybrid) this.data.tagHybrid = true;
+        this.data.tagHybrid = release.hybrid;
 
-        if (release.source?.includes('WEB-DL')) this.data.tagWEBDL = true;
-        else if (release.source?.includes('WEBRip')) this.data.tagWEBRip = true;
+        this.data.tagWEBDL = !!release.source?.includes('WEB-DL');
+        this.data.tagWEBRip = !!release.source?.includes('WEBRip');
 
         // Title
 

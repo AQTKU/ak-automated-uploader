@@ -1,4 +1,4 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, TrackerLayout } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, FieldLayout } from '$lib/types';
 import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
@@ -183,7 +183,7 @@ const layout = [
     ['personalRelease', 'refundable'],
     ['modQueueOptIn', 'free'],
     ['draftQueueOptIn', 'free'],
-] as const satisfies TrackerLayout;
+] as const satisfies FieldLayout;
 
 const bannedGroupsCache = new TTLCache<unknown, string[]>({ ttl: 1000 * 60 * 60 });
 
@@ -249,8 +249,9 @@ export default class LST extends Tracker {
             this.setOption('typeId', 'HDTV');
         }
 
-        if (release.streamingService) this.data.provider = release.streamingService;
+        this.data.provider = release.streamingService ?? '';
 
+        this.setOption('editionId', '');
         if (release.censored === 'UNCUT') this.setOption('editionId', 'Uncut');
         if (release.censored === 'UNRATED') this.setOption('editionId', 'Unrated');
 
@@ -271,6 +272,7 @@ export default class LST extends Tracker {
         }
 
         {
+            this.setOption('hdrDv', 'None');
             const hdrParts: string[] = [];
             if (release.dvProfile) hdrParts.push(`DV P${release.dvProfile}`);
             if (release.hdr) hdrParts.push(release.hdr.plus);
@@ -281,7 +283,7 @@ export default class LST extends Tracker {
             }
         }
 
-        if (release.multiAudio) this.data.dualAudio = true;
+        this.data.dualAudio = !!release.multiAudio;
 
         const type = this.getOption('typeId');
 
