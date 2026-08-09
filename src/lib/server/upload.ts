@@ -6,12 +6,14 @@ import Files, { type FilesState } from './files';
 import Torrent from './torrent';
 import Screenshots from './screenshots';
 import getMediaInfo, { type MediaInfo } from '$lib/server/mediainfo';
-import type { TmdbHydratedSearchResult, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResults, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState } from '$lib/types';
+import type { Metadata, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResults, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState } from '$lib/types';
 import { Trackers } from './trackers';
 import { normalize } from './util/normalize';
 import { getMalId } from './jikan';
 import { log } from './util/log';
 import { getReleaseValues as getReleaseEditorValues, releaseFields, releaseFileNameField, setReleaseValue } from './release-fields';
+import { cloneMetadata, emptyMetadata, getMetadataValues, setMetadataValue } from './metadata-fields';
+import type { Category } from './release-tables';
 
 export interface UploadState {
     errors: string[];
@@ -21,7 +23,9 @@ export interface UploadState {
     releaseBaseline: Record<string, string | boolean>;
     releaseSettled: boolean;
     tmdbResults: TmdbSearchResult[];
-    tmdbSelected: TmdbHydratedSearchResult;
+    tmdbSelected: Metadata;
+    metadataValues: Record<string, string>;
+    metadataBaseline: Record<string, string>;
     files: FilesState;
     torrentProgress: number;
     screenshots: string[];
@@ -37,7 +41,8 @@ export default class Upload {
     id: number;
     private release: Release;
     private tmdbResults?: TmdbSearchResult[];
-    private tmdbSelected?: TmdbHydratedSearchResult;
+    private tmdbSelected?: Metadata;
+    private tmdbBaseline?: Metadata;
     private updateCallbacks: ((callback: Partial<UploadState>) => void)[] = [];
     private statusUpdateCallbacks: (() => void)[] = [];
     private errorCallbacks: ((error: string) => void)[] = [];
@@ -209,25 +214,32 @@ export default class Upload {
     private async initializeTmdb() {
 
         try {
-
-            const results = this.release.category == 'tv'
-                ? await tmdb.searchTv(this.release.title)
-                : await tmdb.searchMovie(this.release.title, this.release.year);
-
-            this.signal.throwIfAborted();
-
-            this.tmdbResults = results.results;
-            this.emitUpdate('tmdbResults');
-
-            if (results.match) {
-                await this.selectTmdbResult(results.match.result.tmdbId, results.match.name);
-                this.signal.throwIfAborted();
-            }
-
-
+            await this.searchTmdb(
+                this.release.title,
+                this.release.category ?? 'movie',
+                this.release.category === 'tv' ? null : this.release.year
+            );
         } catch (error) {
             this.errors.push(errorString('Problem with TMDB', error));
             this.emitUpdate('errors');
+        }
+
+    }
+
+    async searchTmdb(query: string, category: Category, year: number | null) {
+
+        const results = category === 'tv'
+            ? await tmdb.searchTv(query, year)
+            : await tmdb.searchMovie(query, year);
+
+        this.signal.throwIfAborted();
+
+        this.tmdbResults = results.results;
+        this.emitUpdate('tmdbResults');
+
+        if (results.match) {
+            await this.selectTmdbResult(results.match.result.tmdbId, results.match.name);
+            this.signal.throwIfAborted();
         }
 
     }
@@ -287,57 +299,162 @@ export default class Upload {
             const hydrated = await tmdb.hydrateResult(result);
             this.signal.throwIfAborted();
 
-            if (matchedTitle) this.matchedTitles.set(hydrated.tmdbId, matchedTitle);
-            else {
-                const cachedMatch = this.matchedTitles.get(hydrated.tmdbId);
-                matchedTitle = cachedMatch ?? hydrated.title;
-            }
-            const normalizedMatchedTitle = normalize(matchedTitle);
-
-            const normalizedTitle = normalize(hydrated.title);
-            let originalTitle = '';
-
-            if (hydrated.title !== hydrated.originalTitle) {
-                const normalizedOriginalTitle = normalize(hydrated.originalTitle);
-                originalTitle = normalizedMatchedTitle.startsWith(normalizedOriginalTitle) ?
-                    matchedTitle :
-                    hydrated.originalTitle;
-            }
-
-            this.tmdbTitles = {
-                title: normalizedMatchedTitle.startsWith(normalizedTitle) ? matchedTitle : hydrated.title,
-                originalTitle,
-            };
-            this.release.setTitle(this.tmdbTitles.title);
-            this.release.setOriginalTitle(this.tmdbTitles.originalTitle);
-
-            this.tmdbSelected = hydrated;
-            this.emitUpdate('tmdbSelected');
-            this.emitUpdate('release');
-            this.trackers?.setRelease(this.release);
-
-
-            let malId: number | null = null;
-            if (hydrated.keywords.includes('anime')) {
-                try {
-                    malId = await getMalId(hydrated.title, hydrated.originalTitle, this.release.category, hydrated.year);
-                } catch (error) {
-                    log(errorString('Getting MAL ID from Jikan failed', error), 'tomato');
-                }
-            }
-
-            if (this.mediaInfo) await this.mediaInfo;
-            this.signal.throwIfAborted();
-            if (this.trackers) {
-                this.trackers.setMetadata({ malId, ...hydrated });
-                this.trackers.search();
-            }
+            await this.adoptMetadata({ ...hydrated, malId: null }, matchedTitle);
 
         } catch (error) {
             this.errors.push(errorString('Problem with TMDB while getting extra metadata', error));
             this.emitUpdate('errors');
         }
 
+    }
+
+    private async adoptMetadata(metadata: Metadata, matchedTitle?: string) {
+
+        if (matchedTitle) this.matchedTitles.set(metadata.tmdbId, matchedTitle);
+        else {
+            const cachedMatch = this.matchedTitles.get(metadata.tmdbId);
+            matchedTitle = cachedMatch ?? metadata.title;
+        }
+        const normalizedMatchedTitle = normalize(matchedTitle);
+
+        const normalizedTitle = normalize(metadata.title);
+        let originalTitle = '';
+
+        if (metadata.title !== metadata.originalTitle) {
+            const normalizedOriginalTitle = normalize(metadata.originalTitle);
+            originalTitle = normalizedMatchedTitle.startsWith(normalizedOriginalTitle) ?
+                matchedTitle :
+                metadata.originalTitle;
+        }
+
+        this.setTmdbTitles({
+            title: normalizedMatchedTitle.startsWith(normalizedTitle) ? matchedTitle : metadata.title,
+            originalTitle,
+        });
+        this.release.setCategory(metadata.category);
+
+        this.tmdbSelected = metadata;
+        this.tmdbBaseline = cloneMetadata(metadata);
+        this.emitUpdate('tmdbSelected');
+        this.emitUpdate('release');
+        this.trackers?.setRelease(this.release);
+
+        if (metadata.keywords.includes('anime')) {
+            try {
+                metadata.malId = await getMalId(metadata.title, metadata.originalTitle, this.release.category, metadata.year);
+                if (this.tmdbBaseline) this.tmdbBaseline.malId = metadata.malId;
+                this.emitUpdate('tmdbSelected');
+            } catch (error) {
+                log(errorString('Getting MAL ID from Jikan failed', error), 'tomato');
+            }
+        }
+
+        if (this.mediaInfo) await this.mediaInfo;
+        this.signal.throwIfAborted();
+        if (this.trackers) {
+            this.trackers.setMetadata(metadata);
+            this.trackers.search();
+        }
+
+    }
+
+    private setTmdbTitles(titles: { title: string, originalTitle: string }) {
+        this.tmdbTitles = titles;
+        this.release.setTitle(titles.title);
+        this.release.setOriginalTitle(titles.originalTitle);
+    }
+
+    private applyMetadataToRelease(metadata: Metadata) {
+
+        if (metadata.title) {
+            this.setTmdbTitles({
+                title: metadata.title,
+                originalTitle: metadata.originalTitle === metadata.title ? '' : metadata.originalTitle,
+            });
+        }
+
+        this.release.setCategory(metadata.category);
+
+    }
+
+    private seedMetadata(): Metadata {
+        const metadata = emptyMetadata();
+        metadata.category = this.release.category ?? 'movie';
+        metadata.title = this.release.title;
+        metadata.originalTitle = this.release.originalTitle ?? this.release.title;
+        metadata.year = this.release.year;
+        return metadata;
+    }
+
+    private materializeMetadata(): Metadata {
+        if (!this.tmdbSelected) {
+            this.tmdbSelected = this.seedMetadata();
+            this.tmdbBaseline = cloneMetadata(this.tmdbSelected);
+        }
+        return this.tmdbSelected;
+    }
+
+    async setMetadataValues(values: Record<string, string | boolean>) {
+
+        const metadata = this.materializeMetadata();
+
+        const previousId = metadata.tmdbId;
+        const previousCategory = metadata.category;
+
+        for (const [key, value] of Object.entries(values)) setMetadataValue(metadata, key, value);
+
+        /* The ID and the category together name an entry, so changing either means going back to
+           TMDB for it rather than keeping the fields that described the old one */
+        if (metadata.tmdbId && (metadata.tmdbId !== previousId || metadata.category !== previousCategory)) {
+            await this.loadTmdbId(metadata.tmdbId, metadata.category);
+            return;
+        }
+
+        this.applyMetadataToRelease(metadata);
+
+        this.emitUpdate('tmdbSelected');
+        this.emitUpdate('release');
+        this.trackers?.setRelease(this.release);
+        this.trackers?.setMetadata(metadata);
+
+    }
+
+    private async loadTmdbId(tmdbId: number, category: Category) {
+
+        let fetched;
+
+        try {
+            fetched = await tmdb.getById(category, tmdbId);
+            this.signal.throwIfAborted();
+        } catch (error) {
+            log(errorString(`Couldn't load TMDB ID ${tmdbId}`, error), 'khaki');
+            this.clearMetadata(tmdbId, category);
+            return;
+        }
+
+        await this.adoptMetadata({ ...fetched, malId: null });
+
+    }
+
+    private clearMetadata(tmdbId: number, category: Category) {
+
+        const metadata = { ...emptyMetadata(), tmdbId, category };
+
+        this.tmdbSelected = metadata;
+        this.tmdbBaseline = cloneMetadata(metadata);
+        this.release.setCategory(category);
+
+        this.emitUpdate('tmdbSelected');
+        this.emitUpdate('release');
+        this.trackers?.setRelease(this.release);
+        this.trackers?.setMetadata(metadata);
+
+    }
+
+    async searchTrackers() {
+        if (this.mediaInfo) await this.mediaInfo;
+        this.signal.throwIfAborted();
+        this.trackers?.search();
     }
 
     async setMediaInfo(path: string) {
@@ -441,6 +558,10 @@ export default class Upload {
         }
         if (!key || key === 'tmdbResults') output.tmdbResults = this.tmdbResults;
         if (!key || key === 'tmdbSelected') output.tmdbSelected = this.tmdbSelected;
+        if (!key || key === 'tmdbSelected' || key === 'release') {
+            output.metadataValues = getMetadataValues(this.tmdbSelected ?? this.seedMetadata());
+            output.metadataBaseline = getMetadataValues(this.tmdbBaseline ?? this.seedMetadata());
+        }
         if (!key || key === 'files') output.files = this.files?.toJSON();
         if (!key || key === 'torrentProgress') output.torrentProgress = this.torrentProgress;
         if (!key || key === 'screenshots') output.screenshots = this.screenshots?.toJSON();

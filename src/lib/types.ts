@@ -66,10 +66,11 @@ export type FieldsToType<T extends readonly TrackerField[]> = {
 };
 
 export interface TmdbHydratedSearchResult {
+    category: 'tv' | 'movie',
     originCountry: string | null,
     originalLanguage: string,
     originalTitle: string,
-    overview: string,
+    overview?: string,
     year: number | null,
     title: string,
     genres: string[],

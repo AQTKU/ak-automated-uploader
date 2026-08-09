@@ -14,7 +14,8 @@
 
     let { data }: { data: PageData } = $props();
     // svelte-ignore state_referenced_locally
-    let { errors, id, release, releaseValues, releaseBaseline, releaseSettled, tmdbResults, tmdbSelected, files,
+    let { errors, id, release, releaseValues, releaseBaseline, releaseSettled, tmdbResults, tmdbSelected,
+        metadataValues, metadataBaseline, files,
         torrentProgress, screenshots, trackerFields, trackerData, trackerStatus,
         trackerSearchResults, trackerActions
     } = $state(data);
@@ -57,6 +58,8 @@
             }
             if (update.tmdbResults) tmdbResults = update.tmdbResults;
             if (update.tmdbSelected) tmdbSelected = update.tmdbSelected;
+            if (update.metadataValues) metadataValues = update.metadataValues;
+            if (update.metadataBaseline) metadataBaseline = update.metadataBaseline;
             if (update.files) files = update.files;
             if (update.torrentProgress) torrentProgress = update.torrentProgress;
             if (update.screenshots) screenshots = update.screenshots;
@@ -133,8 +136,18 @@
 
         <TorrentProgress progress={torrentProgress} />
 
-        {#if tmdbResults && errors}
-            <TmdbPanel results={tmdbResults} selected={tmdbSelected} bind:errors={errors} />
+        {#if id && release && metadataValues && metadataBaseline && errors}
+            <TmdbPanel
+                results={tmdbResults}
+                selected={tmdbSelected}
+                {release}
+                metadataFields={data.metadataFields}
+                metadataLayout={data.metadataLayout}
+                {metadataValues}
+                {metadataBaseline}
+                uploadId={id}
+                bind:errors={errors}
+            />
         {/if}
 
         {#if files && errors}

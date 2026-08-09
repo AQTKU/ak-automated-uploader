@@ -749,12 +749,9 @@ h3 {
 
 #tmdb {
     grid-area: tmdb;
-    overflow-y: auto;
-}
-
-#tmdb h3 {
-    position: sticky;
-    top: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 #tmdb > div {
@@ -763,6 +760,9 @@ h3 {
     gap: .5rem;
     grid-template-columns: 6.666rem auto;
     grid-template-areas: "poster selector";
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 #tmdb img {
@@ -771,11 +771,75 @@ h3 {
     width: 6.666rem;
     object-fit: contain;
     position: sticky;
-    top: 2.125rem;
+    top: 0;
 }
 
 #tmdb .selector {
     grid-area: selector;
+}
+
+#tmdb .empty {
+    opacity: .5;
+    padding: .25rem .5rem;
+}
+
+#tmdb footer {
+    margin-top: .5rem;
+}
+
+#tmdb .manual-search {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+#tmdb .manual-search input[type="search"] {
+    flex-grow: 1;
+    min-width: 3rem;
+}
+
+#tmdb .buttons button {
+    flex-grow: 1;
+}
+
+#metadata-edit {
+    anchor-name: --metadata-edit;
+}
+
+/*** Metadata editor **********************************************************/
+
+#metadata-editor {
+    background: var(--background-color);
+    border: .1rem solid var(--accent-color);
+    border-radius: .25rem;
+    box-shadow: 0 1rem 3rem #00000099;
+    color: inherit;
+    max-width: min(70rem, calc(100vw - 3.5rem));
+    max-height: calc(100vh - 8rem);
+    overflow: auto;
+}
+
+@media (max-width: 1100px) {
+    #metadata-editor {
+        width: calc(100vw - 3.5rem);
+    }
+}
+
+@supports (position-area: block-end) {
+
+    #metadata-editor {
+        position-anchor: --metadata-edit;
+        position-area: block-end span-inline-end;
+        position-try-fallbacks: flip-block, flip-inline;
+        margin: .25rem 0 0 0;
+    }
+
+}
+
+#metadata-editor .revert {
+    background: none;
+    padding: 0 .25rem;
+    align-self: center;
 }
 
 /*** Files ********************************************************************/
@@ -913,22 +977,22 @@ h3 {
     font-size: smaller;
 }
 
-.tracker [size], #release-editor [size] {
+.tracker [size], #release-editor [size], #metadata-editor [size] {
     flex-grow: 0;
 }
 
 @media (min-width: 1100px) {
 
-    .tracker form > div, #release-editor form > div {
+    .tracker form > div, #release-editor form > div, #metadata-editor form > div {
         display: grid;
         gap: .5rem;
     }
 
-    .tracker .field, #release-editor .field {
+    .tracker .field, #release-editor .field, #metadata-editor .field {
         margin: 0;
     }
 
-    .tracker label, #release-editor label {
+    .tracker label, #release-editor label, #metadata-editor label {
         min-width: 7rem;
     }
 

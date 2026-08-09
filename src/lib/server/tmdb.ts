@@ -43,6 +43,39 @@ export type TmdbTvSearchResults = {
     match: { name: string, result: TmdbTvSearchResult } | null,
 };
 
+const TmdbMovieDetailsSchema = v.object({
+    genres: v.optional(v.array(v.object({ name: v.string() })), []),
+    id: v.number(),
+    imdb_id: v.optional(v.nullable(v.string()), null),
+    original_language: v.optional(v.string(), ''),
+    original_title: v.optional(v.string(), ''),
+    overview: v.optional(v.string(), ''),
+    poster_path: v.optional(v.nullable(v.string()), null),
+    release_date: v.optional(v.string(), ''),
+    title: v.string(),
+});
+
+const TmdbTvDetailsSchema = v.object({
+    genres: v.optional(v.array(v.object({ name: v.string() })), []),
+    id: v.number(),
+    first_air_date: v.optional(v.string(), ''),
+    name: v.string(),
+    origin_country: v.optional(v.array(v.string()), []),
+    original_language: v.optional(v.string(), ''),
+    original_name: v.optional(v.string(), ''),
+    overview: v.optional(v.string(), ''),
+    poster_path: v.optional(v.nullable(v.string()), null),
+});
+
+function yearOf(date: string) {
+    if (!date) return null;
+    try {
+        return Temporal.PlainDate.from(date).year;
+    } catch {
+        return null;
+    }
+}
+
 export interface TmdbSearchResult {
     category: 'tv' | 'movie',
     genreIds: number[],
@@ -306,6 +339,57 @@ class Tmdb {
 
     }
 
+    async getById(category: 'tv' | 'movie', id: number): Promise<TmdbHydratedSearchResult> {
+
+        if (!this.authenticated) throw Error('Not logged into TMDB');
+
+        if (category === 'tv') {
+
+            const details = await this.query(`3/tv/${id}`, TmdbTvDetailsSchema);
+            const externalIds = await this.getExternalIds('tv', id);
+            const keywords = await this.getKeywords('tv', id);
+
+            return {
+                category,
+                originCountry: details.origin_country[0] || null,
+                originalLanguage: details.original_language,
+                originalTitle: details.original_name,
+                overview: details.overview || undefined,
+                year: yearOf(details.first_air_date),
+                title: details.name,
+                genres: details.genres.map(genre => genre.name),
+                posterUrl: await this.getPosterUrl(details.poster_path),
+                tmdbId: details.id,
+                tvdbId: externalIds.tvdb_id,
+                imdbId: externalIds.imdb_id,
+                keywords,
+            };
+
+        } else {
+
+            const details = await this.query(`3/movie/${id}`, TmdbMovieDetailsSchema);
+            const keywords = await this.getKeywords('movie', id);
+
+            return {
+                category,
+                originCountry: null,
+                originalLanguage: details.original_language,
+                originalTitle: details.original_title,
+                overview: details.overview || undefined,
+                year: yearOf(details.release_date),
+                title: details.title,
+                genres: details.genres.map(genre => genre.name),
+                posterUrl: await this.getPosterUrl(details.poster_path),
+                tmdbId: details.id,
+                tvdbId: null,
+                imdbId: details.imdb_id || null,
+                keywords,
+            };
+
+        }
+
+    }
+
     async hydrateResult(result: TmdbSearchResult): Promise<TmdbHydratedSearchResult> {
 
         if (!this.authenticated) throw Error('Not logged into TMDB');
@@ -322,10 +406,11 @@ class Tmdb {
             const keywords = await this.getKeywords('tv', result.tmdbId);
 
             const output = {
+                category: result.category,
                 originCountry: result.originCountry,
                 originalLanguage: result.originalLanguage,
                 originalTitle: result.originalTitle,
-                overview: result.overview,
+                overview: result.overview || undefined,
                 year: result.year,
                 title: result.title,
                 genres,
@@ -352,10 +437,11 @@ class Tmdb {
             const keywords = await this.getKeywords('movie', result.tmdbId);
 
             const output = {
+                category: result.category,
                 originCountry: result.originCountry,
                 originalLanguage: result.originalLanguage,
                 originalTitle: result.originalTitle,
-                overview: result.overview,
+                overview: result.overview || undefined,
                 year: result.year,
                 title: result.title,
                 genres,
@@ -437,7 +523,7 @@ class Tmdb {
                     originalTitle: result.original_name,
                     overview: result.overview,
                     posterPath: result.poster_path,
-                    year: result.first_air_date ? Temporal.PlainDate.from(result.first_air_date).year : null,
+                    year: yearOf(result.first_air_date),
                     title: result.name
                 });
 
@@ -452,7 +538,7 @@ class Tmdb {
                     originalTitle: result.original_title,
                     overview: result.overview,
                     posterPath: result.poster_path,
-                    year: result.release_date ? Temporal.PlainDate.from(result.release_date).year : null,
+                    year: yearOf(result.release_date),
                     title: result.title
                 });
 
@@ -513,7 +599,7 @@ class Tmdb {
 
         const results: TmdbMovieSearchResult[] = [];
 
-        const cacheKey = `movie:${title}`;
+        const cacheKey = `movie:${title}:${year ?? ''}`;
         const cached = this.getFromCache<TmdbSearchResults>(this.searchCache, cacheKey);
         if (cached) return cached;
 
@@ -549,7 +635,7 @@ class Tmdb {
 
     }
 
-    async searchTv(title: string): Promise<TmdbSearchResults> {
+    async searchTv(title: string, year: number | null = null): Promise<TmdbSearchResults> {
 
         if (!this.authenticated) throw Error('Not logged into TMDB');
 
@@ -563,7 +649,7 @@ class Tmdb {
         
         const results: TmdbTvSearchResult[] = [];
 
-        const cacheKey = `tv:${title}`;
+        const cacheKey = `tv:${title}:${year ?? ''}`;
         const cached = this.getFromCache<TmdbSearchResults>(this.searchCache, cacheKey);
         if (cached) return cached;
 
@@ -575,6 +661,7 @@ class Tmdb {
             type SearchParams = { query: string, year?: string, page?: string };
             const params: SearchParams = { query: query.title };
             if (query.year) params.year = query.year;
+            if (year) params.year = String(year);
 
             let data: v.InferOutput<typeof Schema>;
             do {
