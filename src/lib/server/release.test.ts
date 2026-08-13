@@ -168,13 +168,13 @@ describe('HDR and Dolby Vision', () => {
 
     test('prefers HDR10+ over the ST 2086 metadata it also carries', () => {
         const release = new Release('Movie.Name.2019.2160p.UHD.BluRay.x265-GRP');
-        release.setHdrFormat('SMPTE ST 2086 / SMPTE ST 2094 App 4', undefined, 'PQ', '1000');
+        release.setHdrFormat('SMPTE ST 2086 / SMPTE ST 2094 App 4', undefined, 'PQ', 1000);
         expect(release.hdr?.plus).toBe('HDR10+');
     });
 
     test('falls back to transfer characteristics when there is no HDR format', () => {
         const release = new Release('Movie.Name.2019.2160p.UHD.BluRay.x265-GRP');
-        release.setHdrFormat(undefined, undefined, 'PQ', '1000');
+        release.setHdrFormat(undefined, undefined, 'PQ', 1000);
         expect(release.hdr).toEqual({ short: 'HDR', plus: 'HDR', long: 'HDR10' });
         release.setHdrFormat(undefined, undefined, 'PQ', undefined);
         expect(release.hdr?.plus).toBe('PQ10');
@@ -184,7 +184,7 @@ describe('HDR and Dolby Vision', () => {
 
     test('reads the Dolby Vision profile out of the HDR format profile', () => {
         const release = new Release('Movie.Name.2019.2160p.UHD.BluRay.x265-GRP');
-        release.setHdrFormat('Dolby Vision / SMPTE ST 2086', 'dvhe.08.06', 'PQ', '1000');
+        release.setHdrFormat('Dolby Vision / SMPTE ST 2086', 'dvhe.08.06', 'PQ', 1000);
         expect(release.dv).toBe(true);
         expect(release.dvProfile).toBe(8);
         expect(release.hdr?.long).toBe('HDR10');

@@ -5,8 +5,7 @@ import Tracker from '../tracker';
 import { unit3dDistributors, unit3dRegions } from './unit3d-distributors';
 import { log } from '../util/log';
 import errorString from '../util/error-string';
-import { TTLCache } from '@isaacs/ttlcache';
-import pMemoize from 'p-memoize';
+import CachedValue from '../util/cached-value';
 
 const UPLOAD_URL = 'https://lst.gg/api/torrents/upload';
 const SEARCH_URL = 'https://lst.gg/api/torrents/filter';
@@ -185,7 +184,7 @@ const layout = [
     ['draftQueueOptIn', 'free'],
 ] as const satisfies FieldLayout;
 
-const bannedGroupsCache = new TTLCache<unknown, string[]>({ ttl: 1000 * 60 * 60 });
+const bannedGroupsCache = new CachedValue<string[]>(1000 * 60 * 60);
 
 export default class LST extends Tracker {
 
@@ -195,7 +194,6 @@ export default class LST extends Tracker {
     override readonly fields = fields;
     override readonly layout = layout;
     source: string = 'LST';
-    private getBannedGroups: typeof this._getBannedGroups;
 
     constructor(settings: TrackerSettings) {
 
@@ -206,8 +204,6 @@ export default class LST extends Tracker {
         this.apiKey = settings.apiKey;
 
         if (settings.defaultDescription) this.data.description = settings.defaultDescription;
-
-        this.getBannedGroups = pMemoize(this._getBannedGroups, { cache: bannedGroupsCache });
 
     }
 
@@ -349,7 +345,7 @@ export default class LST extends Tracker {
 
     }
 
-    private async _getBannedGroups(): Promise<string[]> {
+    private async getBannedGroups(): Promise<string[]> {
 
         try {
 
@@ -416,7 +412,7 @@ export default class LST extends Tracker {
     }
 
     override async validate() {
-        const bannedGroups = await this.getBannedGroups();
+        const bannedGroups = await bannedGroupsCache.get(() => this.getBannedGroups());
         this.checkBannedGroup(bannedGroups);
     }
 

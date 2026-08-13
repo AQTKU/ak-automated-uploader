@@ -5,8 +5,7 @@ import Tracker from '../tracker';
 import { unit3dDistributors, unit3dRegions } from './unit3d-distributors';
 import { log } from '../util/log';
 import errorString from '../util/error-string';
-import { TTLCache } from '@isaacs/ttlcache';
-import pMemoize from 'p-memoize';
+import CachedValue from '../util/cached-value';
 
 const UPLOAD_URL = 'https://aither.cc/api/torrents/upload';
 const CREATE_TRUMPING_REPORT_URL = 'https://aither.cc/api/trumping-reports/create';
@@ -153,7 +152,7 @@ const layout = [
     ['accessibilityType', 'accessibilityType'],
 ] as const satisfies FieldLayout;
 
-const bannedGroupsCache = new TTLCache<unknown, {name: string, types: string[] }[]>({ ttl: 1000 * 60 * 60 });
+const bannedGroupsCache = new CachedValue<{ name: string, types: string[] }[]>(1000 * 60 * 60);
 
 export default class Aither extends Tracker {
 
@@ -163,7 +162,6 @@ export default class Aither extends Tracker {
     override readonly fields = fields;
     override readonly layout = layout;
     source: string = 'Aither';
-    private getBannedGroups: typeof this._getBannedGroups;
 
     constructor(settings: TrackerSettings) {
 
@@ -174,8 +172,6 @@ export default class Aither extends Tracker {
         this.apiKey = settings.apiKey;
 
         if (settings.defaultDescription) this.data.description = settings.defaultDescription;
-
-        this.getBannedGroups = pMemoize(this._getBannedGroups, { cache: bannedGroupsCache });
 
     }
 
@@ -304,7 +300,7 @@ export default class Aither extends Tracker {
 
     }
 
-    private async _getBannedGroups(): Promise<{ name: string, types: string[] }[]> {
+    private async getBannedGroups(): Promise<{ name: string, types: string[] }[]> {
 
         try {
 
@@ -389,7 +385,7 @@ export default class Aither extends Tracker {
     }
 
     override async validate() {
-        const bannedGroups = await this.getBannedGroups();
+        const bannedGroups = await bannedGroupsCache.get(() => this.getBannedGroups());
         this.checkBannedGroup(bannedGroups);
     }
 

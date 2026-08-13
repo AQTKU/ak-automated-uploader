@@ -758,7 +758,7 @@ export default class Release implements Readonly<ReleaseState> {
         format: string | undefined,
         profile: string | undefined,
         transferCharacteristics: string | undefined,
-        maxCll: string | undefined
+        maxCll: number | undefined
     ) {
 
         this.setDv(false);
