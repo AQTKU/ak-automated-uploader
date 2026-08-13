@@ -1,7 +1,7 @@
 import Screenshots from '$lib/server/screenshots';
 import type { RequestHandler } from './$types';
 import { file } from 'bun';
-import sharp from 'sharp';
+import resizeImage from '$lib/server/util/resize-image';
 import why from '$lib/server/util/why';
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -10,17 +10,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
         const path = Screenshots.getPath(params.id);
 
-        let buffer;
-
-        buffer = await file(path).arrayBuffer();
-
         const width = Number(url.searchParams.get('w'));
-        if (width > 0) {
-            const imageBuffer = await sharp(buffer).resize({ width, withoutEnlargement: true }).png().toBuffer();
-            buffer = Buffer.from(imageBuffer);
-        }
+        const body = width > 0
+            ? await resizeImage(path, width)
+            : await file(path).arrayBuffer();
 
-        return new Response(buffer, {
+        return new Response(body, {
             headers: {
                 'Content-Type': 'image/png',
                 'Cache-Control': 'public, max-age=31536000, immutable',

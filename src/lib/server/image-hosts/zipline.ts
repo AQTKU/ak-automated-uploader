@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';
 import { file } from 'bun';
-import sharp from 'sharp';
+import resizeImage from '../util/resize-image';
 import { basename } from 'node:path';
 import { log } from '../util/log';
 
@@ -30,13 +30,6 @@ class Zipline extends ImageHost {
     override async configure(settings: ImageHostSettings) {
         this.apiKey = settings.apiKey ?? '';
         this.server = settings.server ?? '';
-    }
-
-    async makeThumb(fullSizePath: string, width: number): Promise<Blob> {
-        const thumb = sharp(fullSizePath).resize(width).png();
-        const buffer = await thumb.toBuffer();
-        const typedArray = new Uint8Array(buffer);
-        return new Blob([typedArray], { type: 'image/png' });
     }
 
     async post(image: Blob, filename: string, signal: AbortSignal): Promise<string> {
@@ -85,7 +78,7 @@ class Zipline extends ImageHost {
     async upload(path: string, width = 350, signal: AbortSignal) {
 
         const imageUrl = await queue.add(() => this.post(file(path), basename(path), signal), { signal });
-        const thumb = await this.makeThumb(path, width);
+        const thumb = await resizeImage(path, width);
         const thumbUrl = await queue.add(() => this.post(thumb, basename(path, '.png') + '-thumb.png', signal), { signal });
 
         return {

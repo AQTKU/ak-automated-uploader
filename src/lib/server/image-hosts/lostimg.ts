@@ -1,6 +1,6 @@
 import PQueue from 'p-queue';
 import ImageHost from '../image-host';
-import sharp from 'sharp';
+import resizeImage from '../util/resize-image';
 import { file } from 'bun';
 import type { Image, ImageHostSettings, SettingsField } from '$lib/types';
 import * as v from 'valibot';
@@ -26,16 +26,8 @@ class LostImg extends ImageHost {
 
     async upload(path: string, thumbnailWidth = 350, signal?: AbortSignal) {
         const image = file(path);
-        const thumb = await this.makeThumb(path, thumbnailWidth);
+        const thumb = await resizeImage(path, thumbnailWidth);
         return await queue.add(() => this.post(image, thumb, signal));
-    }
-
-    async makeThumb(fullSizePath: string, width: number): Promise<Blob> {
-        const thumb = sharp(fullSizePath).resize(width).png();
-        const buffer = await thumb.toBuffer();
-        const bytes = new Uint8Array(buffer);
-        const blob = new Blob([bytes], { type: 'image/png' });
-        return blob;
     }
 
     async post(image: Blob, thumbnail: Blob, signal?: AbortSignal) {

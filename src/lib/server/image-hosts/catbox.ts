@@ -1,7 +1,7 @@
 import PQueue from 'p-queue';
 import ImageHost from '../image-host';
 import type { Image } from '$lib/types';
-import sharp from 'sharp';
+import resizeImage from '../util/resize-image';
 import { basename } from 'node:path';
 import * as v from 'valibot';
 import { file } from 'bun';
@@ -16,7 +16,7 @@ class Catbox extends ImageHost {
 
         const image = file(path);
         const imageUrl = await queue.add(() => this.post(image, basename(path), signal));
-        const thumb = await this.makeThumb(path, width);
+        const thumb = await resizeImage(path, width);
         const thumbUrl = await queue.add(() => this.post(thumb, 'thumb.png', signal));
 
         return {
@@ -25,14 +25,6 @@ class Catbox extends ImageHost {
             thumbnail: thumbUrl,
         } satisfies Image;
 
-    }
-
-    async makeThumb(fullSizePath: string, width: number): Promise<Blob> {
-        const thumb = sharp(fullSizePath).resize(width).png();
-        const buffer = await thumb.toBuffer();
-        const typedArray = new Uint8Array(buffer);
-        const blob = new Blob([typedArray], { type: 'image/png' });
-        return blob;
     }
 
     async post(image: Blob, filename: string, signal?: AbortSignal) {
