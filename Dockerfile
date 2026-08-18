@@ -18,12 +18,17 @@ COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile --production --omit=optional --omit=peer
 
 # ---- Runtime stage ----
-FROM oven/bun:1-alpine
+# Pinned to Alpine 3.23 for ffmpeg 8. Alpine 3.21 and 3.22 ship ffmpeg 6.1.2,
+# which segfaults decoding some 10-bit HEVC files. The Bun images are still
+# built on 3.22, so the runtime carries over the builder's Bun binary.
+FROM alpine:3.23
 
 WORKDIR /app
 
 # Install runtime dependencies
-RUN apk add --no-cache ffmpeg ca-certificates
+RUN apk add --no-cache ffmpeg ca-certificates libstdc++ libgcc
+
+COPY --from=builder /usr/local/bin/bun /usr/local/bin/bun
 
 # Install mkbrr
 RUN MKBRR_VERSION=$(wget -qS -O /dev/null https://github.com/autobrr/mkbrr/releases/latest 2>&1 \
