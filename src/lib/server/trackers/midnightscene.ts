@@ -150,6 +150,9 @@ export default class MidnightScene extends Tracker {
             this.setOption('typeId', 'HDTV');
         }
 
+        this.data.anonymous = release.anonymous;
+        this.data.internal = this.isInternal(release);
+
         let titleFormat = '';
         if (release.category === 'tv') {
             this.setOption('categoryId', 'TV');

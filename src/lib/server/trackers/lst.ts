@@ -222,6 +222,8 @@ export default class LST extends Tracker {
         this.data.keywords = metadata.keywords.join(', ');
     }
 
+    override readonly internalGroups = ['L0ST', 'coffee', 'SQS', 'Yuki', 'hallowed', 'ZnP'];
+
     applyRelease(release: Release) {
 
         this.setOption('resolutionId', 'Other');
@@ -280,6 +282,10 @@ export default class LST extends Tracker {
         }
 
         this.data.dualAudio = !!release.multiAudio;
+
+        this.data.anonymous = release.anonymous;
+        this.data.internal = this.isInternal(release);
+        this.data.personalRelease = this.isPersonal(release);
 
         const type = this.getOption('typeId');
 

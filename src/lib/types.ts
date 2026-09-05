@@ -4,7 +4,7 @@ import { torrentClients } from './server/torrent-clients';
 export interface SettingsField {
     id: string;
     label: string;
-    type: 'text' | 'url' | 'path' | 'password' | 'multiline' | 'spacer' | 'imageHosts';
+    type: 'text' | 'url' | 'path' | 'password' | 'multiline' | 'spacer' | 'imageHosts' | 'checkbox';
     nameFilter?: string;
     description?: string;
     default?: string;
@@ -116,6 +116,11 @@ export const SettingsSchema = v.object({
     apiKey: v.fallback(v.nullable(v.string()), null),
     tmdbApiKey: v.fallback(v.string(), ''),
     contentFolder: v.optional(v.pipe(v.string(), v.transform(value => value === '' ? undefined : value))),
+    releaseGroup: v.fallback(v.pipe(v.string(), v.trim()), ''),
+    anonymous: v.fallback(v.pipe(
+        v.union([v.boolean(), v.literal('1')]),
+        v.transform(value => value === true || value === '1')
+    ), false),
     imageHosts: v.fallback(v.array(ImageHostSettingsSchema), []),
     torrentClient: v.optional(TorrentClientSettingsSchema),
     trackers: v.fallback(v.array(TrackerSettingsSchema), []),

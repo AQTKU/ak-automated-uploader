@@ -514,6 +514,46 @@ describe('release fields', () => {
 
 });
 
+describe('personal releases', () => {
+
+    const personal = (fileName: string, group: string) => {
+        const release = new Release(fileName);
+        release.setPersonalGroup(group);
+        return release;
+    };
+
+    test('matches the configured group', () => {
+        expect(personal('Movie.Name.2019.1080p.BluRay.x264-FLUX.mkv', 'FLUX').personal).toBe(true);
+    });
+
+    test('matches case sensitively', () => {
+        expect(personal('Movie.Name.2019.1080p.BluRay.x264-FLUX.mkv', 'flux').personal).toBe(false);
+        expect(personal('Movie.Name.2019.1080p.BluRay.x264-decibeL.mkv', 'decibeL').personal).toBe(true);
+    });
+
+    test('is false for another group', () => {
+        expect(personal('Movie.Name.2019.1080p.BluRay.x264-GRP.mkv', 'FLUX').personal).toBe(false);
+    });
+
+    test('is false without a group to match', () => {
+        expect(personal('Movie.Name.2019.1080p.BluRay.x264', 'FLUX').personal).toBe(false);
+    });
+
+    test('is false when no group is configured', () => {
+        expect(new Release('Movie.Name.2019.1080p.BluRay.x264-FLUX.mkv').personal).toBe(false);
+        expect(personal('Movie.Name.2019.1080p.BluRay.x264-FLUX.mkv', '').personal).toBe(false);
+    });
+
+    test('follows the group when it is edited', () => {
+        const release = personal('Movie.Name.2019.1080p.BluRay.x264-FLUX.mkv', 'FLUX');
+        release.setGroup('GRP');
+        expect(release.personal).toBe(false);
+        release.setGroup('FLUX');
+        expect(release.personal).toBe(true);
+    });
+
+});
+
 describe('toJSON', () => {
 
     test('matches the getters', () => {
@@ -525,6 +565,10 @@ describe('toJSON', () => {
         expect(state.seasonOrEpisodeTitle).toBe(release.seasonOrEpisodeTitle);
         expect(state.attributes).toBe(release.attributes);
         expect(state.fileName).toBe('Show.Name.S01E05.Episode.Title.1080p.AMZN.WEB-DL.DDP5.1.H.264-GROUP.mkv');
+        expect(state.anonymous).toBe(false);
+        expect(state.personal).toBe(false);
+        release.setAnonymous(true);
+        expect(release.toJSON().anonymous).toBe(true);
     });
 
 });

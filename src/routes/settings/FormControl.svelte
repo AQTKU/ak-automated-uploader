@@ -43,6 +43,8 @@
             <input type="text" {name} {id} {value} />
         {:else if field.type === 'url'}
             <input type="url" {name} {id} {value} />
+        {:else if field.type === 'checkbox'}
+            <input type="checkbox" value="1" {name} {id} checked={value === true} />
         {:else if field.type === 'multiline'}
             <textarea {name}{id}>{value}</textarea>
         {:else if field.type === 'imageHosts'}

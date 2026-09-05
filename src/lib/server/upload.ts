@@ -14,6 +14,7 @@ import { log } from './util/log';
 import { getReleaseValues as getReleaseEditorValues, releaseFields, releaseFileNameField, setReleaseValue } from './release-fields';
 import { cloneMetadata, emptyMetadata, getMetadataValues, setMetadataValue } from './metadata-fields';
 import type { Category } from './release-tables';
+import settings from './settings';
 
 export interface UploadState {
     errors: string[];
@@ -68,7 +69,7 @@ export default class Upload {
     constructor(id: number, path: string) {
 
         this.id = id;
-        this.release = new Release(basename(path));
+        this.release = this.buildRelease(basename(path));
         this.path = path;
 
         this.initialize().then(() => { }, error => this.handleError('Problem initializing upload', error));
@@ -511,6 +512,9 @@ export default class Upload {
     private buildRelease(fileName: string) {
 
         const release = new Release(fileName);
+
+        release.setAnonymous(settings.anonymous);
+        release.setPersonalGroup(settings.releaseGroup);
 
         if (this.mediaInfoResult) release.applyMediaInfo(this.mediaInfoResult);
         if (this.tmdbTitles) {

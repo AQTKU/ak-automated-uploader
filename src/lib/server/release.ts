@@ -11,6 +11,7 @@ import {
 } from './release-tables';
 
 export interface ReleaseState {
+    anonymous: boolean;
     atmos: boolean;
     attributes: string;
     audio: { p: string, plus: string } | null;
@@ -34,6 +35,7 @@ export interface ReleaseState {
     language: string | null;
     multiAudio: MultiAudio | null;
     originalTitle: string | null;
+    personal: boolean;
     remux: boolean;
     repack: Repack | null;
     resolution: Resolution | null;
@@ -228,6 +230,7 @@ const detailMatchers: DetailMatcher[] = [
 
 export default class Release implements Readonly<ReleaseState> {
 
+    private _anonymous: ReleaseState['anonymous'] = false;
     private _atmos: ReleaseState['atmos'] = false;
     private _audioCodec: ReleaseState['audioCodec'] = null;
     private _audioDescription: ReleaseState['audioDescription'] = false;
@@ -246,6 +249,7 @@ export default class Release implements Readonly<ReleaseState> {
     private _language: ReleaseState['language'] = null;
     private _multiAudio: ReleaseState['multiAudio'] = null;
     private _originalTitle: ReleaseState['originalTitle'] = null;
+    private _personalGroup: string | null = null;
     private _remux: ReleaseState['remux'] = false;
     private _repack: ReleaseState['repack'] = null;
     private _resolution: ReleaseState['resolution'] = null;
@@ -463,6 +467,7 @@ export default class Release implements Readonly<ReleaseState> {
 
     }
 
+    get anonymous() { return this._anonymous; }
     get atmos() { return this._atmos; }
     get attributes() {
         const parts = [
@@ -539,6 +544,9 @@ export default class Release implements Readonly<ReleaseState> {
     get language() { return this._language; }
     get multiAudio() { return this._multiAudio; }
     get originalTitle() { return this._originalTitle; }
+    /* Derived rather than stored, so editing the group in the release editor
+       is enough to change it */
+    get personal() { return this._personalGroup !== null && this._group === this._personalGroup; }
     get remux() { return this._remux; }
     get repack() { return this._repack; }
     get resolution() { return this._resolution; }
@@ -610,6 +618,10 @@ export default class Release implements Readonly<ReleaseState> {
 
         }
 
+    }
+
+    setAnonymous(anonymous: boolean) {
+        this._anonymous = anonymous;
     }
 
     setAtmos(atmos: boolean) {
@@ -872,6 +884,10 @@ export default class Release implements Readonly<ReleaseState> {
         this._originalTitle = title.trim() || null;
     }
 
+    setPersonalGroup(group: string) {
+        this._personalGroup = group || null;
+    }
+
     setRemux(remux: boolean) {
         this._remux = remux;
         this.inferRemuxSourceFromResolution();
@@ -1059,6 +1075,7 @@ export default class Release implements Readonly<ReleaseState> {
 
     toJSON(): ReleaseState {
         return {
+            anonymous: this.anonymous,
             atmos: this.atmos,
             attributes: this.attributes,
             audio: this.audio,
@@ -1082,6 +1099,7 @@ export default class Release implements Readonly<ReleaseState> {
             language: this.language,
             multiAudio: this.multiAudio,
             originalTitle: this.originalTitle,
+            personal: this.personal,
             remux: this.remux,
             repack: this.repack,
             resolution: this.resolution,

@@ -207,8 +207,10 @@ class Settings {
         return this.trackerOptions.filter(option => selected.includes(option.name));
     }
 
+    get anonymous() { return this.settings.anonymous }
     get apiKey() { return this.settings.apiKey }
     get contentFolder() { return this.settings.contentFolder }
+    get releaseGroup() { return this.settings.releaseGroup }
     get torrentClient() { return this.settings.torrentClient; }
 
     async load() {

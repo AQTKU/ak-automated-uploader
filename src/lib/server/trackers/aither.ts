@@ -190,6 +190,11 @@ export default class Aither extends Tracker {
         this.data.keywords = metadata.keywords.join(', ');
     }
 
+    override readonly internalGroups = [
+        'ARTiCUN0', 'ATELiER', 'Headpatter', 'Kitsune', 'MADSKY', 'MainFrame', 'NAN0',
+        'PiRAMiDHEAD', 'RandomBytes', 'VaLTiEL', 'WiTCHCRAFT',
+    ];
+
     applyRelease(release: Release) {
         
         this.setOption('resolutionId', 'Other/Mixed');
@@ -220,6 +225,10 @@ export default class Aither extends Tracker {
         this.data.hdr10p = release.hdr?.plus === 'HDR10+';
         const resolution = parseInt(release.resolution ?? '0');
         this.data.sd = resolution <= 576 && resolution > 0;
+
+        this.data.anonymous = release.anonymous;
+        this.data.internal = this.isInternal(release);
+        this.data.personalRelease = this.isPersonal(release);
 
         this.setOption('accessibilityType', '');
         if (release.signLanguage === 'ASL') this.setOption('accessibilityType', 'ASL');

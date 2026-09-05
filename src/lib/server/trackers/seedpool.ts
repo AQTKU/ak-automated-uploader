@@ -3,8 +3,6 @@ import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
 import { unit3dDistributors, unit3dRegions } from './unit3d-distributors';
-import { log } from '../util/log';
-import errorString from '../util/error-string';
 
 const UPLOAD_URL = 'https://seedpool.org/api/torrents/upload';
 const SEARCH_URL = 'https://seedpool.org/api/torrents/filter';
@@ -202,6 +200,9 @@ export default class Seedpool extends Tracker {
 
         const resolution = parseInt(release.resolution ?? '0');
         this.data.sd = resolution <= 576 && resolution > 0;
+
+        this.data.anonymous = release.anonymous;
+        this.data.internal = this.isInternal(release);
 
         let titleFormat = '{title aka} {year} {edition} {language if_not_dual_audio} {attributes} {repack} {resolution} {source} ';
         

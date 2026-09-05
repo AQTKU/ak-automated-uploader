@@ -26,6 +26,7 @@ export default abstract class Tracker {
     abstract readonly fields: TrackerField[];
     abstract readonly layout: FieldLayout;
     imageHosts: string[] = [];
+    readonly internalGroups: string[] = [];
     metadata?: Metadata;
     mediaInfo?: ReturnType<typeof getMediaInfo>;
     release?: Release;
@@ -164,6 +165,15 @@ export default abstract class Tracker {
         const option = field.options.find(option => option[0] === this.data[fieldKey]);
         if (!option) throw Error(`Couldn't get the key for field ${fieldKey}, ${this.data[fieldKey]} not found in field`);
         return option[1];
+    }
+
+    protected isInternal(release: Release) {
+        if (!release.personal || !release.group) return false;
+        return this.internalGroups.includes(release.group);
+    }
+
+    protected isPersonal(release: Release) {
+        return release.personal && !this.isInternal(release);
     }
 
     async makeTorrent() {

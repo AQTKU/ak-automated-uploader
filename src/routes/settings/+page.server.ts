@@ -6,7 +6,7 @@ import { checkSession, removeSession } from '$lib/server/sessions';
 interface Field {
     id: string;
     label: string;
-    type?: 'path' | 'password' | 'multiline' | 'spacer' | 'imageHosts';
+    type?: 'text' | 'path' | 'password' | 'multiline' | 'spacer' | 'imageHosts' | 'checkbox';
     description?: string;
 }
 
@@ -28,6 +28,18 @@ const fields: FieldList = {
             label: 'Content folder',
             type: 'path',
             description: 'The base folder where your files to upload live (optional).',
+        },
+        {
+            id: 'releaseGroup',
+            label: 'Release group',
+            type: 'text',
+            description: 'Releases matching this group will be marked as personal on supported trackers (optional).',
+        },
+        {
+            id: 'anonymous',
+            label: 'Anonymous',
+            type: 'checkbox',
+            description: 'Anonymous uploads on supported trackers.',
         },
     ],
 

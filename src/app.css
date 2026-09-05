@@ -192,6 +192,10 @@ fieldset > :last-child {
         flex-grow: 1;
     }
 
+    .control.checkbox input {
+        flex-grow: 0;
+    }
+
 }
 
 .field .description {

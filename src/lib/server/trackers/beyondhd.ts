@@ -194,6 +194,7 @@ export const fields = [
     { key: 'mediainfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
     { key: 'nfo', label: 'NFO', type: 'multiline', default: '' },
     { key: 'anonymous', label: 'Anonymous', type: 'checkbox', default: false },
+    { key: 'internal', label: 'Internal', type: 'checkbox', default: false },
     { key: 'live', label: 'Post live', type: 'checkbox', default: true },
     { key: 'sd', label: 'SD', type: 'checkbox', default: false },
     { key: 'pack', label: 'Season pack', type: 'checkbox', default: false },
@@ -237,7 +238,7 @@ const layout = [
     ['nfo',           'nfo',         'nfo',         'nfo',           'nfo',           'nfo',              'nfo',           'nfo'],
     ['sd', 'anonymous'],
     ['special', 'live'],
-    ['pack'],
+    ['pack', 'internal'],
     ['stream'],
 ] as const satisfies FieldLayout;
 
@@ -274,6 +275,11 @@ export default class BeyondHD extends Tracker {
         this.data.tmdb = String(metadata.tmdbId);
         this.data.imdb = metadata.imdbId ?? '';
     }
+
+    override readonly internalGroups = [
+        'FraMeSToR', 'BHDStudio', 'BMF', 'decibeL', 'HiFi', 'NCmt', 'TDD', 'FLUX', 'CRFW',
+        'S0NNY', 'MKVULTRA', 'RPG', 'W4NK3R', 'iROBOT',
+    ];
 
     applyRelease(release: Release) {
 
@@ -349,7 +355,12 @@ export default class BeyondHD extends Tracker {
         this.data.special = release.isSpecial;
         this.data.sd = ['480p', '480i', '576p', '576i', '540p'].includes(release.resolution ?? '');
 
+        this.data.anonymous = release.anonymous;
+        this.data.internal = this.isInternal(release);
+
         // Tags
+
+        this.data.tagPersonal = this.isPersonal(release);
 
         this.data.tagDualAudio = !!release.multiAudio;
         this.data.tagDV = release.dv;
@@ -497,7 +508,7 @@ export default class BeyondHD extends Tracker {
         const {
             name, description, mediainfo, nfo, tmdb, imdb, categoryId, type,
             source, provider, region, distributor, edition, customEdition,
-            anonymous, live, sd, pack, special, stream
+            anonymous, live, sd, pack, special, stream, internal
         } = this.data;
 
         // Required fields
@@ -537,6 +548,7 @@ export default class BeyondHD extends Tracker {
         if (pack) formData.set('pack', '1');
         if (special) formData.set('special', '1');
         if (stream) formData.set('stream', '1');
+        if (internal) formData.set('internal', '1');
 
         // Upload
 
