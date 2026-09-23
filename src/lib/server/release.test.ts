@@ -37,6 +37,22 @@ describe('filename parsing', () => {
         expect(release.resolution).toBe('1080p');
     });
 
+    test('a year in a movie title stays in the title', () => {
+        const cases: Array<[string, string, number]> = [
+            ['Wonder.Woman.1984.2020.2160p.WEB-DL.DDP5.1.HDR.H.265-GRP.mkv', 'Wonder Woman 1984', 2020],
+            ['Blade.Runner.2049.2017.1080p.BluRay.DTS.x264-GRP', 'Blade Runner 2049', 2017],
+            ['1917.2019.1080p.BluRay.DTS.x264-GRP', '1917', 2019],
+            ['2001.A.Space.Odyssey.1968.2160p.UHD.BluRay.x265-GRP', '2001 A Space Odyssey', 1968],
+            ['Movie.Name.(2019).1080p.BluRay.x264-GRP', 'Movie Name', 2019],
+        ];
+        for (const [fileName, title, year] of cases) {
+            const release = new Release(fileName);
+            expect(release.title).toBe(title);
+            expect(release.year).toBe(year);
+            expect(release.seasonOrEpisodeTitle).toBeNull();
+        }
+    });
+
     test('a token is only consumed once', () => {
         const release = new Release('Movie.Name.2019.1080p.720p.BluRay.x264-GRP');
         expect(release.resolution).toBe('720p');
@@ -68,6 +84,10 @@ describe('season packs, episodes and specials', () => {
         expect(new Release('Show.S01E05.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([5]);
         expect(new Release('Show.S01E01E02.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([1, 2]);
         expect(new Release('Show.S01E01-03.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([1, 2, 3]);
+        expect(new Release('Show.S01E09-E10.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([9, 10]);
+        expect(new Release('Show.S01E09-10.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([9, 10]);
+        expect(new Release('Show.S01E09E10.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([9, 10]);
+        expect(new Release('Show.S01E09-E10.1080p.WEB-DL.DDP5.1.H.264-GRP').resolution).toBe('1080p');
         expect(new Release('Show.S01.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([]);
     });
 

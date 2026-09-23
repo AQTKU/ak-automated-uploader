@@ -272,8 +272,9 @@ export default class Release implements Readonly<ReleaseState> {
         input = input.replace(/ {2,}/g, ' ');
         input = input.trim();
 
-        const tvRegexp = /^(.+?) (S[0-9]+(?:E[0-9]+(?:[E-][0-9]+)*)?) (.+?)(?:-(\w+))?(?: (mkv|mp4))?$/i;
-        const movieRegexp = /^(.+?) \(?([0-9]{4})\)? (.+?)(?:-(\w+))?(?: (mkv|mp4))?$/i;
+        const tvRegexp = /^(.+?) (S[0-9]+(?:E[0-9]+(?:(?:-E?|E)[0-9]+)*)?) (.+?)(?:-(\w+))?(?: (mkv|mp4))?$/i;
+        /* Greedy title so the last year wins: Wonder.Woman.1984.2020, Blade.Runner.2049.2017 */
+        const movieRegexp = /^(.+) \(?((?:18|19|20)[0-9]{2})\)? (.+?)(?:-(\w+))?(?: (mkv|mp4))?$/i;
 
         const tvMatches = input.match(tvRegexp);
         const movieMatches = input.match(movieRegexp);
