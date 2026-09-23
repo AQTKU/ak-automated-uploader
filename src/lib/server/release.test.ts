@@ -64,6 +64,13 @@ describe('season packs, episodes and specials', () => {
         expect(release.seasonTitle).toBeNull();
     });
 
+    test('lists every episode in a multi-episode release', () => {
+        expect(new Release('Show.S01E05.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([5]);
+        expect(new Release('Show.S01E01E02.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([1, 2]);
+        expect(new Release('Show.S01E01-03.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([1, 2, 3]);
+        expect(new Release('Show.S01.1080p.WEB-DL.DDP5.1.H.264-GRP').episodes).toEqual([]);
+    });
+
     test('a normal episode has an episode title', () => {
         const release = new Release('Show.Name.S01E05.Episode.Title.1080p.WEB-DL.DDP5.1.H.264-GRP');
         expect(release.episodeTitle).toBe('Episode Title');

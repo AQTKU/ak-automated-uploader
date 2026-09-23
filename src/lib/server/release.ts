@@ -522,6 +522,22 @@ export default class Release implements Readonly<ReleaseState> {
         if (this._episode === null) return null;
         return this._seasonOrEpisodeTitle;
     }
+    /* Every episode in a multi-episode release: E01E02 lists them, E01-03 is a range */
+    get episodes() {
+        if (this._episode === null || !this._seasonEpisode) return [];
+        const episodes: number[] = [];
+        const listed = this._seasonEpisode.replace(/^S\d+/, '').matchAll(/(-E?|E)(\d+)/g);
+        for (const [, separator, number] of listed) {
+            const episode = parseInt(number!, 10);
+            const previous = episodes[episodes.length - 1];
+            if (separator!.startsWith('-') && previous !== undefined && episode > previous && episode - previous <= 100) {
+                for (let next = previous + 1; next <= episode; next++) episodes.push(next);
+            } else {
+                episodes.push(episode);
+            }
+        }
+        return episodes;
+    }
     get extension() { return this._extension; }
     get fileName() { return this._fileName; }
     get fullDisc() { return false; }

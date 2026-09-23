@@ -15,6 +15,7 @@ import { getReleaseValues as getReleaseEditorValues, releaseFields, releaseFileN
 import { cloneMetadata, emptyMetadata, getMetadataValues, setMetadataValue } from './metadata-fields';
 import type { Category } from './release-tables';
 import settings from './settings';
+import { findSeasonOrEpisodeTitle } from './episode-titles';
 
 export interface UploadState {
     errors: string[];
@@ -59,6 +60,7 @@ export default class Upload {
 
     private mediaInfoResult?: MediaInfo;
     private tmdbTitles?: { title: string, originalTitle: string };
+    private tmdbSeasonOrEpisodeTitle?: { fileName: string, title: string };
     private releaseBaselineCache?: { key: string, values: Record<string, string | boolean> };
 
     private initializationPromise: Promise<void> | null = null;
@@ -350,12 +352,54 @@ export default class Upload {
             }
         }
 
+        await this.matchSeasonOrEpisodeTitle(metadata);
+        this.signal.throwIfAborted();
+
         if (this.mediaInfo) await this.mediaInfo;
         this.signal.throwIfAborted();
         if (this.trackers) {
             this.trackers.setMetadata(metadata);
             this.trackers.search();
         }
+
+    }
+
+    /* Always matched against the title parsed from the filename, so an earlier match or an edit
+       can't steer a later one */
+    private async matchSeasonOrEpisodeTitle(metadata: Metadata) {
+
+        const fileName = this.release.fileName;
+        let title: string | null = null;
+
+        if (metadata.category === 'tv' && metadata.tmdbId) {
+            try {
+                title = await findSeasonOrEpisodeTitle(
+                    new Release(fileName),
+                    await tmdb.getSeasons(metadata.tmdbId),
+                    seasonNumber => tmdb.getEpisodes(metadata.tmdbId, seasonNumber),
+                );
+            } catch (error) {
+                log(errorString("Couldn't look up the episode title on TMDB", error), 'khaki');
+            }
+        }
+
+        this.signal.throwIfAborted();
+        if (this.tmdbSelected !== metadata || this.release.fileName !== fileName) return;
+
+        this.setTmdbSeasonOrEpisodeTitle(fileName, title);
+
+    }
+
+    private setTmdbSeasonOrEpisodeTitle(fileName: string, title: string | null) {
+
+        const previous = this.release.seasonOrEpisodeTitle;
+
+        this.tmdbSeasonOrEpisodeTitle = title === null ? undefined : { fileName, title };
+        this.release.setSeasonOrEpisodeTitle(title ?? new Release(fileName).seasonOrEpisodeTitle ?? '');
+
+        if (this.release.seasonOrEpisodeTitle === previous) return;
+        this.emitUpdate('release');
+        this.trackers?.setRelease(this.release);
 
     }
 
@@ -444,6 +488,7 @@ export default class Upload {
         this.tmdbSelected = metadata;
         this.tmdbBaseline = cloneMetadata(metadata);
         this.release.setCategory(category);
+        this.setTmdbSeasonOrEpisodeTitle(this.release.fileName, null);
 
         this.emitUpdate('tmdbSelected');
         this.emitUpdate('release');
@@ -492,9 +537,8 @@ export default class Upload {
         this.checkReleaseSettled();
 
         const fileName = values[releaseFileNameField];
-        if (typeof fileName === 'string' && fileName !== this.release.fileName) {
-            this.release = this.buildRelease(fileName);
-        }
+        const fileNameChanged = typeof fileName === 'string' && fileName !== this.release.fileName;
+        if (fileNameChanged) this.release = this.buildRelease(fileName);
 
         // Order matters: DV profile turns Dolby Vision on, Atmos codec sets Atmos flag
         const order = releaseFields.map(field => field.id);
@@ -506,6 +550,11 @@ export default class Upload {
 
         this.emitUpdate('release');
         this.trackers?.setRelease(this.release);
+
+        if (fileNameChanged && this.tmdbSelected) {
+            this.matchSeasonOrEpisodeTitle(this.tmdbSelected)
+                .catch(error => this.handleError("Couldn't look up the episode title on TMDB", error));
+        }
 
     }
 
@@ -521,6 +570,9 @@ export default class Upload {
             release.setTitle(this.tmdbTitles.title);
             release.setOriginalTitle(this.tmdbTitles.originalTitle);
         }
+        if (this.tmdbSeasonOrEpisodeTitle?.fileName === fileName) {
+            release.setSeasonOrEpisodeTitle(this.tmdbSeasonOrEpisodeTitle.title);
+        }
 
         return release;
 
@@ -531,6 +583,7 @@ export default class Upload {
         const key = [
             this.release.fileName, this.mediaInfoFile,
             this.tmdbTitles?.title, this.tmdbTitles?.originalTitle,
+            this.tmdbSeasonOrEpisodeTitle?.title,
         ].join('\0');
 
         if (this.releaseBaselineCache?.key !== key) {

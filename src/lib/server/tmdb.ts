@@ -93,6 +93,9 @@ export type TmdbSearchResults = {
     match: { name: string, result: TmdbSearchResult } | null,
 }
 
+export type TmdbSeason = { seasonNumber: number, name: string };
+export type TmdbEpisode = { episodeNumber: number, name: string };
+
 type CacheMap<T> = Map<string, { data: T, expires: number }>;
 
 class Tmdb {
@@ -105,6 +108,7 @@ class Tmdb {
     private movieGenres: Map<number, string> | undefined = undefined;
     private queryQueue = new PQueue({ concurrency: 1 });
     private searchCache = new Map<string, { data: any, expires: number }>();
+    private seasonCache = new Map<string, { data: any, expires: number }>();
     private tvGenres: Map<number, string> | undefined = undefined;
 
     private buildPossibleNamesFromResult(title: string, originalTitle: string, year: number | null, country: string | null) {
@@ -387,6 +391,54 @@ class Tmdb {
             };
 
         }
+
+    }
+
+    async getSeasons(id: number): Promise<TmdbSeason[]> {
+
+        if (!this.authenticated) throw Error('Not logged into TMDB');
+
+        const cacheKey = `seasons:${id}`;
+        const cached = this.getFromCache<TmdbSeason[]>(this.seasonCache, cacheKey);
+        if (cached) return cached;
+
+        const Schema = v.object({
+            seasons: v.optional(v.array(v.object({
+                name: v.string(),
+                season_number: v.number(),
+            })), []),
+        });
+
+        const data = await this.query(`3/tv/${id}`, Schema);
+        const seasons = data.seasons.map(season => ({ seasonNumber: season.season_number, name: season.name }));
+
+        this.cache(this.seasonCache, cacheKey, seasons);
+
+        return seasons;
+
+    }
+
+    async getEpisodes(id: number, seasonNumber: number): Promise<TmdbEpisode[]> {
+
+        if (!this.authenticated) throw Error('Not logged into TMDB');
+
+        const cacheKey = `episodes:${id}:${seasonNumber}`;
+        const cached = this.getFromCache<TmdbEpisode[]>(this.seasonCache, cacheKey);
+        if (cached) return cached;
+
+        const Schema = v.object({
+            episodes: v.optional(v.array(v.object({
+                episode_number: v.number(),
+                name: v.string(),
+            })), []),
+        });
+
+        const data = await this.query(`3/tv/${id}/season/${seasonNumber}`, Schema);
+        const episodes = data.episodes.map(episode => ({ episodeNumber: episode.episode_number, name: episode.name }));
+
+        this.cache(this.seasonCache, cacheKey, episodes);
+
+        return episodes;
 
     }
 
