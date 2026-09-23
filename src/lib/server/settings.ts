@@ -130,12 +130,12 @@ class Settings {
 
     async configureApp(settings: SettingsList) {
 
-        const promises = [];
+        const errors: string[] = [];
 
         try {
             await tmdb.configure({ apiKey: settings.tmdbApiKey });
         } catch (error) {
-            throw Error(errorString('Problem configuring TMDB', error));
+            errors.push(errorString('Problem configuring TMDB', error));
         }
 
         for (const imageHost in imageHosts) {
@@ -144,7 +144,7 @@ class Settings {
             try {
                 await imageHosts[imageHost]!.object.configure(found);
             } catch (error) {
-                throw Error(errorString(`Problem configuring ${imageHost}`, error));
+                errors.push(errorString(`Problem configuring ${imageHost}`, error));
             }
         }
 
@@ -154,9 +154,11 @@ class Settings {
             try {
                 await torrentClients[torrentClient]!.object.configure(settings.torrentClient);
             } catch (error) {
-                throw Error(errorString(`Problem configuring ${torrentClient}`, error));
+                errors.push(errorString(`Problem configuring ${torrentClient}`, error));
             }
         }
+
+        if (errors.length > 0) throw Error(errors.join('; '));
 
     }
 

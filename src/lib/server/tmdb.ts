@@ -101,7 +101,6 @@ type CacheMap<T> = Map<string, { data: T, expires: number }>;
 class Tmdb {
 
     private apiKey: string = '';
-    private authenticated = false;
     private cacheTTL = 60 * 1000;
     private hydrationCache = new Map<string, { data: any, expires: number }>();
     private imageConstants: { base_url: string, poster_sizes: string[] } | undefined = undefined;
@@ -186,10 +185,8 @@ class Tmdb {
 
     async configure(settings: TmdbSettings) {
         this.apiKey = settings.apiKey;
-        this.authenticated = false;
         try {
             await this.query('3/authentication', v.object({ success: v.literal(true) }));
-            this.authenticated = true;
         } catch(error) {
             throw Error(errorString(`Failed to authenticate with TMDB`, error));
         }
@@ -345,8 +342,6 @@ class Tmdb {
 
     async getById(category: 'tv' | 'movie', id: number): Promise<TmdbHydratedSearchResult> {
 
-        if (!this.authenticated) throw Error('Not logged into TMDB');
-
         if (category === 'tv') {
 
             const details = await this.query(`3/tv/${id}`, TmdbTvDetailsSchema);
@@ -396,8 +391,6 @@ class Tmdb {
 
     async getSeasons(id: number): Promise<TmdbSeason[]> {
 
-        if (!this.authenticated) throw Error('Not logged into TMDB');
-
         const cacheKey = `seasons:${id}`;
         const cached = this.getFromCache<TmdbSeason[]>(this.seasonCache, cacheKey);
         if (cached) return cached;
@@ -420,8 +413,6 @@ class Tmdb {
 
     async getEpisodes(id: number, seasonNumber: number): Promise<TmdbEpisode[]> {
 
-        if (!this.authenticated) throw Error('Not logged into TMDB');
-
         const cacheKey = `episodes:${id}:${seasonNumber}`;
         const cached = this.getFromCache<TmdbEpisode[]>(this.seasonCache, cacheKey);
         if (cached) return cached;
@@ -443,8 +434,6 @@ class Tmdb {
     }
 
     async hydrateResult(result: TmdbSearchResult): Promise<TmdbHydratedSearchResult> {
-
-        if (!this.authenticated) throw Error('Not logged into TMDB');
 
         if (result.category === 'tv') {
 
@@ -639,8 +628,6 @@ class Tmdb {
 
     async searchMovie(title: string, year: number | null = null): Promise<TmdbSearchResults> {
 
-        if (!this.authenticated) throw Error('Not logged into TMDB');
-
         if (title === '') return { results: [], match: null };
 
         const Schema = v.object({
@@ -688,8 +675,6 @@ class Tmdb {
     }
 
     async searchTv(title: string, year: number | null = null): Promise<TmdbSearchResults> {
-
-        if (!this.authenticated) throw Error('Not logged into TMDB');
 
         if (title === '') return { results: [], match: null };
 
