@@ -121,9 +121,9 @@ export const SettingsSchema = v.object({
         v.union([v.boolean(), v.literal('1')]),
         v.transform(value => value === true || value === '1')
     ), false),
-    imageHosts: v.fallback(v.array(ImageHostSettingsSchema), []),
+    imageHosts: v.optional(v.array(ImageHostSettingsSchema), []),
     torrentClient: v.optional(TorrentClientSettingsSchema),
-    trackers: v.fallback(v.array(TrackerSettingsSchema), []),
+    trackers: v.optional(v.array(TrackerSettingsSchema), []),
 });
 
 export type SettingsList = v.InferOutput<typeof SettingsSchema>;

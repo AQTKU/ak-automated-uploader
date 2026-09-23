@@ -3,9 +3,11 @@ import errorString from './util/error-string';
 import { TrackerSettingsSchema, SettingsSchema, ImageHostSettingsSchema, TorrentClientSettingsSchema } from '$lib/types';
 import type { SettingsField,  SettingsList, SettingsOption, TrackerSettings, ImageHostSettings, TorrentClientSettings } from '$lib/types';
 import buildSchemaFromFields from './util/build-schema-from-fields';
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
+import { rename } from 'node:fs/promises';
 import { log } from './util/log';
 import { file } from 'bun';
+import PQueue from 'p-queue';
 import { imageHosts } from './image-hosts';
 import { torrentClients } from './torrent-clients';
 import { tmdb } from './tmdb';
@@ -19,6 +21,7 @@ class Settings {
     private trackerOptions: SettingsOption[] = [];
     private changeCallbacks: ((settings: SettingsList) => Promise<void>)[] = [];
     private _isFirstBoot = false;
+    private saveQueue = new PQueue({ concurrency: 1 });
 
     constructor() {
 
@@ -223,10 +226,15 @@ class Settings {
         let data;
 
         try {
-            data = await file(path).json();
+            data = v.parse(SettingsSchema, await file(path).json());
         } catch (error) {
-            log(errorString('Error reading settings from file', error), 'tomato');
-            log('Using default settings', 'tomato');
+            if (await file(path).exists()) {
+                const corruptPath = await appDataPath(`settings-corrupt-${Date.now()}.json`);
+                await rename(path, corruptPath);
+                log(errorString("Couldn't read settings", error), 'tomato');
+                log(`Moved the unreadable settings file to ${corruptPath}`, 'tomato');
+            }
+            log('Using default settings', 'khaki');
             data = v.parse(SettingsSchema, {});
         }
 
@@ -254,29 +262,31 @@ class Settings {
         await this.save();
     }
 
+    /* Write to a temporary file then rename over the original, so a crash mid-write
+       leaves either the old settings or the new ones, never half of each */
     async save() {
 
-        try {
+        await this.saveQueue.add(async () => {
 
             const path = await appDataPath('settings.json');
+            const temporaryPath = await appDataPath(`settings-${randomUUID()}.json`);
             const text = JSON.stringify(this.settings, undefined, 2);
 
-            await file(path).write(text);
+            try {
+                await file(temporaryPath).write(text);
+                await rename(temporaryPath, path);
+            } catch (error) {
+                await file(temporaryPath).delete().catch(() => {});
+                throw Error(errorString('Problem saving settings', error));
+            }
 
-        } catch (error) {
-            throw Error(errorString('Problem saving settings', error));
-        }
+        });
 
     }
 
     async set(data: Object, saveAuthToken = false, throwOnMisconfigured = false) {
 
-        const currentAuthToken = this.settings.authToken;
-        const currentApiKey = this.settings.apiKey;
-
         const settings = v.parse(SettingsSchema, data);
-        settings.authToken = (saveAuthToken && settings.authToken) ? settings.authToken : currentAuthToken;
-        settings.apiKey = ('apiKey' in data && data.apiKey) ? settings.apiKey : currentApiKey;
 
         try {
             await this.configureApp(settings);
@@ -286,6 +296,11 @@ class Settings {
         }
 
         await this.emitChanged(settings);
+
+        /* Read these after the awaits above, so an API key generated or rescinded
+           while this save was configuring services isn't reverted */
+        settings.authToken = (saveAuthToken && settings.authToken) ? settings.authToken : this.settings.authToken;
+        settings.apiKey = ('apiKey' in data && data.apiKey) ? settings.apiKey : this.settings.apiKey;
         this.settings = settings;
 
         await this.save();
