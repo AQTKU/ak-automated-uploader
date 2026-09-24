@@ -1,5 +1,5 @@
 import { uploads } from '$lib/server/uploads.js';
-import { ACCEPTED } from '$lib/server/util/empty-responses';
+import { accepted } from '$lib/server/util/empty-responses';
 import why from '$lib/server/util/why.js';
 
 export async function DELETE({ params }) {
@@ -12,6 +12,6 @@ export async function DELETE({ params }) {
         return why(404, "Couldn't delete upload", error);
     }
 
-    return ACCEPTED;
+    return accepted();
 
 }

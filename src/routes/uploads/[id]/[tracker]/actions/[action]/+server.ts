@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import type Tracker from '$lib/server/tracker';
 import why from '$lib/server/util/why';
-import { ACCEPTED, NO_CONTENT } from '$lib/server/util/empty-responses';
+import { noContent } from '$lib/server/util/empty-responses';
 import { uploads } from '$lib/server/uploads';
 import errorString from '$lib/server/util/error-string';
 
@@ -24,6 +24,6 @@ export const POST: RequestHandler = async ({ params, request }) => {
         return why(500, errorString(`Problem performing action for ${tracker.name}`, error));
     }
 
-    return NO_CONTENT;
+    return noContent();
 
 };

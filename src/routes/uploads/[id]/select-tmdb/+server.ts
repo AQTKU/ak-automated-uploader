@@ -1,5 +1,5 @@
 import { uploads } from '$lib/server/uploads.js';
-import { ACCEPTED } from '$lib/server/util/empty-responses.js';
+import { accepted } from '$lib/server/util/empty-responses';
 import why from '$lib/server/util/why.js';
 import * as v from 'valibot';
 
@@ -23,6 +23,6 @@ export async function PATCH({ params, request }) {
         return why(500, "Couldn't select TMDB result", error);
     }
 
-    return ACCEPTED;
+    return accepted();
 
 }

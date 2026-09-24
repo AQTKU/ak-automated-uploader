@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import normalizeApiInput from '$lib/server/util/normalize-api-input';
 import { whyByAcceptHeader } from '$lib/server/util/why';
-import { NO_CONTENT } from '$lib/server/util/empty-responses';
+import { noContent } from '$lib/server/util/empty-responses';
 import { uploads } from '$lib/server/uploads';
 import { ApiUploadSchema } from '$lib/types';
 
@@ -38,6 +38,6 @@ export const POST: RequestHandler = async ({ request }) => {
         return why(422, 'Failed to upload file', error);
     }
 
-    return NO_CONTENT;
+    return noContent();
 
 };

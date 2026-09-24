@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import type Tracker from '$lib/server/tracker';
 import why from '$lib/server/util/why';
-import { ACCEPTED } from '$lib/server/util/empty-responses';
+import { accepted } from '$lib/server/util/empty-responses';
 import { uploads } from '$lib/server/uploads';
 
 export const PUT: RequestHandler = async ({ params, request }) => {
@@ -23,6 +23,6 @@ export const PUT: RequestHandler = async ({ params, request }) => {
     try { tracker.setData(data); }
     catch (error) { return why(422, "Couldn't set tracker data", error); }
 
-    return ACCEPTED;
+    return accepted();
 
 };

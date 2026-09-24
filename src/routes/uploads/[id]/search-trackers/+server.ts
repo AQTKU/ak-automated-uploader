@@ -1,5 +1,5 @@
 import { uploads } from '$lib/server/uploads.js';
-import { ACCEPTED } from '$lib/server/util/empty-responses.js';
+import { accepted } from '$lib/server/util/empty-responses';
 import why from '$lib/server/util/why.js';
 
 export async function POST({ params }) {
@@ -13,6 +13,6 @@ export async function POST({ params }) {
         return why(500, `Couldn't check the trackers for duplicates`, error);
     }
 
-    return ACCEPTED;
+    return accepted();
 
 }

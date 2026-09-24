@@ -1,5 +1,5 @@
 import { uploads } from '$lib/server/uploads.js';
-import { ACCEPTED } from '$lib/server/util/empty-responses.js';
+import { accepted } from '$lib/server/util/empty-responses';
 import why from '$lib/server/util/why.js';
 import * as v from 'valibot';
 
@@ -25,6 +25,6 @@ export async function PATCH({ params, request }) {
     try { upload.setMediaInfo(path); }
     catch (error) { return why(422, 'Problem setting MediaInfo', error); }
 
-    return ACCEPTED;
+    return accepted();
 
 }
