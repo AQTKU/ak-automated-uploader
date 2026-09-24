@@ -2,6 +2,7 @@ import type { SettingsField, TorrentClientSettings } from '$lib/types';
 import errorString from '../util/error-string';
 import TorrentClient from '../torrent-client';
 import { log } from '../util/log';
+import path from 'node:path';
 import posixPath from 'node:path/posix';
 import win32Path from 'node:path/win32';
 import { file } from 'bun';
@@ -110,14 +111,17 @@ class RTorrent extends TorrentClient {
             if (relativeContentPath) {
                 const defaultDirectory = await this.call('directory.default');
                 this.setPlatform(defaultDirectory);
-                const contentFolder = this.path.join(defaultDirectory, relativeContentPath);
-                params.push({ type: 'string', value: this.quoteCommand('d.directory_base.set', contentFolder) });
+                const localRelativeContentPath = relativeContentPath.replaceAll(path.sep, this.path.sep);
+                const contentFolder = this.path.join(defaultDirectory, localRelativeContentPath);
+                /* relativeContentPath is the release's parent folder, which is d.directory;
+                   d.directory_base would be the release folder itself */
+                params.push({ type: 'string', value: this.quoteCommand('d.directory.set', contentFolder) });
             }
 
             await this.call('load.raw_start', params, signal);
 
         } catch (error) {
-            throw Error(errorString('Failed to upload torrent file', error));
+            throw Error(errorString("Couldn't send torrent to rtorrent", error));
         }
 
     }
