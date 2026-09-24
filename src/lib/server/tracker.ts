@@ -357,6 +357,10 @@ export default abstract class Tracker {
                 if (download instanceof Response) response = download;
                 else response = await fetch(download, { signal });
 
+                if (!response.ok) {
+                    throw Error(`Uploaded, but couldn't download the torrent: ${response.status} ${response.statusText}`);
+                }
+
                 const arrayBuffer = await response.arrayBuffer();
                 const path = join(tmpdir(), randomUUID() + '.torrent');
                 await file(path).write(arrayBuffer);
