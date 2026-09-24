@@ -571,6 +571,8 @@ export default class Aither extends Tracker {
             );
         }
 
+        /* One report per episode number is deliberate: reporting a single episode is enough,
+           site staff clear out the rest of the season from it */
         const grouped = Object.groupBy(
             filtered.length > 0 ? filtered : results,
             ({ episode }) => String(episode)
