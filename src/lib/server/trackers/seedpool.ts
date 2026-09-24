@@ -179,14 +179,9 @@ export default class Seedpool extends Tracker {
             this.setOption('typeId', 'HDTV');
         }
 
-        const sportsPatterns = [
-            /EFL.*/i, /.*mlb.*/i, /.*formula1.*/i, /.*nascar.*/i, /.*nfl.*/i, /.*wrc.*/i, /.*wwe.*/i,
-            /.*fifa.*/i, /.*boxing.*/i, /.*rally.*/i, /.*ufc.*/i, /.*ppv.*/i, /.*uefa.*/i, /.*nhl.*/i,
-            /.*nba.*/i, /.*motogp.*/i, /.*moto2.*/i, /.*moto3.*/i, /.*gamenight.*/i, /.*darksport.*/i,
-            /.*overtake.*/i
-        ];
+        const sportsPattern = /\b(?:efl|mlb|formula1|nascar|nfl|wrc|wwe|fifa|boxing|rally|ufc|ppv|uefa|nhl|nba|motogp|moto2|moto3|gamenight|darksport|overtake)\b/i;
 
-        if (sportsPatterns.some(pattern => pattern.test(release.title || ''))) {
+        if (sportsPattern.test(release.title || '')) {
             this.setOption('categoryId', 'Sports');
         } else if (release.category === 'tv') {
             this.setOption('categoryId', 'TV');
