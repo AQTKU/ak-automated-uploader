@@ -273,7 +273,8 @@ export default class LST extends Tracker {
             this.setOption('hdrDv', 'None');
             const hdrParts: string[] = [];
             if (release.dvProfile) hdrParts.push(`DV P${release.dvProfile}`);
-            if (release.hdr) hdrParts.push(release.hdr.plus);
+            /* LST calls plain HDR10 "HDR" alongside DV, but "HDR10" on its own */
+            if (release.hdr) hdrParts.push(!release.dvProfile && release.hdr.plus === 'HDR' ? 'HDR10' : release.hdr.plus);
             if (hdrParts.length > 0) {
                 const hdrString = hdrParts.join(' ')
                 try { this.setOption('hdrDv', hdrString); }
@@ -594,6 +595,8 @@ export default class LST extends Tracker {
             );
         }
 
+        /* One report per episode number is deliberate: reporting a single episode is enough,
+           site staff clear out the rest of the season from it */
         const grouped = Object.groupBy(
             filtered.length > 0 ? filtered : results,
             ({ episode }) => String(episode)
