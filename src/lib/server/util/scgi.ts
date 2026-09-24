@@ -56,13 +56,31 @@ export async function scgiRequest(socketPath: string, body: string, signal?: Abo
     return new Promise<string>((resolve, reject) => {
 
         const chunks: Uint8Array[] = [];
+        let unsent = encodeScgiRequest(encoder.encode(body));
+        let socket: Awaited<ReturnType<typeof connect>> | undefined;
+        let settled = false;
 
-        const onAbort = () => {
-            socket?.terminate();
-            reject(Error('Aborted'));
+        const settle = (error?: Error) => {
+            if (settled) return;
+            settled = true;
+            signal?.removeEventListener('abort', onAbort);
+            if (error) reject(error);
+            else resolve(decodeScgiResponse(concatBytes(chunks)));
         };
 
-        let socket: Awaited<ReturnType<typeof connect>> | undefined;
+        /* terminate() runs the close handler synchronously, so reject first
+           or close would resolve with whatever partial response had arrived */
+        const onAbort = () => {
+            settle(Error('Aborted'));
+            socket?.terminate();
+        };
+
+        /* Bun's socket.write() is unbuffered and may only take part of a large
+           request, so the rest is written as the socket drains */
+        const writeUnsent = (openSocket: NonNullable<typeof socket>) => {
+            const written = openSocket.write(unsent);
+            if (written > 0) unsent = unsent.subarray(written);
+        };
 
         connect({
             unix: socketPath,
@@ -70,24 +88,27 @@ export async function scgiRequest(socketPath: string, body: string, signal?: Abo
                 binaryType: 'uint8array',
                 open(openedSocket) {
                     socket = openedSocket;
-                    openedSocket.write(encodeScgiRequest(encoder.encode(body)));
+                    openedSocket.timeout(60);
+                    writeUnsent(openedSocket);
+                },
+                drain(openSocket) {
+                    if (unsent.length > 0) writeUnsent(openSocket);
                 },
                 data(_socket, data) {
                     chunks.push(data);
                 },
                 close() {
-                    signal?.removeEventListener('abort', onAbort);
-                    resolve(decodeScgiResponse(concatBytes(chunks)));
+                    if (unsent.length > 0) settle(Error('Connection closed before the request was sent'));
+                    else settle();
+                },
+                timeout() {
+                    settle(Error('Timed out waiting for rtorrent'));
                 },
                 error(_socket, error) {
-                    signal?.removeEventListener('abort', onAbort);
-                    reject(error);
+                    settle(error);
                 },
             },
-        }).catch(error => {
-            signal?.removeEventListener('abort', onAbort);
-            reject(error);
-        });
+        }).catch(error => settle(error));
 
         signal?.addEventListener('abort', onAbort, { once: true });
 
