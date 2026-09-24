@@ -47,7 +47,6 @@ export default class Upload {
     private tmdbBaseline?: Metadata;
     private updateCallbacks: ((callback: Partial<UploadState>) => void)[] = [];
     private statusUpdateCallbacks: (() => void)[] = [];
-    private errorCallbacks: ((error: string) => void)[] = [];
     private path: string;
     private files?: Files;
     private torrent?: Torrent;
@@ -63,7 +62,8 @@ export default class Upload {
     private tmdbSeasonOrEpisodeTitle?: { fileName: string, title: string };
     private releaseBaselineCache?: { key: string, values: Record<string, string | boolean> };
 
-    private initializationPromise: Promise<void> | null = null;
+    private initialization: Promise<void>;
+    private tmdbSelection = 0;
 
     private errors: string[] = [];
     private abortController = new AbortController();
@@ -74,7 +74,9 @@ export default class Upload {
         this.release = this.buildRelease(basename(path));
         this.path = path;
 
-        this.initialize().then(() => { }, error => this.handleError('Problem initializing upload', error));
+        this.initialization = this.initialize();
+        // Each step has already reported its own error to the UI, this is kept for ready()
+        this.initialization.catch(() => {});
 
     }
 
@@ -89,12 +91,6 @@ export default class Upload {
     checkReleaseSettled() {
         if (!this.mediaInfoResult) throw Error('MediaInfo not ready');
         if (!this.tmdbSelected) throw Error('TMDB not ready');
-    }
-
-    emitError(error: string) {
-        for (const callback of this.errorCallbacks) {
-            callback(error);
-        }
     }
 
     emitUpdate(key?: string) {
@@ -123,27 +119,30 @@ export default class Upload {
         return !!this.mediaInfoResult && !!this.tmdbSelected;
     }
 
-    get readyToEdit(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.onStatusUpdate(() => {
-                const statusCounts = this.statusCounts.get('✏️ Ready to edit');
-                if ((statusCounts || 0) >= (this.trackers?.count || Infinity)) resolve();
-            });
-            this.onError((message) => reject(message));
-        });
-    }
+    /* For the API, where nobody is watching the UI to pick a TMDB result or a MediaInfo
+       file, so waiting on those would never end */
+    async ready(signal: AbortSignal) {
 
-    trackerReadyToEdit(trackerName: string): Promise<void> {
-        const tracker = this.getTrackerByName(trackerName);
-        return new Promise((resolve, reject) => {
-            const status = tracker.getStatusState();
-            if (status === '✏️ Ready to edit') return resolve();
-            if (status === '❌ Error') return reject(Error(`${trackerName} failed before becoming ready`));
-            tracker.onStatusChanged(status => {
-                if (status === '✏️ Ready to edit') resolve();
-                else if (status === '❌ Error') reject(Error(`${trackerName} failed before becoming ready`));
-            });
+        const aborted = AbortSignal.any([this.signal, signal]);
+        let onAbort = () => {};
+        const abortion = new Promise<never>((_, reject) => {
+            onAbort = () => reject(Error(this.signal.aborted ? 'Upload was closed' : 'Request was cancelled'));
+            if (aborted.aborted) onAbort();
+            else aborted.addEventListener('abort', onAbort, { once: true });
         });
+
+        try {
+            await Promise.race([this.initialization, abortion]);
+        } catch (error) {
+            // The API can reuse an upload, and a step that failed may have been fixed in the UI since
+            if (aborted.aborted || !this.releaseSettled) throw error;
+        } finally {
+            aborted.removeEventListener('abort', onAbort);
+        }
+
+        if (!this.mediaInfoResult) throw Error("Couldn't find a video file to read MediaInfo from");
+        if (!this.tmdbSelected) throw Error('No TMDB match found, choose one in the UI');
+
     }
 
     get signal() {
@@ -174,19 +173,41 @@ export default class Upload {
         const message = errorString(description, error);
         this.errors.push(message);
         this.emitUpdate('errors');
-        this.emitError(message);
+    }
+
+    private reportAndRethrow(description: string, error: unknown): never {
+        this.handleError(description, error);
+        throw error;
     }
 
     private async initialize() {
 
         this.initializeTrackers();
-        this.initializeTmdb();
 
-        this.files = await Files.create(this.path);
+        await Promise.all([
+            this.initializeTmdb().catch(error => this.reportAndRethrow('Problem with TMDB', error)),
+            this.initializeFiles(),
+        ]);
+
+    }
+
+    private async initializeFiles() {
+
+        const files = await Files.create(this.path)
+            .catch(error => this.reportAndRethrow('Problem initializing upload', error));
+        this.files = files;
         this.signal.throwIfAborted();
-        if (this.files.mediaInfoFile) this.setMediaInfo(this.files.mediaInfoFile);
-        this.initializeScreenshots(this.files);
-        this.initializeTorrent(this.files.path);
+
+        const mediaInfoFile = files.mediaInfoFile;
+        const mediaInfo = mediaInfoFile
+            ? this.loadMediaInfo(mediaInfoFile)
+                .catch(error => this.reportAndRethrow(`Couldn't set MediaInfo for ${basename(mediaInfoFile)}`, error))
+            : undefined;
+
+        this.initializeScreenshots(files);
+        this.initializeTorrent(files.path);
+
+        await mediaInfo;
 
     }
 
@@ -216,20 +237,22 @@ export default class Upload {
 
     private async initializeTmdb() {
 
-        try {
-            await this.searchTmdb(
-                this.release.title,
-                this.release.category ?? 'movie',
-                this.release.category === 'tv' ? null : this.release.year
-            );
-        } catch (error) {
-            this.errors.push(errorString('Problem with TMDB', error));
-            this.emitUpdate('errors');
-        }
+        const match = await this.loadTmdbResult(
+            this.release.title,
+            this.release.category ?? 'movie',
+            this.release.category === 'tv' ? null : this.release.year
+        );
+
+        if (match) await this.adoptTmdbResult(match.result.tmdbId, match.name);
 
     }
 
     async searchTmdb(query: string, category: Category, year: number | null) {
+        const match = await this.loadTmdbResult(query, category, year);
+        if (match) await this.selectTmdbResult(match.result.tmdbId, match.name);
+    }
+
+    private async loadTmdbResult(query: string, category: Category, year: number | null) {
 
         const results = category === 'tv'
             ? await tmdb.searchTv(query, year)
@@ -240,10 +263,7 @@ export default class Upload {
         this.tmdbResults = results.results;
         this.emitUpdate('tmdbResults');
 
-        if (results.match) {
-            await this.selectTmdbResult(results.match.result.tmdbId, results.match.name);
-            this.signal.throwIfAborted();
-        }
+        return results.match;
 
     }
 
@@ -279,10 +299,6 @@ export default class Upload {
         this.updateCallbacks = this.updateCallbacks.filter(existingCallback => existingCallback !== callback);
     }
 
-    onError(callback: (error: string) => void) {
-        this.errorCallbacks.push(callback);
-    }
-
     onStatusUpdate(callback: () => void) {
         this.statusUpdateCallbacks.push(callback);
     }
@@ -292,25 +308,30 @@ export default class Upload {
     }
 
     async selectTmdbResult(id: number, matchedTitle?: string) {
-
         try {
-
-            if (!this.tmdbResults) throw Error('No TMDB results returned to select');
-            const result = this.tmdbResults.find(result => result.tmdbId === id);
-            if (!result) throw Error(`Couldn't select result with TMDB ID ${id}`);
-
-            const hydrated = await tmdb.hydrateResult(result);
-            this.signal.throwIfAborted();
-
-            await this.adoptMetadata({ ...hydrated, malId: null }, matchedTitle);
-
+            await this.adoptTmdbResult(id, matchedTitle);
         } catch (error) {
-            this.errors.push(errorString('Problem with TMDB while getting extra metadata', error));
-            this.emitUpdate('errors');
+            this.handleError('Problem with TMDB while getting extra metadata', error);
         }
+    }
+
+    private async adoptTmdbResult(id: number, matchedTitle?: string) {
+
+        if (!this.tmdbResults) throw Error('No TMDB results returned to select');
+        const result = this.tmdbResults.find(result => result.tmdbId === id);
+        if (!result) throw Error(`Couldn't select result with TMDB ID ${id}`);
+
+        const selection = ++this.tmdbSelection;
+        const hydrated = await tmdb.hydrateResult(result);
+        this.signal.throwIfAborted();
+        if (selection !== this.tmdbSelection) return;
+
+        await this.adoptMetadata({ ...hydrated, malId: null }, matchedTitle);
 
     }
 
+    /* Every await here is followed by a check that this is still the selected metadata,
+       so a slow earlier selection can't overwrite a newer one */
     private async adoptMetadata(metadata: Metadata, matchedTitle?: string) {
 
         if (matchedTitle) this.matchedTitles.set(metadata.tmdbId, matchedTitle);
@@ -344,8 +365,10 @@ export default class Upload {
 
         if (metadata.keywords.includes('anime')) {
             try {
-                metadata.malId = await getMalId(metadata.title, metadata.originalTitle, this.release.category, metadata.year);
-                if (this.tmdbBaseline) this.tmdbBaseline.malId = metadata.malId;
+                const malId = await getMalId(metadata.title, metadata.originalTitle, this.release.category, metadata.year);
+                if (this.tmdbSelected !== metadata) return;
+                metadata.malId = malId;
+                if (this.tmdbBaseline) this.tmdbBaseline.malId = malId;
                 this.emitUpdate('tmdbSelected');
             } catch (error) {
                 log(errorString('Getting MAL ID from Jikan failed', error), 'tomato');
@@ -354,9 +377,13 @@ export default class Upload {
 
         await this.matchSeasonOrEpisodeTitle(metadata);
         this.signal.throwIfAborted();
+        if (this.tmdbSelected !== metadata) return;
 
-        if (this.mediaInfo) await this.mediaInfo;
+        // A MediaInfo failure is reported where it happens, trackers just won't become ready
+        await this.mediaInfo?.catch(() => {});
         this.signal.throwIfAborted();
+        if (this.tmdbSelected !== metadata) return;
+
         if (this.trackers) {
             this.trackers.setMetadata(metadata);
             this.trackers.search();
@@ -442,6 +469,7 @@ export default class Upload {
     async setMetadataValues(values: Record<string, string | boolean>) {
 
         const metadata = this.materializeMetadata();
+        const selection = ++this.tmdbSelection;
 
         const previousId = metadata.tmdbId;
         const previousCategory = metadata.category;
@@ -451,7 +479,7 @@ export default class Upload {
         /* The ID and the category together name an entry, so changing either means going back to
            TMDB for it rather than keeping the fields that described the old one */
         if (metadata.tmdbId && (metadata.tmdbId !== previousId || metadata.category !== previousCategory)) {
-            await this.loadTmdbId(metadata.tmdbId, metadata.category);
+            await this.adoptTmdbId(metadata.tmdbId, metadata.category, selection);
             return;
         }
 
@@ -464,7 +492,7 @@ export default class Upload {
 
     }
 
-    private async loadTmdbId(tmdbId: number, category: Category) {
+    private async adoptTmdbId(tmdbId: number, category: Category, selection: number) {
 
         let fetched;
 
@@ -472,10 +500,13 @@ export default class Upload {
             fetched = await tmdb.getById(category, tmdbId);
             this.signal.throwIfAborted();
         } catch (error) {
+            if (selection !== this.tmdbSelection) return;
             log(errorString(`Couldn't load TMDB ID ${tmdbId}`, error), 'khaki');
             this.clearMetadata(tmdbId, category);
             return;
         }
+
+        if (selection !== this.tmdbSelection) return;
 
         await this.adoptMetadata({ ...fetched, malId: null });
 
@@ -504,31 +535,42 @@ export default class Upload {
     }
 
     async setMediaInfo(path: string) {
-
         try {
-
-            if (!this.files) throw Error('Files not initialized');
-            this.files.checkPath(path);
-
-            if (path === this.mediaInfoFile) return;
-            this.mediaInfoFile = path;
-
-            this.mediaInfo = getMediaInfo(path);
-            this.trackers?.setMediaInfo(this.mediaInfo);
-
-            const mediaInfo = await this.mediaInfo;
-            this.signal.throwIfAborted();
-
-            this.mediaInfoResult = mediaInfo;
-            this.release.applyMediaInfo(mediaInfo);
-
-            this.emitUpdate('files');
-            this.emitUpdate('release');
-            this.trackers?.setRelease(this.release);
-
+            await this.loadMediaInfo(path);
         } catch (error) {
             this.handleError(`Couldn't set MediaInfo for ${basename(path)}`, error);
         }
+    }
+
+    private async loadMediaInfo(path: string) {
+
+        if (!this.files) throw Error('Files not initialized');
+        this.files.checkPath(path);
+
+        if (path === this.mediaInfoFile) return;
+        this.mediaInfoFile = path;
+
+        const pending = getMediaInfo(path);
+        this.mediaInfo = pending;
+        this.trackers?.setMediaInfo(pending);
+
+        let mediaInfo;
+        try {
+            mediaInfo = await pending;
+        } catch (error) {
+            // Forget the file so picking it again retries rather than returning early above
+            if (this.mediaInfoFile === path) this.mediaInfoFile = undefined;
+            throw error;
+        }
+        this.signal.throwIfAborted();
+        if (this.mediaInfoFile !== path) return;
+
+        this.mediaInfoResult = mediaInfo;
+        this.release.applyMediaInfo(mediaInfo);
+
+        this.emitUpdate('files');
+        this.emitUpdate('release');
+        this.trackers?.setRelease(this.release);
 
     }
 

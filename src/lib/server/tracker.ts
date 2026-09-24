@@ -271,9 +271,10 @@ export default abstract class Tracker {
     setMediaInfo(mediaInfo: ReturnType<typeof getMediaInfo>) {
         this.mediaInfo = mediaInfo;
         this.emitStatus('⏳ Waiting for MediaInfo and metadata');
-        this.mediaInfo.then(() => {
-            if (this.metadata) this.emitStatus('✏️ Ready to edit');
-        });
+        this.mediaInfo.then(
+            () => { if (this.metadata) this.emitStatus('✏️ Ready to edit'); },
+            () => {}
+        );
     }
 
     setMetadata(metadata: Metadata) {
