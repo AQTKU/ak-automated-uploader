@@ -197,6 +197,7 @@ export default class MidnightScene extends Tracker {
         formData.set('description', description);
         formData.set('mediainfo', mediaInfo);
         formData.set('bdinfo', bdInfo);
+        formData.set('keywords', keywords);
         formData.set('category_id', categoryId);
         formData.set('type_id', typeId);
         formData.set('resolution_id', resolutionId);
