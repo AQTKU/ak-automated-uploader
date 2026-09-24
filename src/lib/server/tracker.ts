@@ -271,9 +271,10 @@ export default abstract class Tracker {
     setMediaInfo(mediaInfo: ReturnType<typeof getMediaInfo>) {
         this.mediaInfo = mediaInfo;
         this.emitStatus('⏳ Waiting for MediaInfo and metadata');
-        this.mediaInfo.then(
-            () => { if (this.metadata) this.emitStatus('✏️ Ready to edit'); },
-            () => {}
+        /* Upload reports the failure itself, so only the status changes here */
+        mediaInfo.then(
+            () => { if (this.mediaInfo === mediaInfo && this.metadata) this.emitStatus('✏️ Ready to edit'); },
+            () => { if (this.mediaInfo === mediaInfo) this.emitStatus('❌ Error'); }
         );
     }
 
