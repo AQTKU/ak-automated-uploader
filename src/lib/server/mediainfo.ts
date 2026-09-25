@@ -30,21 +30,19 @@ export class MediaInfo {
     async analyze(fileHandle: BunFile, fileSize: number, type: 'tracks'): Promise<Track[]>;
     async analyze(fileHandle: BunFile, fileSize: number, outputFormat: 'text' | 'tracks'): Promise<string | Track[]> {
 
+        const mediaInfo = await mediaInfoFactory({
+            format: outputFormat === 'text' ? 'text' : 'object',
+            full: outputFormat !== 'text',
+        });
+
+        const readChunk: ReadChunkFunc = async (size, offset) => {
+            const blob = fileHandle.slice(offset, offset + size);
+            return new Uint8Array(await blob.arrayBuffer());
+        }
+
+        pauseHashing();
+
         try {
-
-            const mediaInfo = await mediaInfoFactory({
-                format: outputFormat === 'text' ? 'text' : 'object',
-                full: outputFormat !== 'text',
-            });
-
-            const readChunk: ReadChunkFunc = async (size, offset) => {
-                const buffer = new Uint8Array(size);
-                const blob = fileHandle.slice(offset, offset + size);
-                const arrayBuffer = await blob.arrayBuffer();
-                return new Uint8Array(arrayBuffer);
-            }
-
-            pauseHashing();
 
             const result = await mediaInfo.analyzeData(fileSize, readChunk);
 
@@ -58,10 +56,9 @@ export class MediaInfo {
 
             return result.media.track;
 
-        } catch (error) {
-            throw error;
         } finally {
             resumeHashing();
+            mediaInfo.close();
         }
 
     }
