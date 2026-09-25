@@ -1,21 +1,21 @@
 <script lang="ts">
     import { dndzone, type DndEvent } from 'svelte-dnd-action';
     import { flip } from 'svelte/animate';
-    import type { SettingsField } from '$lib/types';
+    import type { ImageHostOrderItem, SettingsField } from '$lib/types';
 
     let { field, value, name = '', id = '', imageHosts = [] }: {
         field: SettingsField,
         value: unknown,
         name?: string,
         id?: string,
-        imageHosts?: { id: number, name: string }[],
+        imageHosts?: ImageHostOrderItem[],
     } = $props();
     // svelte-ignore state_referenced_locally
     id = id ? id : field.id;
     // svelte-ignore state_referenced_locally
     name = name ? name : field.id;
 
-    let orderedHosts: { id: number, name: string }[] = $state([]);
+    let orderedHosts: ImageHostOrderItem[] = $state([]);
 
     // svelte-ignore state_referenced_locally
     if (field.type === 'imageHosts') {
@@ -32,7 +32,7 @@
     let imageHostFieldValue = $derived(orderedHosts.map(item => item.name));
 
     function handleSort(e: CustomEvent<DndEvent>) {
-        orderedHosts = e.detail.items as { id: number, name: string }[];
+        orderedHosts = e.detail.items as ImageHostOrderItem[];
     }
 
 </script>

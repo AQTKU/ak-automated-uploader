@@ -2,19 +2,9 @@ import type { Actions, PageServerLoad } from './$types';
 import errorString from '$lib/server/util/error-string';
 import { redirect } from '@sveltejs/kit';
 import { removeAllSessions } from '$lib/server/sessions';
+import type { SettingsField } from '$lib/types';
 
-interface Field {
-    id: string;
-    label: string;
-    type?: 'text' | 'path' | 'password' | 'multiline' | 'spacer' | 'imageHosts' | 'checkbox';
-    description?: string;
-}
-
-interface FieldList {
-    general: Field[];
-}
-
-const fields: FieldList = {
+const fields: { general: SettingsField[] } = {
 
     general: [
         {

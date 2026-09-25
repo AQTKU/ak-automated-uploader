@@ -9,6 +9,12 @@ export interface SettingsField {
     default?: string;
 }
 
+/* The id is only for svelte-dnd-action to track items while they're dragged */
+export interface ImageHostOrderItem {
+    id: number,
+    name: string,
+}
+
 export interface SettingsOption {
     name: string,
     fields: SettingsField[],

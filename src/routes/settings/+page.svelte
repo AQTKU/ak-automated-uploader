@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { ActionData, PageData } from "./$types";
+    import type { ImageHostOrderItem } from '$lib/types';
     import General from './General.svelte';
     import SettingsSection from './SettingsSection.svelte';
     import TorrentClients from './TorrentClients.svelte';
@@ -8,7 +9,7 @@
 
     let { data, form }: { data: PageData, form: ActionData } = $props();
 
-    let imageHosts: { id: number, name: string }[] = $state([]);
+    let imageHosts: ImageHostOrderItem[] = $state([]);
     // svelte-ignore state_referenced_locally
     imageHosts = data.settings.imageHosts.map((imageHost, index) => ({ id: index, name: imageHost.name }));
 

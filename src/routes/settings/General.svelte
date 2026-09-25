@@ -1,7 +1,11 @@
 <script lang="ts">
+    import type { SettingsField, SettingsList } from '$lib/types';
     import FormControl from './FormControl.svelte';
 
-    let { fields, settings } = $props()
+    let { fields, settings }: {
+        fields: SettingsField[],
+        settings: SettingsList,
+    } = $props();
 
 </script>
 
@@ -14,7 +18,7 @@
             {#each fields as field}
                 <FormControl
                     {field}
-                    value={settings[field.id]}
+                    value={settings[field.id as keyof SettingsList]}
                 />
             {/each}
         </fieldset>

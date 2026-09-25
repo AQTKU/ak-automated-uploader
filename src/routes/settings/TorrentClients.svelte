@@ -1,15 +1,17 @@
 <script lang="ts">
-    import type { TorrentClientSettings } from '$lib/types';
-    import type { SettingsField } from '$lib/types';
-    import type { SettingsOption } from '$lib/types';
+    import type { SettingsField, SettingsOption } from '$lib/types';
     import FormControl from './FormControl.svelte';
 
-    let { available, selected, settings } = $props();
+    let { available, selected, settings }: {
+        available: SettingsOption[],
+        selected: SettingsOption[],
+        settings: { name: string, [key: string]: unknown } | undefined,
+    } = $props();
 
-    const allOptions: SettingsOption[] = [...selected, ...available];
+    const allOptions = $derived([...selected, ...available]);
 
     // svelte-ignore state_referenced_locally
-    let active = $state(selected.length > 0 ? selected[0].name : '');
+    let active = $state(selected[0]?.name ?? '');
 
     const client = $derived(allOptions.find((option) => option.name === active));
 
