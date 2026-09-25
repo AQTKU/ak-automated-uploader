@@ -34,6 +34,10 @@ function parsePrimitive(
     }
 
     if (schema.type === 'union') {
+
+        /* A form value is always a string, and whether "1" means true depends on the field it's for, so leave that to the caller */
+        if (schema.options.some((option: any) => unwrap(option).type === 'string')) return String(value);
+
         for (const option of schema.options) {
             const unwrapped = unwrap(option);
 
@@ -48,9 +52,6 @@ function parsePrimitive(
                     const number = Number(value);
                     if (!Number.isNaN(number)) return number;
                     break;
-
-                case 'string':
-                    return String(value);
 
             }
 

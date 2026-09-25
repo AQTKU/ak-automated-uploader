@@ -219,8 +219,11 @@ export default abstract class Tracker {
         if (!field) throw Error(`Couldn't find field ${key}`);
 
         if (field.type === 'checkbox') {
-            if (typeof value !== 'boolean') throw Error(`Couldn't set ${key}, expected boolean, got string`);
+            if (value === 'true' || value === '1') value = true;
+            if (value === 'false' || value === '0') value = false;
+            if (typeof value !== 'boolean') throw Error(`Couldn't set ${key}, expected true, false, 1 or 0`);
             this.data[key] = value;
+            if (emit) this.emitDataChanged();
             return;
         }
 
