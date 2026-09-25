@@ -3,6 +3,7 @@ import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';
 import { file } from 'bun';
+import { setTimeout as sleep } from 'node:timers/promises';
 import resizeImage from '../util/resize-image';
 import { basename } from 'node:path';
 import { log } from '../util/log';
@@ -20,6 +21,8 @@ export const ziplineFields: SettingsField[] = [{
 }];
 
 const queue = new PQueue({ concurrency: 1 });
+const MAX_ATTEMPTS = 5;
+const MAX_WAIT = 60;
 
 class Zipline extends ImageHost {
 
@@ -34,31 +37,37 @@ class Zipline extends ImageHost {
 
     async post(image: Blob, filename: string, signal: AbortSignal): Promise<string> {
 
-        const formData = new FormData();
-        formData.append('file', image, filename);
-
         const url = new URL('/api/upload', this.server);
+        let waited = 0;
+        let response: Response;
+        let body: any;
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { Authorization: this.apiKey },
-            body: formData,
-            signal,
-        });
+        for (let attempt = 1; ; attempt++) {
 
-        const body = await response.json();
+            const formData = new FormData();
+            formData.append('file', image, filename);
 
-        if (response.status === 429) {
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { Authorization: this.apiKey },
+                body: formData,
+                signal,
+            });
+
+            body = await response.json();
+
+            if (response.status !== 429) break;
+
             const match = body.error?.match(/retry in (\d+) seconds/i);
-            const delay = match ? Number(match[1]) : null;
+            const delay = match ? Number(match[1]) : undefined;
 
-            if (delay !== null && delay <= 60) {
-                log(`Zipline rate limited, retrying in ${delay}s`);
-                await new Promise(r => setTimeout(r, delay * 1000));
-                return this.post(image, filename, signal);
-            }
+            if (delay === undefined) throw Error('Rate limited');
+            if (attempt >= MAX_ATTEMPTS || waited + delay > MAX_WAIT) throw Error(`Rate limited, gave up after ${attempt} attempts`);
 
-            throw Error(`Rate limited${delay ? ` (${delay}s)` : ''} - retry window too long or unparseable`);
+            log(`Rate limited, retrying in ${delay}s`);
+            await sleep(delay * 1000, undefined, { signal });
+            waited += delay;
+
         }
 
         if (!response.ok) {
