@@ -23,11 +23,9 @@
 
     async function submit(event: SubmitEvent) {
 
-        if (submitted) return;
-        submitted = true;
-
         event.preventDefault();
-        if (!(event.currentTarget instanceof HTMLFormElement)) return;
+
+        if (submitted || !(event.currentTarget instanceof HTMLFormElement)) return;
 
         const formData = new FormData(event.currentTarget);
         const action = event.submitter instanceof HTMLButtonElement ? event.submitter.value : undefined;
@@ -39,14 +37,19 @@
             default: endpoint = 'save';
         }
 
-        const response = await fetch(`/uploads/${uploadId}/${trackerNameToId(name)}/${endpoint}`, {
-            method: 'PUT',
-            body: formData
-        });
+        submitted = true;
 
-        if (!response.ok) errors = [...errors, await getWhy(response)];
-
-        submitted = false;
+        try {
+            const response = await fetch(`/uploads/${uploadId}/${trackerNameToId(name)}/${endpoint}`, {
+                method: 'PUT',
+                body: formData
+            });
+            if (!response.ok) errors = [...errors, await getWhy(response)];
+        } catch (error) {
+            errors = [...errors, error instanceof Error ? error.message : String(error)];
+        } finally {
+            submitted = false;
+        }
 
     }
 
@@ -59,15 +62,18 @@
         actionSubmitted.add(actionId);
         actionStatuses.set(actionId, '⏳');
 
-        const response = await fetch(
-            `/uploads/${uploadId}/${trackerNameToId(name)}/actions/${actionId}`,
-            { method: 'POST' }
-        );
-
-        if (!response.ok) actionStatuses.set(actionId, `❌ ${await getWhy(response)}`);
-
-        actionStatuses.set(actionId, '✅');
-        actionSubmitted.delete(actionId);
+        try {
+            const response = await fetch(
+                `/uploads/${uploadId}/${trackerNameToId(name)}/actions/${actionId}`,
+                { method: 'POST' }
+            );
+            if (response.ok) actionStatuses.set(actionId, '✅');
+            else actionStatuses.set(actionId, `❌ ${await getWhy(response)}`);
+        } catch (error) {
+            actionStatuses.set(actionId, `❌ ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            actionSubmitted.delete(actionId);
+        }
 
     }
 
