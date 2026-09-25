@@ -212,6 +212,8 @@ export class Trackers {
     }
 
     setScreenshots(screenshots: Promise<string[]>) {
+        /* Screenshots reports its own errors, and a tracker only awaits this when it submits */
+        screenshots.catch(() => {});
         this.trackers.forEach(tracker => tracker.setScreenshots(screenshots));
     }
 
