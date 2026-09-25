@@ -15,9 +15,9 @@ class Catbox extends ImageHost {
     async upload(path: string, width = 350, signal?: AbortSignal) {
 
         const image = file(path);
-        const imageUrl = await queue.add(() => this.post(image, basename(path), signal));
+        const imageUrl = await queue.add(() => this.post(image, basename(path), signal), { signal });
         const thumb = await resizeImage(path, width);
-        const thumbUrl = await queue.add(() => this.post(thumb, 'thumb.png', signal));
+        const thumbUrl = await queue.add(() => this.post(thumb, 'thumb.png', signal), { signal });
 
         return {
             page: imageUrl,

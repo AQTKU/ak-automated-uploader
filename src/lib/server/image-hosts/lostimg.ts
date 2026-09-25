@@ -4,6 +4,7 @@ import resizeImage from '../util/resize-image';
 import { file } from 'bun';
 import type { Image, ImageHostSettings, SettingsField } from '$lib/types';
 import * as v from 'valibot';
+import responseToJson from '../util/response-to-json';
 
 const queue = new PQueue({ concurrency: 1 });
 
@@ -27,7 +28,7 @@ class LostImg extends ImageHost {
     async upload(path: string, thumbnailWidth = 350, signal?: AbortSignal) {
         const image = file(path);
         const thumb = await resizeImage(path, thumbnailWidth);
-        return await queue.add(() => this.post(image, thumb, signal));
+        return await queue.add(() => this.post(image, thumb, signal), { signal });
     }
 
     async post(image: Blob, thumbnail: Blob, signal?: AbortSignal) {
@@ -47,11 +48,11 @@ class LostImg extends ImageHost {
 
         if (!response.ok) {
             let data: any = {};
-            try { data = await response.json(); } catch { }
+            try { data = await responseToJson(response); } catch { }
             throw Error(data.error ? String(data.error) : response.statusText);
         }
 
-        const data = await response.json();
+        const data = await responseToJson(response);
 
         const Schema = v.object({
             urls: v.pipe(

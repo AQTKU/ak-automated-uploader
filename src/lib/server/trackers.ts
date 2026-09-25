@@ -51,39 +51,6 @@ export class Trackers {
         }
     }
 
-    async configure() {
-
-        const settingsTrackerNames = new Set(
-            settings.all().trackers.map(trackerSettings => trackerSettings.name)
-        );
-
-        for (const tracker of this.trackers) {
-            if (!settingsTrackerNames.has(tracker.name)) {
-                await tracker.cleanup();
-            }
-        }
-        this.trackers = this.trackers.filter(tracker =>
-            settingsTrackerNames.has(tracker.name)
-        );
-
-        for (const trackerSettings of settings.all().trackers) {
-
-            if (!(trackerSettings.name in trackers)) {
-                throw Error(`Couldn't find tracker ${trackerSettings.name}`);
-            }
-
-            let tracker = this.trackers.find(tracker => tracker.name === trackerSettings.name);
-            if (tracker) {
-                tracker.configure(trackerSettings);
-            } else {
-                tracker = new trackers[trackerSettings.name]!.class(trackerSettings);
-                this.add(tracker);
-            }
-
-        }
-
-    }
-
     emitActions() {
         for (const callback of this.actionsAddedCallbacks) {
             callback(this.getActions());

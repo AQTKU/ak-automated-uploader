@@ -3,7 +3,7 @@ import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';
 import { file } from 'bun';
-import { log } from '../util/log';
+import responseToJson from '../util/response-to-json';
 
 const UPLOAD_URL = 'https://freeimage.host/api/1/upload';
 
@@ -47,7 +47,7 @@ class FreeimageHost extends ImageHost {
             throw Error(`Failed with status code ${response.status}`);
         }
 
-        const data = await response.json();
+        const data = await responseToJson(response);
 
         const Schema = v.object({
             status_code: v.literal(200),
@@ -74,7 +74,7 @@ class FreeimageHost extends ImageHost {
     }
 
     async upload(path: string, thumbnailWidth?: number, signal?: AbortSignal) {
-        return await queue.add(() => this.post(path, !thumbnailWidth, signal));
+        return await queue.add(() => this.post(path, !thumbnailWidth, signal), { signal });
     }
 
 }

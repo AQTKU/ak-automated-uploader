@@ -5,6 +5,7 @@ import PQueue from 'p-queue';
 import { file } from 'bun';
 import resizeImage from '../util/resize-image';
 import { basename } from 'node:path';
+import responseToJson from '../util/response-to-json';
 
 const UPLOAD_URL = 'https://ptpimg.me/upload.php';
 const REFERER = 'https://ptpimg.me/index.php';
@@ -46,7 +47,7 @@ class Ptpimg extends ImageHost {
             throw Error(response.statusText ?? response.status.toString());
         }
 
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         const Schema = v.pipe(
             v.array(v.object({

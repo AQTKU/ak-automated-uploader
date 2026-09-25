@@ -1,6 +1,7 @@
 import PQueue from 'p-queue';
 import { normalize } from './util/normalize';
 import * as v from 'valibot';
+import responseToJson from './util/response-to-json';
 
 const queue = new PQueue({ concurrency: 1, strict: true, intervalCap: 1, interval: 1000 });
 
@@ -30,7 +31,7 @@ export async function getMalId(inputTitle: string, inputOriginalTitle: string, i
         do {
 
             const response = await queue.add(async () => await fetch(url));
-            const body = await response.json();
+            const body = await responseToJson(response);
             const validated = v.parse(ResultsSchema, body);
 
             const filtered = validated.data.filter(({ type, year }) => {

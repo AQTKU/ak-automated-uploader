@@ -7,6 +7,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import resizeImage from '../util/resize-image';
 import { basename } from 'node:path';
 import { log } from '../util/log';
+import responseToJson from '../util/response-to-json';
 
 export const ziplineFields: SettingsField[] = [{
     id: 'server',
@@ -54,7 +55,7 @@ class Zipline extends ImageHost {
                 signal,
             });
 
-            body = await response.json();
+            body = await responseToJson(response);
 
             if (response.status !== 429) break;
 

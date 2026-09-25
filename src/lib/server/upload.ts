@@ -6,7 +6,7 @@ import Files, { type FilesState } from './files';
 import Torrent from './torrent';
 import Screenshots from './screenshots';
 import getMediaInfo, { type MediaInfo } from '$lib/server/mediainfo';
-import type { Metadata, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResults, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState } from '$lib/types';
+import type { Metadata, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResultState, TrackerState, TrackerStatus, TrackerStatusState } from '$lib/types';
 import { Trackers } from './trackers';
 import { normalize } from './util/normalize';
 import { getMalId } from './jikan';

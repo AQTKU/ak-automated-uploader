@@ -4,6 +4,7 @@ import type { Image } from '$lib/types';
 import * as v from 'valibot';
 import { file } from 'bun';
 import { load } from 'cheerio';
+import responseToJson from '../util/response-to-json';
 
 const queue = new PQueue({ concurrency: 1 })
 
@@ -12,7 +13,7 @@ class PiXhost extends ImageHost {
     maxSize = 10 * 1024 * 1024;
 
     async upload(path: string, thumbnailWidth = 350, signal?: AbortSignal) {
-        return await queue.add(() => this.post(path, thumbnailWidth, signal));
+        return await queue.add(() => this.post(path, thumbnailWidth, signal), { signal });
     }
 
     private async getDirectUrl(pageUrl: string, signal?: AbortSignal) {
@@ -42,7 +43,7 @@ class PiXhost extends ImageHost {
 
         if (!response.ok) throw Error(response.statusText);
 
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         const validated = v.parse(
             v.object({

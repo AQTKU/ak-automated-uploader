@@ -6,6 +6,7 @@ import { unit3dDistributors, unit3dRegions } from './unit3d-distributors';
 import { log } from '../util/log';
 import errorString from '../util/error-string';
 import CachedValue from '../util/cached-value';
+import responseToJson from '../util/response-to-json';
 
 const UPLOAD_URL = 'https://lst.gg/api/torrents/upload';
 const SEARCH_URL = 'https://lst.gg/api/torrents/filter';
@@ -357,7 +358,7 @@ export default class LST extends Tracker {
         try {
 
             const response = await fetch(BANNED_GROUPS_URL, { headers: this.headers });
-            const body = await response.json();
+            const body = await responseToJson(response);
 
             if (!response.ok) {
                 throw Error(body.message ?? response.statusText);
@@ -401,7 +402,7 @@ export default class LST extends Tracker {
         if (this.data.episodeNumber) params.append('episodeNumber', this.data.episodeNumber);
 
         const response = await fetch(url, { headers: this.headers });
-        const data = await response.json();
+        const data = await responseToJson(response);
 
         const validated = v.parse(SearchResultsSchema, data).data;
 
@@ -483,7 +484,7 @@ export default class LST extends Tracker {
             signal,
         });
 
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         if (!response.ok || !body.success) {
             const ErrorSchema = v.record(v.string(), v.array(v.string()));
@@ -510,7 +511,7 @@ export default class LST extends Tracker {
         url.searchParams.set('name', this.data.name);
 
         const response = await fetch(url, { headers: this.headers, signal });
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         if (!response.ok) throw Error(`Couldn't find torrent: ${body.message ?? response.statusText}`);
 
@@ -535,7 +536,7 @@ export default class LST extends Tracker {
         if (this.data.episodeNumber) params.append('episodeNumber', this.data.episodeNumber);
 
         const response = await fetch(url, { headers: this.headers, signal });
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         if (!response.ok) throw Error(`Couldn't find repack trumping candidates: ${body.message ?? response.statusText}`);
 
@@ -564,7 +565,7 @@ export default class LST extends Tracker {
         do {
 
             const response: Response = await fetch(next ?? url, { headers: this.headers, signal });
-            const body = await response.json();
+            const body = await responseToJson(response);
 
             if (!response.ok) throw Error(`Couldn't find season pack trumping candidates: ${body.message ?? response.statusText}`);
 
@@ -624,7 +625,7 @@ export default class LST extends Tracker {
             signal
         });
 
-        const body = await response.json();
+        const body = await responseToJson(response);
         if (!response.ok || !body.success) throw Error(`Failed to create trumping report: ${body.message ?? response.statusText}`);
 
     }

@@ -3,7 +3,6 @@ import normalizeApiInput from '$lib/server/util/normalize-api-input';
 import { whyByAcceptHeader } from '$lib/server/util/why';
 import { noContent } from '$lib/server/util/empty-responses';
 import { uploads } from '$lib/server/uploads';
-import { log } from '$lib/server/util/log';
 import { ApiUploadSchema } from '$lib/types';
 
 export const POST: RequestHandler = async ({ request }) => {

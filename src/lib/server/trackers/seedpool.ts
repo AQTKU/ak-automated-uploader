@@ -1,8 +1,9 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, FieldLayout } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, Metadata, FieldLayout } from '$lib/types';
 import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
 import { unit3dDistributors, unit3dRegions } from './unit3d-distributors';
+import responseToJson from '../util/response-to-json';
 
 const UPLOAD_URL = 'https://seedpool.org/api/torrents/upload';
 const SEARCH_URL = 'https://seedpool.org/api/torrents/filter';
@@ -153,8 +154,25 @@ export default class Seedpool extends Tracker {
         this.data.imdb = metadata.imdbId ? metadata.imdbId.replace(/^tt/i, '') : '0';
         this.data.tvdb = metadata.tvdbId ? String(metadata.tvdbId) : '0';
         this.data.mal = metadata.malId ? String(metadata.malId) : '0';
-        if (metadata.malId && this.release?.category === 'tv') this.setOption('categoryId', 'Anime');
+        this.applyCategory();
         this.data.keywords = metadata.keywords.join(', ');
+    }
+
+    /* Depends on both the release and the metadata, so either can change it */
+    private applyCategory() {
+
+        if (!this.release) return;
+
+        const sportsPattern = /\b(?:efl|mlb|formula1|nascar|nfl|wrc|wwe|fifa|boxing|rally|ufc|ppv|uefa|nhl|nba|motogp|moto2|moto3|gamenight|darksport|overtake)\b/i;
+
+        if (sportsPattern.test(this.release.title || '')) {
+            this.setOption('categoryId', 'Sports');
+        } else if (this.release.category === 'tv') {
+            this.setOption('categoryId', this.metadata?.malId ? 'Anime' : 'TV');
+        } else {
+            this.setOption('categoryId', 'Movie');
+        }
+
     }
 
     applyRelease(release: Release) {
@@ -179,15 +197,7 @@ export default class Seedpool extends Tracker {
             this.setOption('typeId', 'HDTV');
         }
 
-        const sportsPattern = /\b(?:efl|mlb|formula1|nascar|nfl|wrc|wwe|fifa|boxing|rally|ufc|ppv|uefa|nhl|nba|motogp|moto2|moto3|gamenight|darksport|overtake)\b/i;
-
-        if (sportsPattern.test(release.title || '')) {
-            this.setOption('categoryId', 'Sports');
-        } else if (release.category === 'tv') {
-            this.setOption('categoryId', 'TV');
-        } else {
-            this.setOption('categoryId', 'Movie');
-        }
+        this.applyCategory();
 
         this.data.dv = release.dv;
         this.data.hdr = release.hdr?.plus === 'HDR';
@@ -231,7 +241,7 @@ export default class Seedpool extends Tracker {
         if (this.data.episodeNumber) params.append('episodeNumber', this.data.episodeNumber);
 
         const response = await fetch(url, { headers: this.headers });
-        const data = await response.json();
+        const data = await responseToJson(response);
         const validated = v.parse(SearchResultsSchema, data).data;
 
         return validated.map(result => ({
@@ -282,7 +292,7 @@ export default class Seedpool extends Tracker {
             signal,
         });
         
-        const body = await response.json();
+        const body = await responseToJson(response);
         if (!response.ok || !body.success) throw Error(body.message ?? response.statusText);
 
         const validated = v.parse(v.object({ data: v.pipe(v.string(), v.url())}), body);

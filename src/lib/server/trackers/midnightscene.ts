@@ -1,10 +1,9 @@
-import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, TrackerAfterUploadAction, Metadata, FieldLayout } from '$lib/types';
+import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSearchResults, TrackerSettings, Metadata, FieldLayout } from '$lib/types';
 import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
 import { unit3dDistributors, unit3dRegions } from './unit3d-distributors';
-import { log } from '../util/log';
-import errorString from '../util/error-string';
+import responseToJson from '../util/response-to-json';
 
 const BASE_URL = 'https://midnightscene.cc';
 const UPLOAD_URL = `${BASE_URL}/api/torrents/upload`;
@@ -174,7 +173,7 @@ export default class MidnightScene extends Tracker {
         url.searchParams.append('categories[]', this.data.categoryId);
         
         const response = await fetch(url, { headers: this.headers });
-        const data = await response.json();
+        const data = await responseToJson(response);
         const validated = v.parse(SearchResultsSchema, data).data;
 
         return validated.map(result => ({
@@ -224,7 +223,7 @@ export default class MidnightScene extends Tracker {
             signal,
         });
         
-        const body = await response.json();
+        const body = await responseToJson(response);
         if (!response.ok || !body.success) throw Error(body.message ?? response.statusText);
 
         return v.parse(v.object({ data: v.pipe(v.string(), v.url())}), body).data;

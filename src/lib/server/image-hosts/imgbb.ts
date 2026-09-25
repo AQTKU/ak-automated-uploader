@@ -5,6 +5,7 @@ import PQueue from 'p-queue';
 import { file } from 'bun';
 import { basename } from 'node:path';
 import { Temporal } from '@js-temporal/polyfill';
+import responseToJson from '../util/response-to-json';
 
 const FRONT_PAGE_URL = 'https://imgbb.com/';
 const API_UPLOAD_URL = 'https://api.imgbb.com/1/upload';
@@ -51,7 +52,7 @@ class ImgBB extends ImageHost {
         body.append('image', base64);
 
         const response = await fetch(API_UPLOAD_URL, { method: 'POST', body, signal });
-        const responseBody = await response.json();
+        const responseBody = await responseToJson(response);
 
         if (!response.ok || !responseBody.success) {
             const ErrorSchema = v.object({ error: v.object({ message: v.string() })});
@@ -91,7 +92,7 @@ class ImgBB extends ImageHost {
         body.set('auth_token', authToken);
 
         const response = await fetch(PAGE_UPLOAD_URL, { method: 'POST', body, signal });
-        const responseBody = await response.json();
+        const responseBody = await responseToJson(response);
 
         if (!response.ok || !responseBody.success) {
             const ErrorSchema = v.object({ error: v.object({ message: v.string() })});
@@ -120,8 +121,8 @@ class ImgBB extends ImageHost {
     }
 
     async upload(path: string, width: number | undefined, signal: AbortSignal) {
-        if (this.apiKey) return await queue.add(() => this.postToApi(path, !width, signal));
-        else return await queue.add(() => this.postToPage(path, !width, signal));
+        if (this.apiKey) return await queue.add(() => this.postToApi(path, !width, signal), { signal });
+        else return await queue.add(() => this.postToPage(path, !width, signal), { signal });
     }
 
 }

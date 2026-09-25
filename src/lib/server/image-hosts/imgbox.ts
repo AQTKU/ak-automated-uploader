@@ -6,6 +6,7 @@ import { file } from 'bun';
 import { load } from 'cheerio';
 import getCookies from '../util/get-cookies';
 import { basename } from 'node:path';
+import responseToJson from '../util/response-to-json';
 
 const BASE_URL = 'https://imgbox.com';
 const THUMBNAIL_SIZES = [100, 150, 200, 250, 300, 350, 500, 800];
@@ -42,7 +43,7 @@ class Imgbox extends ImageHost {
             }
         });
 
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         const TokenSchema = v.object({
             token_id: v.number(),
@@ -87,7 +88,7 @@ class Imgbox extends ImageHost {
             signal,
         });
 
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         const FilesSchema = v.object({
             files: v.pipe(
@@ -111,7 +112,7 @@ class Imgbox extends ImageHost {
     }
 
     async upload(path: string, thumbnailWidth: number | undefined, signal: AbortSignal) {
-        return await queue.add(() => this.post(path, thumbnailWidth, signal));
+        return await queue.add(() => this.post(path, thumbnailWidth, signal), { signal });
     }
 
 }

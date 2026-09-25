@@ -2,6 +2,7 @@ import type { FieldsToType, KeyValueData, SettingsField, TrackerField, TrackerSe
 import * as v from 'valibot';
 import type Release from '../release';
 import Tracker from '../tracker';
+import responseToJson from '../util/response-to-json';
 
 const UPLOAD_URL = (apiKey: string) => `https://beyond-hd.me/api/upload/${apiKey}`;
 const SEARCH_URL = (apiKey: string) => `https://beyond-hd.me/api/torrents/${apiKey}`;
@@ -489,7 +490,7 @@ export default class BeyondHD extends Tracker {
         if (features.length > 0) url.searchParams.set('features', features.join(','));
 
         const response = await fetch(url, { method: 'POST' });
-        const body = await response.json();
+        const body = await responseToJson(response);
         const validated = v.parse(SearchResultsSchema, body);
 
         return (validated.results ?? []).map(result => ({
@@ -558,7 +559,7 @@ export default class BeyondHD extends Tracker {
             signal,
         });
 
-        const body = await response.json();
+        const body = await responseToJson(response);
         const validated = v.parse(UploadResponseSchema, body);
 
         if (!validated.success || validated.status_code === 0) {

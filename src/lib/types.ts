@@ -1,5 +1,4 @@
 import * as v from 'valibot';
-import { torrentClients } from './server/torrent-clients';
 
 export interface SettingsField {
     id: string;

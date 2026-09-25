@@ -8,8 +8,6 @@ export default async function sendTorrent(torrentPath: string, contentPath: stri
     torrentPath = normalize(torrentPath);
     contentPath = normalize(contentPath);
 
-    console.log(`Torrent path: ${contentPath}`);
-
     const configuredClient = settings.torrentClient;
     if (!configuredClient) throw Error('No torrent client configured');
 

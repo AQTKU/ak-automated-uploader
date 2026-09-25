@@ -5,6 +5,7 @@ import { normalize } from './util/normalize';
 import type { TmdbHydratedSearchResult } from '$lib/types';
 import { Temporal } from '@js-temporal/polyfill';
 import { log } from './util/log';
+import responseToJson from './util/response-to-json';
 
 export type TmdbSettings = { apiKey: string };
 
@@ -610,7 +611,7 @@ class Tmdb {
                 };
 
                 const response = await fetch(url, { headers });
-                const data = await response.json();
+                const data = await responseToJson(response);
 
                 if (!response.ok) {
                     throw Error('status_message' in data ? data.status_message : response.statusText);

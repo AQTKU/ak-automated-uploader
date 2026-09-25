@@ -8,6 +8,7 @@ import * as v from 'valibot';
 import posixPath from 'node:path/posix';
 import win32Path from 'node:path/win32';
 import { file } from 'bun';
+import responseToJson from '../util/response-to-json';
 
 export const settings: SettingsField[] = [
     {
@@ -95,7 +96,7 @@ class QBittorrent extends TorrentClient {
     private async getCategories(defaultSavePath: string = '') {
 
         const response = await this.get('api/v2/torrents/categories');
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         const validated = v.parse(
             v.record(v.string(), v.object({
@@ -133,7 +134,7 @@ class QBittorrent extends TorrentClient {
     private async getPreferences() {
 
         const response = await this.get('api/v2/app/preferences');
-        const body = await response.json();
+        const body = await responseToJson(response);
 
         const validated = v.parse(
             v.object({

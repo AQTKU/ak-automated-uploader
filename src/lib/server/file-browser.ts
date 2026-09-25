@@ -56,8 +56,6 @@ async function getItem(name: string, path: string): Promise<FileInfo | null> {
 
 export async function list(requestedPath: string): Promise<FileInfo[]> {
 
-    const output: FileInfo[] = [];
-
     try {
 
         pauseHashing();

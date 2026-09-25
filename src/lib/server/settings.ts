@@ -1,8 +1,7 @@
 import appDataPath from './util/app-data-path';
 import errorString from './util/error-string';
-import { TrackerSettingsSchema, SettingsSchema, ImageHostSettingsSchema, TorrentClientSettingsSchema } from '$lib/types';
-import type { SettingsField,  SettingsList, SettingsOption, TrackerSettings, ImageHostSettings, TorrentClientSettings } from '$lib/types';
-import buildSchemaFromFields from './util/build-schema-from-fields';
+import { SettingsSchema } from '$lib/types';
+import type { SettingsField, SettingsList, SettingsOption } from '$lib/types';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { rename } from 'node:fs/promises';
 import { log } from './util/log';
@@ -19,7 +18,6 @@ class Settings {
     private imageHostOptions: SettingsOption[] = [];
     private torrentClientOptions: SettingsOption[] = [];
     private trackerOptions: SettingsOption[] = [];
-    private changeCallbacks: ((settings: SettingsList) => Promise<void>)[] = [];
     private _isFirstBoot = false;
     private saveQueue = new PQueue({ concurrency: 1 });
 
@@ -29,65 +27,12 @@ class Settings {
 
     }
 
-    addImageHost(settings: ImageHostSettings) {
-
-        if (!('name' in settings)) {
-            throw Error('Tried to add image host with no name');
-        }
-
-        const option = this.imageHostOptions.find(option => option.name === settings.name);
-        if (!option) {
-            throw Error(`Tried to add unknown image host type: ${settings.name}`);
-        }
-
-        const schema = buildSchemaFromFields(option.fields, option.name);
-        const defaultsAdded = v.parse(schema, settings);
-        const validated = v.parse(ImageHostSettingsSchema, defaultsAdded);
-
-        this.settings.imageHosts.push(validated);
-
-    }
-
     addImageHostOption(name: string, fields: SettingsField[]) {
         this.imageHostOptions.push({ name, fields });
     }
 
-    addTorrentClient(settings: TorrentClientSettings) {
-        if (!('name' in settings)) {
-            throw Error('Tried to add torrent client with no name');
-        }
-
-        const option = this.torrentClientOptions.find(option => option.name === settings.name);
-        if (!option) {
-            throw Error(`Tried to add unknown torrent client type: ${settings.name}`);
-        }
-
-        const schema = buildSchemaFromFields(option.fields, option.name);
-        const defaultsAdded = v.parse(schema, settings);
-        const validated = v.parse(TorrentClientSettingsSchema, defaultsAdded);
-
-        this.settings.torrentClient = validated;
-    }
-
     addTorrentClientOption(name: string, fields: SettingsField[]) {
         this.torrentClientOptions.push({ name, fields });
-    }
-
-    addTracker(settings: TrackerSettings) {
-        if (!('name' in settings)) {
-            throw Error('Tried to add tracker with no name');
-        }
-
-        const option = this.torrentClientOptions.find(option => option.name === settings.name);
-        if (!option) {
-            throw Error(`Tried to add unknown tracker type: ${settings.name}`);
-        }
-
-        const schema = buildSchemaFromFields(option.fields, option.name);
-        const defaultsAdded = v.parse(schema, settings);
-        const validated = v.parse(TrackerSettingsSchema, defaultsAdded);
-
-        this.settings.trackers.push(validated);
     }
 
     addTrackerOption(name: string, fields: SettingsField[]) {
@@ -160,10 +105,6 @@ class Settings {
 
         if (errors.length > 0) throw Error(errors.join('; '));
 
-    }
-
-    async emitChanged(settings: SettingsList) {
-        await Promise.all(this.changeCallbacks.map(callback => callback(settings)));
     }
 
     get isFirstBoot() { return this._isFirstBoot; }
@@ -254,10 +195,6 @@ class Settings {
 
     }
 
-    onChange(callback: (settings: SettingsList) => Promise<void>) {
-        this.changeCallbacks.push(callback);
-    }
-
     async rescindApiKey() {
         this.settings.apiKey = null;
         log('API key rescinded');
@@ -296,8 +233,6 @@ class Settings {
             log(errorString('Problem with settings', error), 'tomato');
             if (throwOnMisconfigured) throw error;
         }
-
-        await this.emitChanged(settings);
 
         /* Read these after the awaits above, so an API key generated or rescinded
            while this save was configuring services isn't reverted */

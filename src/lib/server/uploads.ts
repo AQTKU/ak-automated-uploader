@@ -65,10 +65,6 @@ class Uploads {
         this.updateCallbacks.push(callback);
     }
 
-    remove(id: number) {
-        this.uploads.delete(id);
-    }
-
     toJSON(): UploadsState {
 
         const output = [];

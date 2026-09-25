@@ -176,20 +176,6 @@ export default abstract class Tracker {
         return release.personal && !this.isInternal(release);
     }
 
-    async makeTorrent() {
-
-        if (!this.torrentPromise) throw Error(`No torrent available to edit for ${this.name}`);
-        if (!this.announce) throw Error(`Announce URL not configured for ${this.name}`);
-
-        const torrent = await this.torrentPromise;
-        this.signal?.throwIfAborted();
-        const editedTorrentFilename = await torrent.edit(this.announce, this.source);
-        this.signal?.throwIfAborted();
-
-        return editedTorrentFilename;
-
-    }
-
     onActionAdded(callback: (actions: TrackerAfterUploadActionState[]) => void) {
         this.actionsAddedCallbacks.push(callback);
     }
