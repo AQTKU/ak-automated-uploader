@@ -7,28 +7,41 @@ export async function GET({ params, request }) {
     const upload = uploads.get(parseInt(params.id));
     if (!upload) throw error(404);
 
-    let handler: (upload: Partial<UploadState>) => void;
+    let unsubscribe = () => {};
 
     const stream = new ReadableStream({
         start(controller) {
 
             const encoder = new TextEncoder();
 
-            // Send initial state // Should already have that?
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(upload.toJSON())}\n\n`));
+            const send = (data: Partial<UploadState>) => {
+                try {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+                } catch {
+                    unsubscribe();
+                }
+            };
 
-            // Subscribe to updates
-            handler = (data: Partial<UploadState>) => {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-            }
+            const close = () => {
+                unsubscribe();
+                try { controller.close(); } catch { }
+            };
 
-            upload.onUpdate(handler);
+            unsubscribe = () => {
+                upload.offUpdate(send);
+                upload.signal.removeEventListener('abort', close);
+                request.signal.removeEventListener('abort', unsubscribe);
+            };
 
-            request.signal.addEventListener('abort', () => {
-                upload.offUpdate(handler);
-            })
+            send(upload.toJSON());
+            upload.onUpdate(send);
+            upload.signal.addEventListener('abort', close);
+            request.signal.addEventListener('abort', unsubscribe);
 
-        }
+        },
+        cancel() {
+            unsubscribe();
+        },
     });
 
     return new Response(stream, {

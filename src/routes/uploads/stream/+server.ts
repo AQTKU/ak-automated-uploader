@@ -1,30 +1,36 @@
 import { uploads } from '$lib/server/uploads';
 import type { UploadsState } from '$lib/types';
 
-export async function GET({ params, request }) {
+export async function GET({ request }) {
 
-    let handler: (uploadsState: UploadsState) => void;
+    let unsubscribe = () => {};
 
     const stream = new ReadableStream({
         start(controller) {
 
             const encoder = new TextEncoder();
 
-            // Send initial state // Should already have that?
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(uploads.toJSON())}\n\n`));
+            const send = (data: UploadsState) => {
+                try {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+                } catch {
+                    unsubscribe();
+                }
+            };
 
-            // Subscribe to updates
-            handler = (data: UploadsState) => {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-            }
+            unsubscribe = () => {
+                uploads.offUpdate(send);
+                request.signal.removeEventListener('abort', unsubscribe);
+            };
 
-            uploads.onUpdate(handler);
+            send(uploads.toJSON());
+            uploads.onUpdate(send);
+            request.signal.addEventListener('abort', unsubscribe);
 
-            request.signal.addEventListener('abort', () => {
-                uploads.offUpdate(handler);
-            })
-
-        }
+        },
+        cancel() {
+            unsubscribe();
+        },
     });
 
     return new Response(stream, {
