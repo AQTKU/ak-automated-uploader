@@ -533,6 +533,11 @@ export default class Upload {
         this.trackers?.search();
     }
 
+    checkPath(path: string) {
+        if (!this.files) throw Error('Files not initialized');
+        this.files.checkPath(path);
+    }
+
     async setMediaInfo(path: string) {
         try {
             await this.loadMediaInfo(path);
@@ -543,8 +548,7 @@ export default class Upload {
 
     private async loadMediaInfo(path: string) {
 
-        if (!this.files) throw Error('Files not initialized');
-        this.files.checkPath(path);
+        this.checkPath(path);
 
         if (path === this.mediaInfoFile) return;
         this.mediaInfoFile = path;

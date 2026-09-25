@@ -22,8 +22,10 @@ export async function PATCH({ params, request }) {
     const upload = uploads.get(parseInt(params.id));
     if (!upload) return why(404, `Couldn't find upload ${params.id}`);
 
-    try { upload.setMediaInfo(path); }
+    try { upload.checkPath(path); }
     catch (error) { return why(422, 'Problem setting MediaInfo', error); }
+
+    upload.setMediaInfo(path);
 
     return accepted();
 
