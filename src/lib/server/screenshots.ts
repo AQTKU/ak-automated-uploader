@@ -45,13 +45,16 @@ export default class Screenshots {
 
     async cleanup() {
 
-        const batches = await Promise.all(this.batches);
-        for (const batch of batches) {
-            for (const uuid of batch) {
-                this.remove(uuid);
-            }
-        }
+        await Promise.allSettled(this.batches);
+
+        /* The cache holds every screenshot taken, including earlier batches no longer in uuids */
+        const uuids = new Set([...this.cache.values(), ...this.uuids]);
+        await Promise.allSettled([...uuids].map(uuid => file(this.uuidToFilename(uuid)).delete()));
+
+        this.uuids = [];
         this.cache.clear();
+        const index = allScreenshots.indexOf(this);
+        if (index !== -1) allScreenshots.splice(index, 1);
 
     }
 
