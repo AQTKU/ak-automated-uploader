@@ -32,9 +32,7 @@ export const POST: RequestHandler = async ({ request }) => {
         }
         tracker.emitDataChanged();
 
-        await tracker.transformTags();
-
-        await tracker.submit();
+        await tracker.submit(true);
 
     } catch (error) {
         return why(422, 'Failed to upload file', error);

@@ -23,6 +23,7 @@ export default abstract class Tracker {
     private dataChangedCallbacks: Array<(data: Record<string, string | boolean>) => void> = [];
     private errorCallbacks: Array<(reason: string) => void> = [];
     private errorReported = false;
+    private submitting = false;
     abstract readonly fields: TrackerField[];
     abstract readonly layout: FieldLayout;
     imageHosts: string[] = [];
@@ -307,6 +308,11 @@ export default abstract class Tracker {
 
     async submit(transformTags = false) {
 
+        /* Thrown before the try so a rejected second submit doesn't overwrite the status of the first */
+        if (this.submitting) throw Error(`Already uploading to ${this.name}`);
+        if (this.status === '✅ Done') throw Error(`Already uploaded to ${this.name}`);
+        this.submitting = true;
+
         let torrentPath;
         this.errorReported = false;
 
@@ -382,6 +388,8 @@ export default abstract class Tracker {
             const status = this.status;
             this.emitError(errorString(`${status} failed`, error));
             throw Error(errorString(`${status} failed`, error));
+        } finally {
+            this.submitting = false;
         }
 
     }
