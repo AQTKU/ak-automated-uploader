@@ -1,8 +1,15 @@
 <script lang="ts">
     import { dndzone, type DndEvent } from 'svelte-dnd-action';
     import { flip } from 'svelte/animate';
+    import type { SettingsField } from '$lib/types';
 
-    let { field, value, name = '', id = '', imageHosts = [] } = $props()
+    let { field, value, name = '', id = '', imageHosts = [] }: {
+        field: SettingsField,
+        value: unknown,
+        name?: string,
+        id?: string,
+        imageHosts?: { id: number, name: string }[],
+    } = $props();
     // svelte-ignore state_referenced_locally
     id = id ? id : field.id;
     // svelte-ignore state_referenced_locally
