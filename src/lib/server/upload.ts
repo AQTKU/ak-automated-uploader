@@ -83,7 +83,6 @@ export default class Upload {
     close() {
         this.abortController.abort();
         this.screenshots?.cleanup();
-        this.torrent?.stop();
         this.torrent?.cleanup();
         this.trackers?.cleanup();
     }
@@ -276,7 +275,7 @@ export default class Upload {
         });
         const promise = this.torrent.create();
         this.trackers?.setTorrent(promise);
-        promise.catch(reason => { this.handleError('Failed to create torrent', reason); });
+        promise.catch(reason => { this.handleError("Couldn't create torrent", reason); });
 
     }
 

@@ -124,6 +124,8 @@ export default class Torrent {
     private mkbrr: ReadableSubprocess | undefined = undefined;
     private torrentPath: string;
     private editedTorrentPaths: string[] = [];
+    private edits: Promise<string>[] = [];
+    private stopped = false;
     private progressCallbacks: Array<(progress: number) => void> = [];
 
     constructor(path: string) {
@@ -132,6 +134,8 @@ export default class Torrent {
     }
 
     async cleanup() {
+        this.stop();
+        await Promise.allSettled([this.hashPromise, ...this.edits]);
         try { await file(this.torrentPath).delete(); } catch { }
         for (const editedTorrentPath of this.editedTorrentPaths) {
             try { await file(editedTorrentPath).delete(); } catch { }
@@ -143,6 +147,8 @@ export default class Torrent {
         if (this.hashPromise) return this.hashPromise;
 
         this.hashPromise = createQueue.add(async () => {
+
+            if (this.stopped) throw Error('Upload was closed');
 
             log(`Starting hashing for ${basename(this._contentPath)}`);
 
@@ -195,6 +201,8 @@ export default class Torrent {
 
         const editedTorrentPath = editQueue.add(async () => {
 
+            if (this.stopped) throw Error('Upload was closed');
+
             const editedTorrentPath = join(tmpdir(), randomUUID() + '.torrent');
             this.editedTorrentPaths.push(editedTorrentPath);
 
@@ -226,6 +234,8 @@ export default class Torrent {
 
         });
 
+        this.edits.push(editedTorrentPath);
+
         return editedTorrentPath;
 
     }
@@ -255,7 +265,11 @@ export default class Torrent {
     }
 
     stop() {
-        if (this.mkbrr) this.mkbrr.kill();
+        this.stopped = true;
+        if (!this.mkbrr) return;
+        this.mkbrr.kill();
+        /* A suspended process doesn't act on the kill until it's resumed */
+        try { this.resume(); } catch { }
     }
 
 }
