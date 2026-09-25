@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import errorString from '$lib/server/util/error-string';
 import { redirect } from '@sveltejs/kit';
-import { checkSession, removeSession } from '$lib/server/sessions';
+import { removeAllSessions } from '$lib/server/sessions';
 
 interface Field {
     id: string;
@@ -134,9 +134,8 @@ export const actions = {
             }
         }
 
-        locals.settings.unsetAuthToken();
-        const isLoggedIn = checkSession(cookies.get('akauSession') ?? '');
-        if (isLoggedIn) removeSession(cookies.get('akauSession') as string);
+        await locals.settings.unsetAuthToken();
+        removeAllSessions();
         cookies.delete('akauSession', { path: '/' });
         redirect(303, '/login');
 

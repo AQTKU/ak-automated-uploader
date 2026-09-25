@@ -28,3 +28,7 @@ export function addSession() {
 export function removeSession(id: string) {
     sessions.delete(id);
 }
+
+export function removeAllSessions() {
+    sessions.clear();
+}
