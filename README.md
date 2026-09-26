@@ -1,4 +1,4 @@
-<h1 align="center"><img alt="AK Automated Uploader" src="static/logo.svg" width="300"></h1>
+<h1 align="center"><img alt="AK Automated Uploader" src="static/logo.svg" width="250"></h1>
 
 AK Automated Uploader is a web-based torrent uploader tool for private trackers.
 
@@ -100,7 +100,8 @@ Metadata:
 - Jikan
 - srrdb
 
-This product uses the TMDB API but is not endorsed or certified by TMDB.  
+This product uses the TMDB API but is not endorsed or certified by TMDB.
+
 <img alt="TMDB logo" src="static/tmdb.svg" width="100">
 
 ## Known issues
