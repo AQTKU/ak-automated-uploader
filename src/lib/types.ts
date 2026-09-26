@@ -47,6 +47,11 @@ export type TrackerField =
         label: string;
         type: 'checkbox';
         default: boolean;
+    } | {
+        key: string;
+        label: string;
+        type: 'file';
+        accept?: string;
     };
 
 export type FieldLayout = (string | null)[][];
@@ -64,7 +69,10 @@ export interface TrackerStatusState {
     status: TrackerStatus;
 }
 
-type FieldValue<T> = T extends { type: 'checkbox' } ? boolean : string;
+type FieldValue<T> =
+    T extends { type: 'checkbox' } ? boolean :
+    T extends { type: 'file' } ? File | null :
+    string;
 
 export type FieldsToType<T extends readonly TrackerField[]> = {
     [K in T[number]['key']]: FieldValue<Extract<T[number], { key: K }>>
@@ -149,6 +157,11 @@ export type TrackerFieldState =
         id: string;
         label: string;
         type: 'checkbox';
+    } | {
+        id: string;
+        label: string;
+        type: 'file';
+        accept?: string;
     };
 
 export type TrackerData = Record<string, string | boolean>;
@@ -212,6 +225,6 @@ export const ApiUploadSchema = v.object({
     tracker: v.string(),
     set: v.fallback(v.record(
         v.string(),
-        v.union([v.boolean(), v.string()])
+        v.union([v.boolean(), v.string(), v.file()])
     ), {})
 });

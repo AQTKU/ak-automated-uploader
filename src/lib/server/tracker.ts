@@ -104,10 +104,15 @@ export default abstract class Tracker {
         const output: Record<string, string | boolean> = {};
 
         for (const key in this.data) {
-            if (typeof this.data[key] !== 'string' && typeof this.data[key] !== 'boolean') {
-                throw Error(`Tried to get data state and received the wrong type: ${typeof this.data[key]}`);
+            const value = this.data[key];
+            if (value instanceof File || value === null) {
+                output[key] = value?.name ?? '';
+                continue;
             }
-            output[key] = this.data[key];
+            if (typeof value !== 'string' && typeof value !== 'boolean') {
+                throw Error(`Tried to get data state and received the wrong type: ${typeof value}`);
+            }
+            output[key] = value;
         }
 
         return output;
@@ -135,6 +140,15 @@ export default abstract class Tracker {
                     id: field.key,
                     label: field.label,
                     type: 'checkbox',
+                });
+
+            } else if (field.type === 'file') {
+
+                output.push({
+                    id: field.key,
+                    label: field.label,
+                    type: 'file',
+                    accept: field.accept,
                 });
 
             } else {
@@ -200,10 +214,20 @@ export default abstract class Tracker {
 
     abstract search(): Promise<TrackerSearchResults>;
 
-    set(key: string, value: string | boolean, emit = true) {
+    set(key: string, value: string | boolean | File | null, emit = true) {
 
         const field = this.fields.find(field => field.key === key);
         if (!field) throw Error(`Couldn't find field ${key}`);
+
+        if (field.type === 'file') {
+            if (value === '' || value === null) value = null;
+            else if (!(value instanceof File)) throw Error(`Couldn't set ${key}, expected a file, or an empty string to remove it`);
+            this.data[key] = value;
+            if (emit) this.emitDataChanged();
+            return;
+        }
+
+        if (value instanceof File || value === null) throw Error(`Couldn't set ${key}, expected ${field.type === 'checkbox' ? 'true or false' : 'a string'}, got a file`);
 
         if (field.type === 'checkbox') {
             if (value === 'true' || value === '1') value = true;
@@ -227,11 +251,17 @@ export default abstract class Tracker {
 
     }
 
-    setData(data: Record<string, string | boolean>) {
+    setData(data: Record<string, string | boolean | File>) {
 
         for (const field of this.fields) {
 
-            if (field.type === 'checkbox') {
+            if (field.type === 'file') {
+                /* A file input can't be filled with the file the server already has, so an empty
+                   one means it's unchanged, and removing it is sent as an empty string */
+                const value = data[field.key];
+                if (value === undefined || (value instanceof File && !value.name && !value.size)) continue;
+                this.set(field.key, value, false);
+            } else if (field.type === 'checkbox') {
                 this.set(field.key, data[field.key] === '1', false);
             } else {
                 this.set(field.key, data[field.key] ?? field.default, false);
@@ -253,6 +283,7 @@ export default abstract class Tracker {
                     if (!option) throw Error(`Couldn't find default option for ${field.key} on ${this.name}`);
                     return [field.key, option[0]];
                 }
+                if (field.type === 'file') return [field.key, null];
                 return [field.key, field.default];
             })
         ) as FieldsToType<T>;
@@ -276,6 +307,13 @@ export default abstract class Tracker {
             () => {}
         );
         this.emitDataChanged();
+    }
+
+    /* Every tracker keys its NFO field nfo, whatever its API calls it, so the one set for the
+       whole upload can reach it */
+    setNfo(nfo: File | null) {
+        if (!this.fields.some(field => field.key === 'nfo' && field.type === 'file')) return;
+        this.set('nfo', nfo, false);
     }
 
     setRelease(release: Release) {

@@ -158,6 +158,7 @@ export const fields = [
     { key: 'description', label: 'Description', type: 'multiline', default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}' },
     { key: 'mediainfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
     { key: 'bdinfo', label: 'BDInfo', type: 'multiline', default: '' },
+    { key: 'nfo', label: 'NFO', type: 'file', accept: '.nfo,.txt' },
     { key: 'anonymous', label: 'Anonymous', type: 'checkbox', default: false },
     { key: 'personalRelease', label: 'Personal release', type: 'checkbox', default: false },
     { key: 'modQueueOptIn', label: 'Opt in to mod queue', type: 'checkbox', default: false },
@@ -179,6 +180,7 @@ const layout = [
     ['description',   'description',   'description',  'description'],
     ['mediainfo',     'mediainfo',     'mediainfo',    'mediainfo'],
     ['bdinfo',        'bdinfo',        'bdinfo',       'bdinfo'],
+    ['nfo',           'nfo',           'nfo',          'nfo'],
     ['anonymous',     'internal'],
     ['personalRelease', 'refundable'],
     ['modQueueOptIn', 'free'],
@@ -431,7 +433,7 @@ export default class LST extends Tracker {
         formData.set('torrent', torrent, filename);
 
         const {
-            name, description, mediainfo, bdinfo, keywords, seasonNumber,
+            name, description, mediainfo, bdinfo, nfo, keywords, seasonNumber,
             episodeNumber, tmdb, imdb, tvdb, mal, categoryId, typeId,
             resolutionId, regionId, distributorId, hdrDv, provider,
             dualAudio, anonymous, personalRelease, internal, free, editionId,
@@ -449,6 +451,7 @@ export default class LST extends Tracker {
         formData.set('resolution_id', resolutionId);
         formData.set('keywords', keywords);
 
+        if (nfo) formData.set('nfo', nfo);
         if (regionId) formData.set('region_id', regionId);
         if (distributorId) formData.set('distributor_id', distributorId);
         if (editionId) formData.set('edition_id', editionId);

@@ -193,7 +193,7 @@ export const fields = [
     { key: 'imdb', label: 'IMDB ID', type: 'text', default: '', size: 10 },
     { key: 'description', label: 'Description', type: 'multiline', default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}' },
     { key: 'mediainfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
-    { key: 'nfo', label: 'NFO', type: 'multiline', default: '' },
+    { key: 'nfo', label: 'NFO', type: 'file', accept: '.nfo,.txt' },
     { key: 'anonymous', label: 'Anonymous', type: 'checkbox', default: false },
     { key: 'internal', label: 'Internal', type: 'checkbox', default: false },
     { key: 'live', label: 'Post live', type: 'checkbox', default: true },
@@ -362,6 +362,7 @@ export default class BeyondHD extends Tracker {
         // Tags
 
         this.data.tagPersonal = this.isPersonal(release);
+        this.data.tagScene = release.scene;
 
         this.data.tagDualAudio = !!release.multiAudio;
         this.data.tagDV = release.dv;
@@ -537,7 +538,7 @@ export default class BeyondHD extends Tracker {
         if (distributor) formData.set('distributor', distributor);
         if (edition) formData.set('edition', edition);
         if (customEdition) formData.set('custom_edition', customEdition);
-        if (nfo) formData.set('nfo', new Blob([nfo], { type: 'text/plain' }), 'nfo');
+        if (nfo) formData.set('nfo_file', nfo);
 
         const tags = this.assembleTags();
         if (tags) formData.set('tags', tags);

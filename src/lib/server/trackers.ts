@@ -206,6 +206,11 @@ export class Trackers {
         this.emitDataChanged();
     }
 
+    setNfo(nfo: File | null) {
+        this.trackers.forEach(tracker => tracker.setNfo(nfo));
+        this.emitDataChanged();
+    }
+
     setRelease(release: Release) {
         this.trackers.forEach(tracker => tracker.setRelease(release));
         this.emitDataChanged();

@@ -11,11 +11,12 @@ import { Trackers } from './trackers';
 import { normalize } from './util/normalize';
 import { getMalId } from './jikan';
 import { log } from './util/log';
-import { getReleaseValues as getReleaseEditorValues, releaseFields, releaseFileNameField, setReleaseValue } from './release-fields';
+import { getReleaseValues as getReleaseEditorValues, releaseFields, releaseFileNameField, releaseNfoField, setReleaseValue } from './release-fields';
 import { cloneMetadata, emptyMetadata, getMetadataValues, setMetadataValue } from './metadata-fields';
 import type { Category } from './release-tables';
 import settings from './settings';
 import { findSeasonOrEpisodeTitle } from './episode-titles';
+import { findSceneRelease, mightBeScene, type SceneRelease } from './scene';
 
 export interface UploadState {
     errors: string[];
@@ -24,6 +25,7 @@ export interface UploadState {
     releaseValues: Record<string, string | boolean>;
     releaseBaseline: Record<string, string | boolean>;
     releaseSettled: boolean;
+    sceneName: string | null;
     tmdbResults: TmdbSearchResult[];
     tmdbSelected: Metadata;
     metadataValues: Record<string, string>;
@@ -56,6 +58,8 @@ export default class Upload {
     private mediaInfoFile?: string;
     private trackers?: Trackers;
     private matchedTitles: Map<number, string> = new Map();
+    private nfo: File | null = null;
+    private scene?: SceneRelease;
 
     private mediaInfoResult?: MediaInfo;
     private tmdbTitles?: { title: string, originalTitle: string };
@@ -184,7 +188,9 @@ export default class Upload {
         this.initializeTrackers();
 
         await Promise.all([
-            this.initializeTmdb().catch(error => this.reportAndRethrow('Problem with TMDB', error)),
+            this.initializeScene()
+                .then(() => this.initializeTmdb())
+                .catch(error => this.reportAndRethrow('Problem with TMDB', error)),
             this.initializeFiles(),
         ]);
 
@@ -231,6 +237,35 @@ export default class Upload {
             }));
             if (screenshots) this.trackers?.setScreenshots(screenshots);
         }
+
+    }
+
+    /* A scene file's own name can be anything, so the release name it was
+       packed under is found before TMDB is searched with it */
+    private async initializeScene() {
+
+        const fileName = basename(this.path);
+        if (!mightBeScene(fileName)) return;
+
+        let scene: SceneRelease | null = null;
+        try {
+            scene = await findSceneRelease(this.path, this.signal);
+        } catch (error) {
+            if (!this.signal.aborted) log(errorString(`Couldn't look up ${fileName} on srrDB`, error), 'khaki');
+        }
+        this.signal.throwIfAborted();
+        if (!scene) return;
+
+        log(`Found ${fileName} on srrDB as ${scene.name}`);
+
+        this.scene = scene;
+        this.nfo = scene.nfo;
+        this.trackers?.setNfo(this.nfo);
+        if (this.release.fileName === fileName) this.release = this.buildRelease(scene.name);
+
+        this.emitUpdate('scene');
+        this.emitUpdate('release');
+        this.trackers?.setRelease(this.release);
 
     }
 
@@ -577,9 +612,12 @@ export default class Upload {
 
     }
 
-    setReleaseValues(values: Record<string, string | boolean>) {
+    setReleaseValues(values: Record<string, string | boolean | File>) {
 
         this.checkReleaseSettled();
+
+        const nfo = values[releaseNfoField];
+        if (nfo !== undefined) this.setNfo(nfo);
 
         const fileName = values[releaseFileNameField];
         const fileNameChanged = typeof fileName === 'string' && fileName !== this.release.fileName;
@@ -588,7 +626,7 @@ export default class Upload {
         // Order matters: DV profile turns Dolby Vision on, Atmos codec sets Atmos flag
         const order = releaseFields.map(field => field.id);
         const entries = Object.entries(values)
-            .filter(([key]) => key !== releaseFileNameField)
+            .filter(([key]) => key !== releaseFileNameField && key !== releaseNfoField)
             .sort(([first], [second]) => order.indexOf(first) - order.indexOf(second));
 
         for (const [key, value] of entries) setReleaseValue(this.release, key, value);
@@ -603,12 +641,25 @@ export default class Upload {
 
     }
 
+    /* The editor only knows a file by its name, so reverting sends the original's name back */
+    private setNfo(value: string | boolean | File) {
+
+        if (value instanceof File) this.nfo = value;
+        else if (value === '') this.nfo = null;
+        else if (value === this.scene?.nfo?.name) this.nfo = this.scene.nfo;
+        else throw Error(`Couldn't set the NFO, expected a file, or an empty string to remove it`);
+
+        this.trackers?.setNfo(this.nfo);
+
+    }
+
     private buildRelease(fileName: string) {
 
         const release = new Release(fileName);
 
         release.setAnonymous(settings.anonymous);
         release.setPersonalGroup(settings.releaseGroup);
+        release.setScene(!!this.scene);
 
         if (this.mediaInfoResult) release.applyMediaInfo(this.mediaInfoResult);
         if (this.tmdbTitles) {
@@ -617,6 +668,10 @@ export default class Upload {
         }
         if (this.tmdbSeasonOrEpisodeTitle?.fileName === fileName) {
             release.setSeasonOrEpisodeTitle(this.tmdbSeasonOrEpisodeTitle.title);
+        }
+        const streaming = release.source === 'WEB-DL' || release.source === 'WEBRip';
+        if (this.scene?.streamingService && streaming && !release.streamingService) {
+            release.setStreamingService(this.scene.streamingService);
         }
 
         return release;
@@ -628,12 +683,13 @@ export default class Upload {
         const key = [
             this.release.fileName, this.mediaInfoFile,
             this.tmdbTitles?.title, this.tmdbTitles?.originalTitle,
-            this.tmdbSeasonOrEpisodeTitle?.title,
+            this.tmdbSeasonOrEpisodeTitle?.title, this.scene?.name,
         ].join('\0');
 
         if (this.releaseBaselineCache?.key !== key) {
             const values = getReleaseEditorValues(this.buildRelease(this.release.fileName));
-            values[releaseFileNameField] = basename(this.path);
+            values[releaseFileNameField] = this.scene?.name ?? basename(this.path);
+            values[releaseNfoField] = this.scene?.nfo?.name ?? '';
             this.releaseBaselineCache = { key, values };
         }
 
@@ -654,10 +710,11 @@ export default class Upload {
         if (!key || key === 'id') output.id = this.id;
         if (!key || key === 'release') {
             output.release = this.release.toJSON();
-            output.releaseValues = getReleaseEditorValues(this.release);
+            output.releaseValues = { ...getReleaseEditorValues(this.release), [releaseNfoField]: this.nfo?.name ?? '' };
             output.releaseBaseline = this.releaseBaseline;
             output.releaseSettled = this.releaseSettled;
         }
+        if (!key || key === 'scene') output.sceneName = this.scene?.name ?? null;
         if (!key || key === 'tmdbResults') output.tmdbResults = this.tmdbResults;
         if (!key || key === 'tmdbSelected') output.tmdbSelected = this.tmdbSelected;
         if (!key || key === 'tmdbSelected' || key === 'release') {

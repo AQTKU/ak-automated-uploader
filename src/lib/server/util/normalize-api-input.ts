@@ -69,13 +69,12 @@ function parseParams(params: URLSearchParams | FormData, schema: v.ObjectSchema<
     for (const [key, shape] of Object.entries(schema.entries)) {
 
         const values = params.getAll(key).filter(value => typeof value === 'string');
-        if (!values.length) continue;
 
         let unwrappedShape = unwrap(shape);
 
         if (unwrappedShape.type === 'record') {
 
-            result[key] = Object.fromEntries(
+            const record: Record<string, unknown> = Object.fromEntries(
                 values.map(value => {
                     const [recordKey, ...recordValues] = value.split('=');
                     if (!recordKey || !recordValues.length) throw Error(`Expected key=value pairs in field ${key}`);
@@ -84,7 +83,22 @@ function parseParams(params: URLSearchParams | FormData, schema: v.ObjectSchema<
                 })
             );
 
-        } else if (unwrappedShape.type === 'object') {
+            // A file can't be written as key=value, so it's sent as key[recordKey] instead
+            for (const [name, value] of params.entries()) {
+                if (!name.startsWith(`${key}[`) || !name.endsWith(']')) continue;
+                const recordKey = name.slice(key.length + 1, -1);
+                if (!recordKey) throw Error(`Expected a key between the brackets in ${name}`);
+                record[recordKey] = typeof value === 'string' ? parsePrimitive(value, unwrappedShape.value) : value;
+            }
+
+            if (Object.keys(record).length) result[key] = record;
+            continue;
+
+        }
+
+        if (!values.length) continue;
+
+        if (unwrappedShape.type === 'object') {
 
             result[key] = Object.fromEntries(
                 values.map(value => {

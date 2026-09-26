@@ -271,6 +271,22 @@ progress {
     accent-color: var(--accent-color);
 }
 
+.control .file {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .5rem;
+}
+
+.control .file .file-name {
+    overflow-wrap: anywhere;
+}
+
+.control .file .clear {
+    background: none;
+    padding: 0;
+}
+
 .control.image-hosts > span {
     display: flex;
     flex-wrap: wrap;
@@ -593,6 +609,18 @@ h3 {
 
 #upload header h2 > button:disabled {
     cursor: wait;
+}
+
+#upload header h2 .badge {
+    display: inline-block;
+    margin-left: .5rem;
+    padding: 0 .4rem;
+    border: .1rem solid var(--accent-color);
+    border-radius: .25rem;
+    background: var(--lighter-background);
+    font-size: .6em;
+    vertical-align: middle;
+    text-decoration: none;
 }
 
 #upload:has(:popover-open) header > button {

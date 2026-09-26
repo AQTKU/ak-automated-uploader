@@ -31,7 +31,8 @@
         return (local[id] ?? '') !== (baseline[id] ?? '');
     }
 
-    let fieldsEdited = $derived(fields.some(field => field.id !== fileNameField && edited(field.id)));
+    // A new filename rebuilds the release, which a file isn't part of
+    let fieldsEdited = $derived(fields.some(field => field.id !== fileNameField && field.type !== 'file' && edited(field.id)));
 
     function locked(id: string) {
         return id === fileNameField && fieldsEdited;
@@ -39,9 +40,9 @@
 
     const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
-    function change(id: string, value: string | boolean, immediate: boolean) {
+    function change(id: string, value: string | boolean | File, immediate: boolean) {
 
-        local[id] = value;
+        local[id] = value instanceof File ? value.name : value;
 
         clearTimeout(timers.get(id));
 
@@ -59,9 +60,15 @@
         change(id, baseline[id] ?? '', true);
     }
 
-    async function patch(id: string, value: string | boolean) {
+    async function patch(id: string, value: string | boolean | File) {
 
-        const response = await fetch(`/uploads/${uploadId}/set-release`, {
+        let body;
+        if (value instanceof File) {
+            body = new FormData();
+            body.set(`set[${id}]`, value);
+        }
+
+        const response = await fetch(`/uploads/${uploadId}/set-release`, body ? { method: 'PATCH', body } : {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ set: { [id]: value } }),
@@ -74,13 +81,14 @@
     function handleInput(event: Event) {
         const target = event.target;
         if (target instanceof HTMLTextAreaElement) change(target.name, target.value, false);
-        else if (target instanceof HTMLInputElement && target.type !== 'checkbox') change(target.name, target.value, false);
+        else if (target instanceof HTMLInputElement && target.type !== 'checkbox' && target.type !== 'file') change(target.name, target.value, false);
     }
 
     function handleChange(event: Event) {
         const target = event.target;
         if (target instanceof HTMLSelectElement) change(target.name, target.value, true);
         else if (target instanceof HTMLInputElement && target.type === 'checkbox') change(target.name, target.checked, true);
+        else if (target instanceof HTMLInputElement && target.type === 'file' && target.files?.[0]) change(target.name, target.files[0], true);
     }
 
     function handleFocusOut(event: FocusEvent) {
@@ -105,6 +113,7 @@
                         {field}
                         value={local[field.id]}
                         onrevert={edited(field.id) && !locked(field.id) ? () => revert(field.id) : undefined}
+                        onclear={() => change(field.id, '', true)}
                         disabled={locked(field.id)}
                         title={locked(field.id) ? 'Revert your field edits to edit the filename again' : undefined}
                     />

@@ -14,7 +14,7 @@
 
     let { data }: { data: PageData } = $props();
     // svelte-ignore state_referenced_locally
-    let { errors, id, release, releaseValues, releaseBaseline, releaseSettled, tmdbResults, tmdbSelected,
+    let { errors, id, release, releaseValues, releaseBaseline, releaseSettled, sceneName, tmdbResults, tmdbSelected,
         metadataValues, metadataBaseline, files,
         torrentProgress, screenshots, trackerFields, trackerData, trackerStatus,
         trackerSearchResults, trackerActions
@@ -56,6 +56,7 @@
                 releaseSettled = update.releaseSettled;
                 updateTitleHeight();
             }
+            if (update.sceneName) sceneName = update.sceneName;
             if (update.tmdbResults) tmdbResults = update.tmdbResults;
             if (update.tmdbSelected) tmdbSelected = update.tmdbSelected;
             if (update.metadataValues) metadataValues = update.metadataValues;
@@ -110,6 +111,17 @@
                 disabled={!releaseSettled}
                 title={releaseSettled ? '' : 'Waiting for MediaInfo and metadata'}
             >{@html insertWbr(release?.fileName ?? '') }</button>
+            {#if release?.scene && sceneName}
+                <a
+                    class="badge"
+                    href="https://www.srrdb.com/release/details/{encodeURIComponent(sceneName)}"
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Found on srrDB as {sceneName}"
+                >scene</a>
+            {:else if release?.scene}
+                <span class="badge">scene</span>
+            {/if}
         </h2>
         <button onclick={close}>✖️ Close</button>
     </header>

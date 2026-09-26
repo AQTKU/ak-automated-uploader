@@ -1,11 +1,12 @@
 <script lang="ts">
     import type { TrackerFieldState } from '$lib/types';
 
-    let { idPrefix, field, value, onrevert, disabled = false, title }: {
+    let { idPrefix, field, value, onrevert, onclear, disabled = false, title }: {
         idPrefix: string,
         field: TrackerFieldState,
         value: string | boolean | undefined,
         onrevert?: () => void,
+        onclear?: () => void,
         disabled?: boolean,
         title?: string,
     } = $props();
@@ -14,6 +15,35 @@
         let id = $state(`${idPrefix}-${field.id}`);
 
     let text = $derived(typeof value === 'string' ? value : '');
+
+    /* A file input can't be given the file the server already has, so it only carries a newly
+       chosen one, and removing the current one is sent as an empty value in its place */
+    let fileInput: HTMLInputElement | undefined = $state();
+    let picked: string | null = $state(null);
+    let cleared = $state(false);
+    let fileName = $derived(cleared ? '' : picked ?? text);
+
+    // A new value from the server means the pick or removal made here has landed, or been replaced
+    $effect(() => {
+        text;
+        picked = null;
+        cleared = false;
+        if (fileInput) fileInput.value = '';
+    });
+
+    function pick() {
+        const file = fileInput?.files?.[0];
+        if (!file) return;
+        picked = file.name;
+        cleared = false;
+    }
+
+    function clear() {
+        picked = null;
+        cleared = true;
+        if (fileInput) fileInput.value = '';
+        onclear?.();
+    }
 
 </script>
 
@@ -52,6 +82,21 @@
                         <option value={option.id}>{option.label}</option>
                     {/each}
                 </select>
+
+            {:else if field.type === 'file'}
+
+                <input type="file" {id} name={cleared ? undefined : field.id} accept={field.accept} hidden bind:this={fileInput} onchange={pick} {disabled}>
+                {#if cleared}
+                    <input type="hidden" name={field.id} value="">
+                {/if}
+
+                <span class="file">
+                    {#if fileName}
+                        <span class="file-name">📄 {fileName}</span>
+                        <button type="button" class="clear" onclick={clear} {disabled} title="Remove {field.label}">✖️</button>
+                    {/if}
+                    <button type="button" onclick={() => fileInput?.click()} {disabled} {title}>📂 {fileName ? 'Replace' : 'Choose'}</button>
+                </span>
 
             {:else if field.type === 'text'}
 

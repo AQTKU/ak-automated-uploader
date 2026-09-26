@@ -40,6 +40,7 @@ export interface ReleaseState {
     repack: Repack | null;
     resolution: Resolution | null;
     scanType: ScanType | null;
+    scene: boolean;
     sdr: boolean;
     season: number | null;
     seasonEpisode: string | null;
@@ -254,6 +255,7 @@ export default class Release implements Readonly<ReleaseState> {
     private _repack: ReleaseState['repack'] = null;
     private _resolution: ReleaseState['resolution'] = null;
     private _scanType: ReleaseState['scanType'] = null;
+    private _scene: ReleaseState['scene'] = false;
     private _season: ReleaseState['season'] = null;
     private _seasonEpisode: ReleaseState['seasonEpisode'] = null;
     private _seasonOrEpisodeTitle: ReleaseState['seasonOrEpisodeTitle'] = null;
@@ -568,6 +570,7 @@ export default class Release implements Readonly<ReleaseState> {
     get repack() { return this._repack; }
     get resolution() { return this._resolution; }
     get scanType() { return this._scanType; }
+    get scene() { return this._scene; }
     get sdr() { return !this.dv && !this.hdr; }
     get season() { return this._season; }
     get seasonEpisode() { return this._seasonEpisode; }
@@ -951,6 +954,10 @@ export default class Release implements Readonly<ReleaseState> {
 
     }
 
+    setScene(scene: boolean) {
+        this._scene = scene;
+    }
+
     setSeasonEpisode(seasonEpisode: string) {
 
         seasonEpisode = seasonEpisode.toUpperCase().trim();
@@ -1121,6 +1128,7 @@ export default class Release implements Readonly<ReleaseState> {
             repack: this.repack,
             resolution: this.resolution,
             scanType: this.scanType,
+            scene: this.scene,
             sdr: this.sdr,
             season: this.season,
             seasonEpisode: this.seasonEpisode,

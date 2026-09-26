@@ -205,11 +205,21 @@ const definitions: ReleaseFieldDefinition[] = [
         release => release.audioDescription,
         (release, value) => release.setAudioDescription(value)),
 
+    checkbox({ id: 'scene', label: 'Scene' },
+        release => release.scene,
+        (release, value) => release.setScene(value)),
+
 ];
 
 export const releaseFileNameField = 'fileName';
 
-export const releaseFields: TrackerFieldState[] = definitions.map(definition => definition.field);
+export const releaseNfoField = 'nfo';
+
+export const releaseFields: TrackerFieldState[] = [
+    ...definitions.map(definition => definition.field),
+    // Held by the upload rather than the release, since it isn't anything the filename describes
+    { id: releaseNfoField, label: 'NFO', type: 'file', accept: '.nfo,.txt' },
+];
 
 export const releaseLayout: FieldLayout = [
     ['fileName', 'fileName', 'fileName', 'category'],
@@ -221,6 +231,7 @@ export const releaseLayout: FieldLayout = [
     ['language', 'signLanguage', 'audioDescription', null],
     ['edition',  'censored', 'hybrid', null],
     [ 'group', 'repack', 'extension', null],
+    ['nfo', 'nfo', 'scene', null],
 ];
 
 export function getReleaseValues(release: Release) {
@@ -229,16 +240,17 @@ export function getReleaseValues(release: Release) {
     return output;
 }
 
-export function setReleaseValue(release: Release, key: string, value: string | boolean) {
+export function setReleaseValue(release: Release, key: string, value: string | boolean | File) {
 
     const definition = definitions.find(definition => definition.field.id === key);
     if (!definition) throw Error(`Couldn't find release field ${key}`);
     const { field } = definition;
+    const got = value instanceof File ? 'a file' : typeof value;
 
     if (field.type === 'checkbox') {
-        if (typeof value !== 'boolean') throw Error(`Couldn't set ${key}, expected boolean, got string`);
+        if (typeof value !== 'boolean') throw Error(`Couldn't set ${key}, expected boolean, got ${got}`);
     } else {
-        if (typeof value !== 'string') throw Error(`Couldn't set ${key}, expected string, got boolean`);
+        if (typeof value !== 'string') throw Error(`Couldn't set ${key}, expected string, got ${got}`);
         if (field.type === 'select') {
             const ids = field.options.map(option => option.id);
             if (!ids.includes(value)) throw Error(`Couldn't set ${key}, must be one of: ${ids.join(', ')}`);

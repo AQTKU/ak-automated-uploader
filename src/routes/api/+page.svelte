@@ -35,6 +35,7 @@
         switch (type) {
             case 'checkbox': return 'boolean';
             case 'select': return 'string enum';
+            case 'file': return 'file';
             default: return 'string';
         }
     }
@@ -160,6 +161,12 @@
                 <code>?set=anonymous=true&set=tmdb=1234</code>. See below for a
                 field reference.
             </dd>
+            <dd>
+                Send a file field, like <code>nfo</code>, as multipart form
+                data named after it, like <code>set[nfo]</code>. Leave it out
+                to keep the file the uploader found, or set it to an empty
+                string to send none.
+            </dd>
         </dl>
 
         <h4>Response</h4>
@@ -226,6 +233,12 @@
                 or use multiple query params, like
                 <code>?set=anonymous=true&set=tmdb=1234</code>. See below for a
                 field reference.
+            </dd>
+            <dd>
+                Send a file field, like <code>nfo</code>, as multipart form
+                data named after it, like <code>set[nfo]</code>. Leave it out
+                to keep the file the uploader found, or set it to an empty
+                string to send none.
             </dd>
         </dl>
 

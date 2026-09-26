@@ -99,6 +99,7 @@ export const fields = [
     { key: 'description', label: 'Description', type: 'multiline', default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}' },
     { key: 'mediaInfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
     { key: 'bdInfo', label: 'BDInfo', type: 'multiline', default: '' },
+    { key: 'nfo', label: 'NFO', type: 'file', accept: '.nfo,.txt' },
     { key: 'dv', label: 'Dolby Vision', type: 'checkbox', default: false },
     { key: 'hdr', label: 'HDR', type: 'checkbox', default: false },
     { key: 'hdr10p', label: 'HDR10+', type: 'checkbox', default: false },
@@ -119,6 +120,7 @@ const layout = [
     ['description',   'description',     'description', 'description'],
     ['mediaInfo',     'mediaInfo',       'mediaInfo',   'mediaInfo'],
     ['bdInfo',        'bdInfo',          'bdInfo',      'bdInfo'],
+    ['nfo',           'nfo',             'nfo',         'nfo'],
     ['dv',            'anonymous',       'internal'],
     ['hdr',           'exclusive',       'free'],
     ['hdr10p',        'sd',              'free'],
@@ -264,6 +266,7 @@ export default class Seedpool extends Tracker {
         formData.set('resolution_id', d.resolutionId);
         formData.set('keywords', d.keywords);
 
+        if (d.nfo) formData.set('nfo', d.nfo);
         if (d.regionId) formData.set('region_id', d.regionId);
         if (d.distributorId) formData.set('distributor_id', d.distributorId);
         if (d.categoryId === '2') {

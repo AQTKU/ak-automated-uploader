@@ -120,6 +120,7 @@ export const fields = [
     { key: 'description', label: 'Description', type: 'multiline', default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}' },
     { key: 'mediaInfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
     { key: 'bdInfo', label: 'BDInfo', type: 'multiline', default: '' },
+    { key: 'nfo', label: 'NFO', type: 'file', accept: '.nfo,.txt' },
     { key: 'dv', label: 'Dolby Vision', type: 'checkbox', default: false },
     { key: 'hdr', label: 'HDR', type: 'checkbox', default: false },
     { key: 'hdr10p', label: 'HDR10+', type: 'checkbox', default: false },
@@ -145,6 +146,7 @@ const layout = [
     ['description',       'description',     'description', 'description'],
     ['mediaInfo',         'mediaInfo',       'mediaInfo',   'mediaInfo'],
     ['bdInfo',            'bdInfo',          'bdInfo',      'bdInfo'],
+    ['nfo',               'nfo',             'nfo',         'nfo'],
     ['dv',                'anonymous',       'internal'],
     ['hdr',               'personalRelease', 'exclusive'],
     ['hdr10p',            'modQueueOptIn',   'refundable'],
@@ -406,7 +408,7 @@ export default class Aither extends Tracker {
         formData.set('torrent', torrent, filename);
 
         const {
-            name, description, mediaInfo, bdInfo, keywords, seasonNumber,
+            name, description, mediaInfo, bdInfo, nfo, keywords, seasonNumber,
             episodeNumber, tmdb, imdb, tvdb, mal, categoryId, typeId,
             resolutionId, regionId, distributorId, free, anonymous, stream,
             sd, dv, hdr, hdr10p, accessibilityType, personalRelease, internal,
@@ -424,6 +426,7 @@ export default class Aither extends Tracker {
         formData.set('resolution_id', resolutionId);
         formData.set('keywords', keywords);
 
+        if (nfo) formData.set('nfo', nfo);
         if (regionId) formData.set('region_id', regionId);
         if (distributorId) formData.set('distributor_id', distributorId);
 

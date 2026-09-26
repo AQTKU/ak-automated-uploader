@@ -80,6 +80,7 @@ export const fields = [
     { key: 'description', label: 'Description', type: 'multiline', default: '{% screenshots width:350 %}[url={{page}}][img=350]{{thumbnail}}[/img][/url]{% endscreenshots %}' },
     { key: 'mediaInfo', label: 'MediaInfo', type: 'multiline', default: '{{ mediaInfo.fullText }}' },
     { key: 'bdInfo', label: 'BDInfo', type: 'multiline', default: '' },
+    { key: 'nfo', label: 'NFO', type: 'file', accept: '.nfo,.txt' },
     { key: 'anonymous', label: 'Anonymous', type: 'checkbox', default: false },
     { key: 'internal', label: 'Internal', type: 'checkbox', default: false },
     { key: 'modQueueOptIn', label: 'Opt in to mod queue', type: 'checkbox', default: false },
@@ -95,6 +96,7 @@ const layout = [
     ['description',   'description',     'description', 'description'],
     ['mediaInfo',     'mediaInfo',       'mediaInfo',   'mediaInfo'],
     ['bdInfo',        'bdInfo',          'bdInfo',      'bdInfo'],
+    ['nfo',           'nfo',             'nfo',         'nfo'],
     ['anonymous',     'internal',        'modQueueOptIn'],
 ] as const satisfies FieldLayout;
 
@@ -187,7 +189,7 @@ export default class MidnightScene extends Tracker {
         formData.set('torrent', torrent, filename);
 
         const {
-            name, description, mediaInfo, bdInfo, keywords, seasonNumber,
+            name, description, mediaInfo, bdInfo, nfo, keywords, seasonNumber,
             episodeNumber, tmdb, imdb, tvdb, mal, categoryId, typeId,
             resolutionId, regionId, distributorId, anonymous, internal, modQueueOptIn
         } = this.data;
@@ -213,6 +215,7 @@ export default class MidnightScene extends Tracker {
             formData.set('season_number', seasonNumber);
             formData.set('episode_number', episodeNumber);
         }
+        if (nfo) formData.set('nfo', nfo);
         if (regionId) formData.set('region_id', regionId);
         if (distributorId) formData.set('distributor_id', distributorId);
 
