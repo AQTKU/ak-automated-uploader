@@ -102,7 +102,7 @@ Metadata:
 
 This product uses the TMDB API but is not endorsed or certified by TMDB.
 
-<img alt="TMDB logo" src="static/tmdb.svg" width="100">
+<img alt="TMDB logo" src="static/tmdb.svg" width="200">
 
 ## Known issues
 
