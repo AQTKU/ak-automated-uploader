@@ -248,7 +248,9 @@ export function setReleaseValue(release: Release, key: string, value: string | b
     const got = value instanceof File ? 'a file' : typeof value;
 
     if (field.type === 'checkbox') {
-        if (typeof value !== 'boolean') throw Error(`Couldn't set ${key}, expected boolean, got ${got}`);
+        if (value === 'true' || value === '1') value = true;
+        if (value === 'false' || value === '0') value = false;
+        if (typeof value !== 'boolean') throw Error(`Couldn't set ${key}, expected true, false, 1 or 0, got ${got}`);
     } else {
         if (typeof value !== 'string') throw Error(`Couldn't set ${key}, expected string, got ${got}`);
         if (field.type === 'select') {

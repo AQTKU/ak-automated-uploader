@@ -1,6 +1,7 @@
 import { uploads } from '$lib/server/uploads.js';
 import { accepted } from '$lib/server/util/empty-responses';
 import why from '$lib/server/util/why.js';
+import { MetadataValuesSchema } from '$lib/server/metadata-fields';
 import * as v from 'valibot';
 
 export async function PATCH({ params, request }) {
@@ -10,7 +11,7 @@ export async function PATCH({ params, request }) {
     try {
         const data = await request.json();
         const validated = v.parse(v.object({
-            set: v.record(v.string(), v.union([v.string(), v.boolean()])),
+            set: MetadataValuesSchema,
         }), data);
         set = validated.set;
     } catch (error) {

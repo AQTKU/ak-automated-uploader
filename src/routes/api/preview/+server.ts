@@ -1,9 +1,9 @@
 import type { RequestHandler } from './$types';
 import normalizeApiInput from '$lib/server/util/normalize-api-input';
+import applyApiInput, { ApiUploadSchema } from '$lib/server/util/apply-api-input';
 import { whyByAcceptHeader } from '$lib/server/util/why';
 import { noContent } from '$lib/server/util/empty-responses';
 import { uploads } from '$lib/server/uploads';
-import { ApiUploadSchema } from '$lib/types';
 
 export const POST: RequestHandler = async ({ request }) => {
 
@@ -24,13 +24,7 @@ export const POST: RequestHandler = async ({ request }) => {
         if (!upload) return why(500, "Upload didn't get created for a mysterious reason");
         await upload.ready(request.signal);
 
-        const tracker = upload.getTrackerByName(input.tracker);
-
-        const entries = Object.entries(input.set);
-        for (const [key, value] of entries) {
-            tracker.set(key, value, false);
-        }
-        tracker.emitDataChanged();
+        const tracker = await applyApiInput(upload, input);
 
         await tracker.transformTags();
 

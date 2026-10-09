@@ -12,8 +12,8 @@
         release: { category: 'tv' | 'movie' | null, title: string, year: number | null },
         metadataFields: TrackerFieldState[],
         metadataLayout: FieldLayout,
-        metadataValues: Record<string, string>,
-        metadataBaseline: Record<string, string>,
+        metadataValues: Record<string, string | string[]>,
+        metadataBaseline: Record<string, string | string[]>,
         uploadId: number,
         errors: string[],
     } = $props();

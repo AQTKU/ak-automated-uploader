@@ -4,7 +4,14 @@
 
     const { data }: PageProps = $props();
     // svelte-ignore state_referenced_locally
-    let { apiKey, trackers } = data;
+    let { apiKey, trackers, metadataFields, releaseFields } = data;
+
+    type ReferenceField = {
+        key: string;
+        label: string;
+        type: string;
+        options?: [key: string, value: string][];
+    };
 
     let copyTimeout: ReturnType<typeof setTimeout> | undefined;
     let copyState: string | null = $state(null);
@@ -36,6 +43,7 @@
             case 'checkbox': return 'boolean';
             case 'select': return 'string enum';
             case 'file': return 'file';
+            case 'list': return 'string[]';
             default: return 'string';
         }
     }
@@ -50,6 +58,97 @@
     }
 
 </script>
+
+{#snippet fieldParams()}
+
+    <dt>
+        <var>metadata</var>
+        <small>{'{ field: string | string[] }'}</small>
+    </dt>
+    <dd>
+        Fields to set in the metadata panel. Changing <code>tmdbId</code> or
+        <code>category</code> looks the entry up on TMDB again, replacing the
+        rest of the metadata, so set any other metadata fields alongside it to
+        override what TMDB returns.
+    </dd>
+
+    <dt>
+        <var>release</var>
+        <small>{'{ field: string | boolean }'}</small>
+    </dt>
+    <dd>
+        Fields to set in the release editor, for when the filename isn't
+        parsed the way you want.
+    </dd>
+
+    <dt>
+        <var>data</var>
+        <small>{'{ field: string | boolean }'}</small>
+    </dt>
+    <dd>
+        Fields to set in the tracker's form before uploading.
+    </dd>
+
+    <dd>
+        These are applied in order: <var>metadata</var>, then
+        <var>release</var>, then <var>data</var>. Metadata and release changes
+        fill in the tracker's form the same way they do in the UI, and
+        <var>data</var> has the final say.
+    </dd>
+    <dd>
+        Use an object in JSON, like
+        <code>{'"data": { "anonymous": true, "categoryId": 4 }'}</code>, or
+        repeat a param once per field, like
+        <code>?metadata=tmdbId=1234&release=repack=true&data=anonymous=true</code>.
+        See below for field references.
+    </dd>
+    <dd>
+        Send a file field, like <code>nfo</code>, as multipart form data with
+        the field name in brackets, like <code>release[nfo]</code>. Set it on
+        <var>release</var> to use it for every tracker, or on
+        <var>data</var> for just this one. Leave it out to keep the file the
+        uploader found, or set it to an empty string to send none.
+    </dd>
+    <dd>
+        <var>set</var> still works as another name for <var>data</var>, but
+        it's deprecated.
+    </dd>
+
+{/snippet}
+
+{#snippet fieldReference(fields: readonly ReferenceField[])}
+
+    {#each fields as field (field.key)}
+        <dt>
+            <var>{field.key}</var>
+            <small>{fieldTypeToDataType(field.type)}</small>
+        </dt>
+        <dd>
+            {#if field.type === 'select' && field.options && field.options.length > 20}
+                <details>
+                    <summary>
+                        {field.label}, one of {field.options.length} options
+                    </summary>
+                    {@html
+                        field.options
+                            .map(option => formatOption(option))
+                            .join(', ')
+                    }
+                </details>
+            {:else if field.type === 'select' && field.options}
+                {field.label}, one of:
+                {@html
+                    field.options
+                        .map(option => formatOption(option))
+                        .join(', ')
+                }
+            {:else}
+                {field.label}
+            {/if}
+        </dd>
+    {/each}
+
+{/snippet}
 
 <main id="api">
 
@@ -149,24 +248,7 @@
                 Tracker to upload to, named exactly how they appear in the UI.
             </dd>
 
-            <dt>
-                <var>set</var>
-                <small>{'{ field: string | boolean }[]'}</small>
-            </dt>
-            <dd>
-                Form fields to override before sending the upload to the
-                tracker. Use an object in JSON, like
-                <code>{'"set": { "anonymous": true, "tmdb": 1234 }'}</code>,
-                or use multiple query params, like
-                <code>?set=anonymous=true&set=tmdb=1234</code>. See below for a
-                field reference.
-            </dd>
-            <dd>
-                Send a file field, like <code>nfo</code>, as multipart form
-                data named after it, like <code>set[nfo]</code>. Leave it out
-                to keep the file the uploader found, or set it to an empty
-                string to send none.
-            </dd>
+            {@render fieldParams()}
         </dl>
 
         <h4>Response</h4>
@@ -222,24 +304,7 @@
                 Tracker to upload to, named exactly how they appear in the UI.
             </dd>
 
-            <dt>
-                <var>set</var>
-                <small>{'{ field: string | boolean }[]'}</small>
-            </dt>
-            <dd>
-                Form fields to override before sending the upload to the
-                tracker. Use an object in JSON, like
-                <code>{'"set": { "anonymous": true, "tmdb": 1234 }'}</code>,
-                or use multiple query params, like
-                <code>?set=anonymous=true&set=tmdb=1234</code>. See below for a
-                field reference.
-            </dd>
-            <dd>
-                Send a file field, like <code>nfo</code>, as multipart form
-                data named after it, like <code>set[nfo]</code>. Leave it out
-                to keep the file the uploader found, or set it to an empty
-                string to send none.
-            </dd>
+            {@render fieldParams()}
         </dl>
 
         <h4>Response</h4>
@@ -263,7 +328,45 @@
 
     <section>
 
+        <h3>Metadata field reference</h3>
+
+        <p>
+            Fields in the metadata panel, for <var>metadata</var>. Send a list,
+            like <code>genres</code>, as an array in JSON, like
+            <code>{'"genres": ["Drama", "Crime"]'}</code>. In params, repeat it,
+            like <code>?metadata=genres=Drama&metadata=genres=Crime</code>, or
+            separate items with commas, like
+            <code>?metadata=genres=Drama,Crime</code>. Spaces around each item
+            are trimmed.
+        </p>
+
+        <dl>
+            {@render fieldReference(metadataFields)}
+        </dl>
+
+    </section>
+
+    <section>
+
+        <h3>Release field reference</h3>
+
+        <p>
+            Fields in the release editor, for <var>release</var>. Setting
+            <code>fileName</code> parses it again from scratch before any other
+            release fields are applied.
+        </p>
+
+        <dl>
+            {@render fieldReference(releaseFields)}
+        </dl>
+
+    </section>
+
+    <section>
+
         <h3>Tracker field reference</h3>
+
+        <p>Fields in each tracker's form, for <var>data</var>.</p>
 
         {#each trackers as tracker (tracker.name)}
 
@@ -271,35 +374,7 @@
 
             <dl>
 
-                {#each tracker.fields as field (field.key)}
-                    <dt>
-                        <var>{field.key}</var>
-                        <small>{fieldTypeToDataType(field.type)}</small>
-                    </dt>
-                    <dd>
-                        {#if field.type === 'select' && field.options.length > 20}
-                            <details>
-                                <summary>
-                                    {field.label}, one of {field.options.length} options
-                                </summary>
-                                {@html
-                                    field.options
-                                        .map(option => formatOption(option))
-                                        .join(', ')
-                                }
-                            </details>
-                        {:else if field.type === 'select'}
-                            {field.label}, one of:
-                            {@html
-                                field.options
-                                    .map(option => formatOption(option))
-                                    .join(', ')
-                            }
-                        {:else}
-                            {field.label}
-                        {/if}
-                    </dd>
-                {/each}
+                {@render fieldReference(tracker.fields)}
 
             </dl>
 

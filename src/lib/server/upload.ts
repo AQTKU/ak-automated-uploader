@@ -12,7 +12,7 @@ import { normalize } from './util/normalize';
 import { getMalId } from './jikan';
 import { log } from './util/log';
 import { getReleaseValues as getReleaseEditorValues, releaseFields, releaseFileNameField, releaseNfoField, setReleaseValue } from './release-fields';
-import { cloneMetadata, emptyMetadata, getMetadataValues, setMetadataValue } from './metadata-fields';
+import { cloneMetadata, emptyMetadata, getMetadataValues, metadataCategoryField, metadataTmdbIdField, setMetadataValue, type MetadataValues } from './metadata-fields';
 import type { Category } from './release-tables';
 import settings from './settings';
 import { findSeasonOrEpisodeTitle } from './episode-titles';
@@ -28,8 +28,8 @@ export interface UploadState {
     sceneName: string | null;
     tmdbResults: TmdbSearchResult[];
     tmdbSelected: Metadata;
-    metadataValues: Record<string, string>;
-    metadataBaseline: Record<string, string>;
+    metadataValues: Record<string, string | string[]>;
+    metadataBaseline: Record<string, string | string[]>;
     files: FilesState;
     torrentProgress: number;
     screenshots: string[];
@@ -500,7 +500,7 @@ export default class Upload {
         return this.tmdbSelected;
     }
 
-    async setMetadataValues(values: Record<string, string | boolean>) {
+    async setMetadataValues(values: MetadataValues) {
 
         const metadata = this.materializeMetadata();
         const selection = ++this.tmdbSelection;
@@ -508,12 +508,16 @@ export default class Upload {
         const previousId = metadata.tmdbId;
         const previousCategory = metadata.category;
 
-        for (const [key, value] of Object.entries(values)) setMetadataValue(metadata, key, value);
+        for (const [key, value] of Object.entries(values)) {
+            if (value !== undefined) setMetadataValue(metadata, key, value);
+        }
 
         /* The ID and the category together name an entry, so changing either means going back to
            TMDB for it rather than keeping the fields that described the old one */
         if (metadata.tmdbId && (metadata.tmdbId !== previousId || metadata.category !== previousCategory)) {
             await this.adoptTmdbId(metadata.tmdbId, metadata.category, selection);
+            if (selection !== this.tmdbSelection || !this.tmdbSelected) return;
+            this.overrideAdoptedMetadata(this.tmdbSelected, values);
             return;
         }
 
@@ -522,6 +526,29 @@ export default class Upload {
         this.emitUpdate('tmdbSelected');
         this.emitUpdate('release');
         this.trackers?.setRelease(this.release);
+        this.trackers?.setMetadata(metadata);
+
+    }
+
+    /* Values sent alongside a new ID were meant to describe the entry it names, so they're laid
+       over what TMDB returned rather than lost to it. The release's titles are only redone when a
+       title was sent, since adopting keeps the filename's spelling when it matches TMDB's. */
+    private overrideAdoptedMetadata(metadata: Metadata, values: MetadataValues) {
+
+        const overrides = Object.entries(values).filter(([key, value]) =>
+            value !== undefined && key !== metadataTmdbIdField && key !== metadataCategoryField
+        );
+        if (!overrides.length) return;
+
+        for (const [key, value] of overrides) setMetadataValue(metadata, key, value!);
+
+        if (overrides.some(([key]) => key === 'title' || key === 'originalTitle')) {
+            this.applyMetadataToRelease(metadata);
+            this.emitUpdate('release');
+            this.trackers?.setRelease(this.release);
+        }
+
+        this.emitUpdate('tmdbSelected');
         this.trackers?.setMetadata(metadata);
 
     }

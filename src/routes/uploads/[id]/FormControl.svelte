@@ -1,10 +1,11 @@
 <script lang="ts">
     import type { TrackerFieldState } from '$lib/types';
+    import splitList from '$lib/util/split-list';
 
     let { idPrefix, field, value, onrevert, onclear, disabled = false, title }: {
         idPrefix: string,
         field: TrackerFieldState,
-        value: string | boolean | undefined,
+        value: string | boolean | string[] | undefined,
         onrevert?: () => void,
         onclear?: () => void,
         disabled?: boolean,
@@ -15,6 +16,16 @@
         let id = $state(`${idPrefix}-${field.id}`);
 
     let text = $derived(typeof value === 'string' ? value : '');
+
+    /* Shown as comma separated text, which is only rewritten when the list itself changes, so a
+       trailing comma or space being typed isn't tidied away mid-word */
+    let listText = $state('');
+    $effect(() => {
+        const items = Array.isArray(value) ? value : [];
+        const typed = splitList(listText);
+        const same = typed.length === items.length && typed.every((item, index) => item === items[index]);
+        if (!same) listText = items.join(', ');
+    });
 
     /* A file input can't be given the file the server already has, so it only carries a newly
        chosen one, and removing the current one is sent as an empty value in its place */
@@ -101,6 +112,10 @@
             {:else if field.type === 'text'}
 
                 <input type="text" {id} name={field.id} value={text} size={field.size} {disabled} {title}>
+
+            {:else if field.type === 'list'}
+
+                <input type="text" {id} name={field.id} bind:value={listText} size={field.size} {disabled} {title}>
 
             {/if}
 

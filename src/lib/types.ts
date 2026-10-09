@@ -162,6 +162,11 @@ export type TrackerFieldState =
         label: string;
         type: 'file';
         accept?: string;
+    } | {
+        id: string;
+        label: string;
+        type: 'list';
+        size?: number;
     };
 
 export type TrackerData = Record<string, string | boolean>;
@@ -219,12 +224,3 @@ export type UploadsState = Array<{
     name: string,
     statusCounts: Record<TrackerStatus, number>,
 }>;
-    
-export const ApiUploadSchema = v.object({
-    contentPath: v.string(),
-    tracker: v.string(),
-    set: v.fallback(v.record(
-        v.string(),
-        v.union([v.boolean(), v.string(), v.file()])
-    ), {})
-});

@@ -2,21 +2,24 @@
     import type { TrackerFieldState, FieldLayout } from '$lib/types';
     import { getWhy } from '$lib/util/get-why';
     import buildGridTemplateArea from '$lib/util/build-grid-template-area';
+    import splitList from '$lib/util/split-list';
     import FormControl from './FormControl.svelte';
 
     let { fields, layout, values, baseline, uploadId, errors = $bindable() }: {
         fields: TrackerFieldState[],
         layout: FieldLayout,
-        values: Record<string, string>,
-        baseline: Record<string, string>,
+        values: Record<string, Value>,
+        baseline: Record<string, Value>,
         uploadId: number,
         errors: string[],
     } = $props();
 
+    type Value = string | string[];
+
     const identityFields = ['tmdbId', 'category'];
 
     // svelte-ignore state_referenced_locally
-        let local: Record<string, string | boolean> = $state({ ...values });
+        let local: Record<string, Value> = $state({ ...values });
 
     let loading = $state(false);
     let changed = false;
@@ -30,14 +33,19 @@
     });
 
     function edited(id: string) {
-        return (local[id] ?? '') !== (baseline[id] ?? '');
+        const value = local[id] ?? '';
+        const original = baseline[id] ?? '';
+        if (Array.isArray(value) && Array.isArray(original)) {
+            return value.length !== original.length || value.some((item, index) => item !== original[index]);
+        }
+        return value !== original;
     }
 
-    const pending = new Map<string, string | boolean>();
+    const pending = new Map<string, Value>();
     let timer: ReturnType<typeof setTimeout> | undefined;
     let inFlight: Promise<void> = Promise.resolve();
 
-    function change(id: string, value: string | boolean, immediate: boolean) {
+    function change(id: string, value: Value, immediate: boolean) {
 
         local[id] = value;
         pending.set(id, value);
@@ -71,7 +79,7 @@
 
     }
 
-    async function patch(set: Record<string, string | boolean>) {
+    async function patch(set: Record<string, Value>) {
 
         try {
 
@@ -108,7 +116,12 @@
     function handleInput(event: Event) {
         const target = event.target;
         if (target instanceof HTMLTextAreaElement) change(target.name, target.value, false);
-        else if (target instanceof HTMLInputElement) change(target.name, target.value, false);
+        else if (target instanceof HTMLInputElement) change(target.name, parse(target.name, target.value), false);
+    }
+
+    function parse(id: string, value: string): Value {
+        const field = fields.find(field => field.id === id);
+        return field?.type === 'list' ? splitList(value) : value;
     }
 
     function handleChange(event: Event) {

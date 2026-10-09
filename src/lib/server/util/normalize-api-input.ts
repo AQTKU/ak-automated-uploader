@@ -1,8 +1,10 @@
 import * as v from 'valibot';
+import splitList from '$lib/util/split-list';
 
 type ParseableShape =
     | v.RecordSchema<any, any, any>
     | v.ObjectSchema<v.ObjectEntries, any>
+    | v.StrictObjectSchema<v.ObjectEntries, any>
     | v.ArraySchema<any, any>
     | v.StringSchema<any>
     | v.NumberSchema<any>
@@ -98,18 +100,31 @@ function parseParams(params: URLSearchParams | FormData, schema: v.ObjectSchema<
 
         if (!values.length) continue;
 
-        if (unwrappedShape.type === 'object') {
+        if (unwrappedShape.type === 'object' || unwrappedShape.type === 'strict_object') {
 
-            result[key] = Object.fromEntries(
-                values.map(value => {
-                    const [recordKey, ...recordValues] = value.split('=');
-                    if (!recordKey || !recordValues.length) throw Error(`Expected key=value pairs in field ${key}`);
-                    const recordValue = recordValues.join('=');
-                    const fieldSchema = unwrappedShape.entries[recordKey];
-                    if (!fieldSchema) throw Error(`Unexpected key ${recordKey} in field ${key}`);
-                    return [recordKey, parsePrimitive(recordValue, unwrap(fieldSchema))];
-                })
-            );
+            const object: Record<string, unknown> = {};
+
+            for (const value of values) {
+
+                const [objectKey, ...objectValues] = value.split('=');
+                if (!objectKey || !objectValues.length) throw Error(`Expected key=value pairs in field ${key}`);
+                const objectValue = objectValues.join('=');
+                const fieldSchema = unwrappedShape.entries[objectKey];
+                if (!fieldSchema) throw Error(`Unexpected key ${objectKey} in field ${key}`);
+                const fieldShape = unwrap(fieldSchema);
+
+                // A list can be sent as repeated keys, comma separated items, or both
+                if (fieldShape.type === 'array') {
+                    const items = splitList(objectValue).map(item => parsePrimitive(item, fieldShape.item));
+                    const previous = object[objectKey];
+                    object[objectKey] = Array.isArray(previous) ? [...previous, ...items] : items;
+                } else {
+                    object[objectKey] = parsePrimitive(objectValue, fieldShape);
+                }
+
+            }
+
+            result[key] = object;
 
         } else if (unwrappedShape.type === 'array') {
 
