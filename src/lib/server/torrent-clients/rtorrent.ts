@@ -1,4 +1,4 @@
-import type { SettingsField, TorrentClientSettings } from '$lib/types';
+import type { SettingsField, TorrentClientSettings } from '#lib/types.js';
 import errorString from '../util/error-string';
 import TorrentClient from '../torrent-client';
 import { log } from '../util/log';

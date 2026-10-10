@@ -1,12 +1,12 @@
-import type getMediaInfo from '$lib/server/mediainfo';
+import type getMediaInfo from '#lib/server/mediainfo.js';
 import type Release from './release';
 import settings from './settings';
-import type { Metadata, TrackerErrorState, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResultState, TrackerState, TrackerStatusState } from '$lib/types';
+import type { Metadata, TrackerErrorState, TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResultState, TrackerState, TrackerStatusState } from '#lib/types.js';
 import type Torrent from './torrent';
 import { trackers } from './trackers/index';
 import type Tracker from './tracker';
 import errorString from './util/error-string';
-import trackerNameToId from '$lib/util/tracker-name-to-id';
+import trackerNameToId from '#lib/util/tracker-name-to-id.js';
 
 export class Trackers {
 

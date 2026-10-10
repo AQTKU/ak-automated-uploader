@@ -1,7 +1,7 @@
-import { uploads } from '$lib/server/uploads.js';
-import { accepted } from '$lib/server/util/empty-responses';
-import normalizeApiInput from '$lib/server/util/normalize-api-input';
-import why from '$lib/server/util/why.js';
+import { uploads } from '#lib/server/uploads.js';
+import { accepted } from '#lib/server/util/empty-responses.js';
+import normalizeApiInput from '#lib/server/util/normalize-api-input.js';
+import why from '#lib/server/util/why.js';
 import * as v from 'valibot';
 
 const SetReleaseSchema = v.object({

@@ -1,8 +1,8 @@
-import Screenshots from '$lib/server/screenshots';
+import Screenshots from '#lib/server/screenshots.js';
 import type { RequestHandler } from './$types';
 import { file } from 'bun';
-import resizeImage from '$lib/server/util/resize-image';
-import why from '$lib/server/util/why';
+import resizeImage from '#lib/server/util/resize-image.js';
+import why from '#lib/server/util/why.js';
 
 export const GET: RequestHandler = async ({ params, url }) => {
 

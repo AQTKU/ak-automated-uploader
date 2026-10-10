@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { TrackerFieldState } from '$lib/types';
-    import splitList from '$lib/util/split-list';
+    import type { TrackerFieldState } from '#lib/types.js';
+    import splitList from '#lib/util/split-list.js';
 
     let { idPrefix, field, value, onrevert, onclear, disabled = false, title }: {
         idPrefix: string,

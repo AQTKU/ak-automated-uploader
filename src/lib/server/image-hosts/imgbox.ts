@@ -1,4 +1,4 @@
-import type { Image } from '$lib/types';
+import type { Image } from '#lib/types.js';
 import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';

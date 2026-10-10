@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { uploads } from '$lib/server/uploads';
-import { releaseFields, releaseLayout } from '$lib/server/release-fields';
-import { metadataFields, metadataLayout } from '$lib/server/metadata-fields';
+import { uploads } from '#lib/server/uploads.js';
+import { releaseFields, releaseLayout } from '#lib/server/release-fields.js';
+import { metadataFields, metadataLayout } from '#lib/server/metadata-fields.js';
 
 export const load: PageServerLoad = async ({ params }) => {
     const upload = uploads.get(parseInt(params.id));

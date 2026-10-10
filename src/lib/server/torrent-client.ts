@@ -1,4 +1,4 @@
-import type { TorrentClientSettings } from '$lib/types';
+import type { TorrentClientSettings } from '#lib/types.js';
 
 export default abstract class TorrentClient {
     abstract configure(settings: TorrentClientSettings): Promise<void>;

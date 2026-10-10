@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dndzone, type DndEvent } from 'svelte-dnd-action';
     import { flip } from 'svelte/animate';
-    import type { ImageHostOrderItem, SettingsField } from '$lib/types';
+    import type { ImageHostOrderItem, SettingsField } from '#lib/types.js';
 
     let { field, value, name = '', id = '', imageHosts = [] }: {
         field: SettingsField,

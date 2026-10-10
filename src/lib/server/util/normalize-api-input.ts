@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import splitList from '$lib/util/split-list';
+import splitList from '#lib/util/split-list.js';
 
 type ParseableShape =
     | v.RecordSchema<any, any, any>

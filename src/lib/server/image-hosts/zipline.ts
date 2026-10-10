@@ -1,4 +1,4 @@
-import type { Image, ImageHostSettings, SettingsField } from '$lib/types';
+import type { Image, ImageHostSettings, SettingsField } from '#lib/types.js';
 import * as v from 'valibot';
 import ImageHost from '../image-host';
 import PQueue from 'p-queue';

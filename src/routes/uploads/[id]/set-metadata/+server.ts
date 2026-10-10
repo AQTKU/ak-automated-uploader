@@ -1,7 +1,7 @@
-import { uploads } from '$lib/server/uploads.js';
-import { accepted } from '$lib/server/util/empty-responses';
-import why from '$lib/server/util/why.js';
-import { MetadataValuesSchema } from '$lib/server/metadata-fields';
+import { uploads } from '#lib/server/uploads.js';
+import { accepted } from '#lib/server/util/empty-responses.js';
+import why from '#lib/server/util/why.js';
+import { MetadataValuesSchema } from '#lib/server/metadata-fields.js';
 import * as v from 'valibot';
 
 export async function PATCH({ params, request }) {

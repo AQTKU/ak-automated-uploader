@@ -1,8 +1,8 @@
 <script lang="ts">
     import { page } from '$app/state';
-    import type { FilesState } from '$lib/server/files';
-    import { getWhy } from '$lib/util/get-why';
-    import insertWbr from '$lib/util/insert-wbr';
+    import type { FilesState } from '#lib/server/files.js';
+    import { getWhy } from '#lib/util/get-why.js';
+    import insertWbr from '#lib/util/insert-wbr.js';
 
     let { files, errors = $bindable() }: { files: FilesState, errors: string[] } = $props();
 

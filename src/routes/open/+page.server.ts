@@ -1,10 +1,10 @@
 import type { Actions, PageServerLoad } from './$types';
-import { list, type FileInfo } from '$lib/server/file-browser';
+import { list, type FileInfo } from '#lib/server/file-browser.js';
 import { error, redirect } from '@sveltejs/kit';
 import { homedir } from 'node:os';
 import { normalize, sep, parse, join } from 'node:path';
 import { Temporal } from '@js-temporal/polyfill';
-import { uploads } from '$lib/server/uploads';
+import { uploads } from '#lib/server/uploads.js';
 import { env } from 'bun';
 
 const sortTable: Record<string, string> = {};

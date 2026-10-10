@@ -2,7 +2,7 @@ import * as v from 'valibot';
 import errorString from './util/error-string';
 import PQueue from 'p-queue';
 import { normalize } from './util/normalize';
-import type { TmdbHydratedSearchResult } from '$lib/types';
+import type { TmdbHydratedSearchResult } from '#lib/types.js';
 import { Temporal } from '@js-temporal/polyfill';
 import { log } from './util/log';
 import responseToJson from './util/response-to-json';

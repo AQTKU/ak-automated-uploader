@@ -1,4 +1,4 @@
-import type { KeyValueData } from '$lib/types';
+import type { KeyValueData } from '#lib/types.js';
 
 export const unit3dDistributors: KeyValueData = [
   [

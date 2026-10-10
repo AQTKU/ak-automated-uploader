@@ -1,4 +1,4 @@
-import type { Image, ImageHostSettings } from '$lib/types';
+import type { Image, ImageHostSettings } from '#lib/types.js';
 
 export default abstract class ImageHost {
 

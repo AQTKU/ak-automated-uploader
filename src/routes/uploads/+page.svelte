@@ -1,10 +1,10 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { PageData } from './$types';
-    import type { TrackerStatus, UploadsState } from '$lib/types';
-    import insertWbr from '$lib/util/insert-wbr';
+    import type { TrackerStatus, UploadsState } from '#lib/types.js';
+    import insertWbr from '#lib/util/insert-wbr.js';
     import { redirect } from '@sveltejs/kit';
-    import { getWhy } from '$lib/util/get-why';
+    import { getWhy } from '#lib/util/get-why.js';
 
     let { data }: { data: PageData } = $props();
     // svelte-ignore state_referenced_locally

@@ -1,9 +1,9 @@
 import type { RequestHandler } from './$types';
-import normalizeApiInput from '$lib/server/util/normalize-api-input';
-import applyApiInput, { ApiUploadSchema } from '$lib/server/util/apply-api-input';
-import { whyByAcceptHeader } from '$lib/server/util/why';
-import { noContent } from '$lib/server/util/empty-responses';
-import { uploads } from '$lib/server/uploads';
+import normalizeApiInput from '#lib/server/util/normalize-api-input.js';
+import applyApiInput, { ApiUploadSchema } from '#lib/server/util/apply-api-input.js';
+import { whyByAcceptHeader } from '#lib/server/util/why.js';
+import { noContent } from '#lib/server/util/empty-responses.js';
+import { uploads } from '#lib/server/uploads.js';
 
 export const POST: RequestHandler = async ({ request }) => {
 

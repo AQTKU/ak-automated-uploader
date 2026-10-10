@@ -1,5 +1,5 @@
-import { uploads } from '$lib/server/uploads';
-import type { UploadsState } from '$lib/types';
+import { uploads } from '#lib/server/uploads.js';
+import type { UploadsState } from '#lib/types.js';
 
 export async function GET({ request }) {
 
@@ -18,7 +18,17 @@ export async function GET({ request }) {
                 }
             };
 
+            // Bun closes connections that go quiet for IDLE_TIMEOUT (10s by default)
+            const keepAlive = setInterval(() => {
+                try {
+                    controller.enqueue(encoder.encode(': keep-alive\n\n'));
+                } catch {
+                    unsubscribe();
+                }
+            }, 5000);
+
             unsubscribe = () => {
+                clearInterval(keepAlive);
                 uploads.offUpdate(send);
                 request.signal.removeEventListener('abort', unsubscribe);
             };

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { ActionData, PageData } from "./$types";
-    import type { ImageHostOrderItem } from '$lib/types';
+    import type { ImageHostOrderItem } from '#lib/types.js';
     import General from './General.svelte';
     import SettingsSection from './SettingsSection.svelte';
     import TorrentClients from './TorrentClients.svelte';

@@ -1,8 +1,8 @@
 import type { RequestHandler } from './$types';
-import type Tracker from '$lib/server/tracker';
-import why from '$lib/server/util/why';
-import { accepted } from '$lib/server/util/empty-responses';
-import { uploads } from '$lib/server/uploads';
+import type Tracker from '#lib/server/tracker.js';
+import why from '#lib/server/util/why.js';
+import { accepted } from '#lib/server/util/empty-responses.js';
+import { uploads } from '#lib/server/uploads.js';
 
 export const PUT: RequestHandler = async ({ params, request }) => {
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { TrackerAfterUploadActionState, TrackerFieldState, FieldLayout, TrackerSearchResults, TrackerStatus } from '$lib/types';
-    import { getWhy } from '$lib/util/get-why';
-    import trackerNameToId from '$lib/util/tracker-name-to-id';
-    import buildGridTemplateArea from '$lib/util/build-grid-template-area';
+    import type { TrackerAfterUploadActionState, TrackerFieldState, FieldLayout, TrackerSearchResults, TrackerStatus } from '#lib/types.js';
+    import { getWhy } from '#lib/util/get-why.js';
+    import trackerNameToId from '#lib/util/tracker-name-to-id.js';
+    import buildGridTemplateArea from '#lib/util/build-grid-template-area.js';
     import { SvelteMap } from 'svelte/reactivity';
     import FormControl from './FormControl.svelte';
 

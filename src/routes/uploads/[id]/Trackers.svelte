@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResultState, TrackerState, TrackerStatusState } from '$lib/types';
+    import type { TrackerFieldsState, TrackersAfterUploadActionsState, TrackerSearchResultState, TrackerState, TrackerStatusState } from '#lib/types.js';
     import Tracker from './Tracker.svelte';
 
     let { trackerFields, trackerData, uploadId, trackerStatus, trackerSearchResults, trackerActions, errors = $bindable() }: {

@@ -1,8 +1,8 @@
 import type { Actions, PageServerLoad } from './$types';
-import errorString from '$lib/server/util/error-string';
+import errorString from '#lib/server/util/error-string.js';
 import { redirect } from '@sveltejs/kit';
-import { removeAllSessions } from '$lib/server/sessions';
-import type { SettingsField } from '$lib/types';
+import { removeAllSessions } from '#lib/server/sessions.js';
+import type { SettingsField } from '#lib/types.js';
 
 const fields: { general: SettingsField[] } = {
 

@@ -1,4 +1,4 @@
-import type { SettingsField, TrackerField, TrackerSettings } from '$lib/types';
+import type { SettingsField, TrackerField, TrackerSettings } from '#lib/types.js';
 import Aither, { settings as aitherSettings, fields as aitherFields } from './aither';
 import type Tracker from '../tracker';
 import LST, { settings as lstSettings, fields as lstFields } from './lst';

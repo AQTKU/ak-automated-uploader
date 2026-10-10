@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SettingsField, SettingsOption } from '$lib/types';
+    import type { SettingsField, SettingsOption } from '#lib/types.js';
     import FormControl from './FormControl.svelte';
 
     let { available, selected, settings }: {

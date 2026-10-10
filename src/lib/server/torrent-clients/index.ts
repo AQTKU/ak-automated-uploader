@@ -1,4 +1,4 @@
-import type { SettingsField } from '$lib/types';
+import type { SettingsField } from '#lib/types.js';
 import { qBittorrent, settings as qBittorrentSettings } from './qbittorrent';
 import { localFolder, settings as localFolderSettings } from './local-folder';
 import { rTorrent, settings as rTorrentSettings } from './rtorrent';

@@ -1,6 +1,6 @@
 import PQueue from 'p-queue';
 import ImageHost from '../image-host';
-import type { Image } from '$lib/types';
+import type { Image } from '#lib/types.js';
 import resizeImage from '../util/resize-image';
 import { basename } from 'node:path';
 import * as v from 'valibot';

@@ -1,4 +1,4 @@
-import type { SettingsField, TorrentClientSettings } from '$lib/types';
+import type { SettingsField, TorrentClientSettings } from '#lib/types.js';
 import getCookies from '../util/get-cookies';
 import errorString from '../util/error-string';
 import path, { basename } from 'node:path';

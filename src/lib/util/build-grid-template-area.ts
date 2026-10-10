@@ -1,4 +1,4 @@
-import type { FieldLayout } from '$lib/types';
+import type { FieldLayout } from '#lib/types.js';
 
 export default function buildGridTemplateArea(layout: FieldLayout) {
 

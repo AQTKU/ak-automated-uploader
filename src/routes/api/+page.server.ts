@@ -1,10 +1,10 @@
-import settings from '$lib/server/settings';
+import settings from '#lib/server/settings.js';
 import { type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { TrackerFieldState } from '$lib/types';
-import { trackers } from '$lib/server/trackers/index';
-import { metadataFields } from '$lib/server/metadata-fields';
-import { releaseFields } from '$lib/server/release-fields';
+import type { TrackerFieldState } from '#lib/types.js';
+import { trackers } from '#lib/server/trackers/index.js';
+import { metadataFields } from '#lib/server/metadata-fields.js';
+import { releaseFields } from '#lib/server/release-fields.js';
 
 function toReferenceField(field: TrackerFieldState) {
     return {

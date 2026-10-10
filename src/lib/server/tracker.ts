@@ -1,4 +1,4 @@
-import type getMediaInfo from '$lib/server/mediainfo';
+import type getMediaInfo from '#lib/server/mediainfo.js';
 import { file } from 'bun';
 import type Release from './release';
 import type Torrent from './torrent';
@@ -6,7 +6,7 @@ import errorString from './util/error-string';
 import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
-import type { FieldsToType, TrackerField, TrackerSearchResults, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState, Metadata, FieldLayout } from '$lib/types';
+import type { FieldsToType, TrackerField, TrackerSearchResults, TrackerSettings, TrackerFieldState, Image, TrackerStatus, TrackerAfterUploadAction, TrackerAfterUploadActionState, Metadata, FieldLayout } from '#lib/types.js';
 import { Context, Liquid, TagToken, type Emitter, type TopLevelToken } from 'liquidjs';
 import { uploadScreenshots } from './upload-screenshots';
 import { log } from './util/log';

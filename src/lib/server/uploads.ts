@@ -1,5 +1,5 @@
 import { normalize } from 'node:path';
-import type { TrackerStatus, UploadsState } from '$lib/types';
+import type { TrackerStatus, UploadsState } from '#lib/types.js';
 import Upload from './upload';
 
 const API_REUSABLE_STATUSES: TrackerStatus[] = ['', '⏳ Waiting for MediaInfo and metadata', '✏️ Ready to edit'];

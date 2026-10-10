@@ -2,7 +2,7 @@ import PQueue from 'p-queue';
 import ImageHost from '../image-host';
 import resizeImage from '../util/resize-image';
 import { file } from 'bun';
-import type { Image, ImageHostSettings, SettingsField } from '$lib/types';
+import type { Image, ImageHostSettings, SettingsField } from '#lib/types.js';
 import * as v from 'valibot';
 import responseToJson from '../util/response-to-json';
 

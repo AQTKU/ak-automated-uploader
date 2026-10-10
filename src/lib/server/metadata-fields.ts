@@ -1,5 +1,5 @@
 import * as v from 'valibot';
-import type { FieldLayout, Metadata, TrackerFieldState } from '$lib/types';
+import type { FieldLayout, Metadata, TrackerFieldState } from '#lib/types.js';
 import { categories, type Category } from './release-tables';
 
 type MetadataValue = string | string[];

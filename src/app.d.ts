@@ -1,6 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { Settings } from '$lib/server/settings';
+import type { Settings } from '#lib/server/settings.js';
 
 // for information about these interfaces
 declare global {

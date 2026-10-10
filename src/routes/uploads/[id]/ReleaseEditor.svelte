@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { TrackerFieldState, FieldLayout } from '$lib/types';
-    import { getWhy } from '$lib/util/get-why';
-    import buildGridTemplateArea from '$lib/util/build-grid-template-area';
+    import type { TrackerFieldState, FieldLayout } from '#lib/types.js';
+    import { getWhy } from '#lib/util/get-why.js';
+    import buildGridTemplateArea from '#lib/util/build-grid-template-area.js';
     import FormControl from './FormControl.svelte';
 
     let { fields, layout, values, baseline, settled, uploadId, errors = $bindable() }: {

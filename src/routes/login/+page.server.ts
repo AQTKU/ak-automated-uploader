@@ -1,7 +1,7 @@
-import settings from '$lib/server/settings';
+import settings from '#lib/server/settings.js';
 import { error, redirect, type Actions } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { addSession, checkSession } from '$lib/server/sessions';
+import { addSession, checkSession } from '#lib/server/sessions.js';
 
 export const load = (async ({ cookies }) => {
     

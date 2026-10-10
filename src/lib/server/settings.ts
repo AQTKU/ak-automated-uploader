@@ -1,7 +1,7 @@
 import appDataPath from './util/app-data-path';
 import errorString from './util/error-string';
-import { SettingsSchema } from '$lib/types';
-import type { SettingsField, SettingsList, SettingsOption } from '$lib/types';
+import { SettingsSchema } from '#lib/types.js';
+import type { SettingsField, SettingsList, SettingsOption } from '#lib/types.js';
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { rename } from 'node:fs/promises';
 import { log } from './util/log';

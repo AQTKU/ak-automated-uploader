@@ -1,4 +1,4 @@
-import type { Image } from '$lib/types';
+import type { Image } from '#lib/types.js';
 import { file } from 'bun';
 import type ImageHost from './image-host';
 import { imageHosts } from './image-hosts/index';

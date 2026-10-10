@@ -1,5 +1,5 @@
-import type { UploadState } from '$lib/server/upload.js';
-import { uploads } from '$lib/server/uploads.js';
+import type { UploadState } from '#lib/server/upload.js';
+import { uploads } from '#lib/server/uploads.js';
 import { error } from '@sveltejs/kit';
 
 export async function GET({ params, request }) {
@@ -27,7 +27,17 @@ export async function GET({ params, request }) {
                 try { controller.close(); } catch { }
             };
 
+            // Bun closes connections that go quiet for IDLE_TIMEOUT (10s by default)
+            const keepAlive = setInterval(() => {
+                try {
+                    controller.enqueue(encoder.encode(': keep-alive\n\n'));
+                } catch {
+                    unsubscribe();
+                }
+            }, 5000);
+
             unsubscribe = () => {
+                clearInterval(keepAlive);
                 upload.offUpdate(send);
                 upload.signal.removeEventListener('abort', close);
                 request.signal.removeEventListener('abort', unsubscribe);

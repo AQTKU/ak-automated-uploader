@@ -1,9 +1,9 @@
 <script lang="ts">
 
-    import insertWbr from '$lib/util/insert-wbr';
+    import insertWbr from '#lib/util/insert-wbr.js';
     import type { PageData } from "./$types";
     import { Temporal } from '@js-temporal/polyfill';
-    import { browser } from '$app/environment';
+    import { browser } from '$app/env';
 
     const { data }: { data: PageData } = $props();
 

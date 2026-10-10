@@ -1,16 +1,16 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import type { PageData } from './$types';
-    import type { UploadState } from '$lib/server/upload';
+    import type { UploadState } from '#lib/server/upload.js';
     import TmdbPanel from './TmdbPanel.svelte';
     import FilesTable from './FilesTable.svelte';
     import TorrentProgress from './TorrentProgress.svelte';
     import Screenshots from './Screenshots.svelte';
     import Trackers from './Trackers.svelte';
     import ReleaseEditor from './ReleaseEditor.svelte';
-    import insertWbr from '$lib/util/insert-wbr';
-    import { getWhy } from '$lib/util/get-why';
-    import { browser } from '$app/environment';
+    import insertWbr from '#lib/util/insert-wbr.js';
+    import { getWhy } from '#lib/util/get-why.js';
+    import { browser } from '$app/env';
 
     let { data }: { data: PageData } = $props();
     // svelte-ignore state_referenced_locally

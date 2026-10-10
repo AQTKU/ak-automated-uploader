@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ImageHostOrderItem, SettingsField, SettingsOption } from '$lib/types';
+    import type { ImageHostOrderItem, SettingsField, SettingsOption } from '#lib/types.js';
     import FormControl from './FormControl.svelte';
 
     let { id, cssId, name, available, selected, settings, imageHosts = $bindable([]) }: {

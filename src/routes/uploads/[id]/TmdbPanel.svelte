@@ -1,8 +1,8 @@
 <script lang="ts">
     import { page } from '$app/state';
-    import type { TmdbSearchResult } from '$lib/server/tmdb';
-    import type { FieldLayout, Metadata, TrackerFieldState } from '$lib/types';
-    import { getWhy } from '$lib/util/get-why';
+    import type { TmdbSearchResult } from '#lib/server/tmdb.js';
+    import type { FieldLayout, Metadata, TrackerFieldState } from '#lib/types.js';
+    import { getWhy } from '#lib/util/get-why.js';
     import MetadataEditor from './MetadataEditor.svelte';
 
     let { results, selected, release, metadataFields, metadataLayout, metadataValues,

@@ -1,4 +1,4 @@
-import type { SettingsField } from '$lib/types';
+import type { SettingsField } from '#lib/types.js';
 import type ImageHost from '../image-host';
 import { catbox } from './catbox';
 import { freeimageHost, freeimageHostFields } from './freeimage-host';

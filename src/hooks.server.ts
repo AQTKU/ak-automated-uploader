@@ -1,11 +1,12 @@
-import { error, redirect, type Handle } from '@sveltejs/kit';
-import settings from '$lib/server/settings';
-import { torrentClients } from '$lib/server/torrent-clients/index';
-import { imageHosts } from '$lib/server/image-hosts/index';
-import { trackers } from '$lib/server/trackers/index';
-import errorString from '$lib/server/util/error-string';
-import { checkSession } from '$lib/server/sessions';
-import { log } from '$lib/server/util/log';
+import { error, redirect } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
+import settings from '#lib/server/settings.js';
+import { torrentClients } from '#lib/server/torrent-clients/index.js';
+import { imageHosts } from '#lib/server/image-hosts/index.js';
+import { trackers } from '#lib/server/trackers/index.js';
+import errorString from '#lib/server/util/error-string.js';
+import { checkSession } from '#lib/server/sessions.js';
+import { log } from '#lib/server/util/log.js';
 import { timingSafeEqual } from 'node:crypto';
 
 log('Starting up');

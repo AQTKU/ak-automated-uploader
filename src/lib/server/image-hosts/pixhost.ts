@@ -1,6 +1,6 @@
 import PQueue from 'p-queue';
 import ImageHost from '../image-host';
-import type { Image } from '$lib/types';
+import type { Image } from '#lib/types.js';
 import * as v from 'valibot';
 import { file } from 'bun';
 import { load } from 'cheerio';

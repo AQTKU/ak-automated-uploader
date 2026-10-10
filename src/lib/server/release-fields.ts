@@ -6,7 +6,7 @@
    (`{ p: 'DDP', plus: 'DD+' }`) that no setter accepts, while a `from` value is guaranteed to
    round trip. */
 
-import type { TrackerFieldState, FieldLayout } from '$lib/types';
+import type { TrackerFieldState, FieldLayout } from '#lib/types.js';
 import type Release from './release';
 import {
     audioCodecs, categories, censoredStates, dvProfiles, editions, hdrFormats, multiAudioFormats,

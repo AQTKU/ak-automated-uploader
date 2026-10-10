@@ -1,4 +1,4 @@
-import { uploads } from '$lib/server/uploads';
+import { uploads } from '#lib/server/uploads.js';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
