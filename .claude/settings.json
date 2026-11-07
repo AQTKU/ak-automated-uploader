@@ -1,0 +1,18 @@
+{
+	"permissions": {
+		"deny": ["Read(/src/lib/server/trackers/aither.ts)"]
+	},
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Read|Grep|Glob|Bash|PowerShell",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-trackers.ts\""
+					}
+				]
+			}
+		]
+	}
+}

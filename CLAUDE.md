@@ -99,3 +99,9 @@ bun test
 ```
 
 Use Bun's built-in runner and don't add tests that need network access or external binaries without discussing it first.
+
+## Banned Trackers
+
+Some trackers ban the use of AI, and require AI agents not learn their API surface. Do not attempt to access these tracker definitions:
+
+- src/lib/server/trackers/aither.ts
